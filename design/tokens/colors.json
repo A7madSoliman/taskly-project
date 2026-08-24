@@ -1,0 +1,19 @@
+{
+  "actionBlue": {
+    "primary": "#0A328C",
+    "primaryContainer": "#0054E6",
+    "surfaceHighest": "#DCE5FF",
+    "surfaceLow": "#F3F5FA",
+    "background": "#FBFBFE"
+  },
+  "slateNeutrals": {
+    "neutral": "#0F172A",
+    "slate700": "#475569",
+    "slate300": "#CBD5E1"
+  },
+  "semantic": {
+    "success": "#69F0AE",
+    "error": "#D32F2F",
+    "warning": "#FFB300"
+  }
+}

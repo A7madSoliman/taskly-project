@@ -1,0 +1,923 @@
+{
+  "info": {
+    "_postman_id": "06df42ab-77ad-4b9e-8bd8-59c2bc275a94",
+    "name": "Tasks Management (Clean & Ready)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Auth - Sign Up",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "apikey",
+            "value": "{{api_key}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"test_user@example.com\",\n  \"password\": \"Password123!\",\n  \"data\": {\n    \"name\": \"Mahmoud Taha\",\n    \"department\": \"Frontend\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/auth/v1/signup",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "v1", "signup"]
+        }
+      }
+    },
+    {
+      "name": "2. Auth - Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "let response = pm.response.json();",
+              "if (response.access_token) {",
+              "    pm.collectionVariables.set(\"access_token\", response.access_token);",
+              "    pm.collectionVariables.set(\"refresh_token\", response.refresh_token);",
+              "    pm.collectionVariables.set(\"user_id\", response.user.id);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "apikey",
+            "value": "{{api_key}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"test_user@example.com\",\n  \"password\": \"Password123!\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/auth/v1/token?grant_type=password",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "v1", "token"],
+          "query": [
+            {
+              "key": "grant_type",
+              "value": "password"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "3. Auth - Get User Data",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "apikey",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/v1/user",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "v1", "user"]
+        }
+      }
+    },
+    {
+      "name": "4. Auth - Update Password",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "apikey",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"password\": \"NewPassword123!\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/auth/v1/user",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "v1", "user"]
+        }
+      }
+    },
+    {
+      "name": "5. Auth - Refresh Token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "let response = pm.response.json();",
+              "if (response.access_token) {",
+              "    pm.collectionVariables.set(\"access_token\", response.access_token);",
+              "    pm.collectionVariables.set(\"refresh_token\", response.refresh_token);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "apikey",
+            "value": "{{api_key}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/auth/v1/token?grant_type=refresh_token",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "v1", "token"],
+          "query": [
+            {
+              "key": "grant_type",
+              "value": "refresh_token"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "6. Auth - Forgot Password",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "apikey",
+            "value": "{{api_key}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"test_user@example.com\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/auth/v1/recover",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "v1", "recover"]
+        }
+      }
+    },
+    {
+      "name": "7. Auth - Logout",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "apikey",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/v1/logout",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "v1", "logout"]
+        }
+      }
+    },
+    {
+      "name": "8. Projects - Get All Projects",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "apikey",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/rest/v1/rpc/get_projects",
+          "host": ["{{base_url}}"],
+          "path": ["rest", "v1", "rpc", "get_projects"]
+        }
+      }
+    },
+    {
+      "name": "9. Projects - Create Project",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "apikey",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Prefer",
+            "value": "return=representation"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"New Workspace Project\",\n  \"description\": \"Project management tasks and epics\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/rest/v1/projects",
+          "host": ["{{base_url}}"],
+          "path": ["rest", "v1", "projects"]
+        }
+      }
+    },
+    {
+      "name": "10. Projects - Update Project",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "apikey",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Updated Project Title\",\n  \"description\": \"Updated project description details\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/rest/v1/projects?id=eq.{{project_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["rest", "v1", "projects"],
+          "query": [
+            {
+              "key": "id",
+              "value": "eq.{{project_id}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "11. Projects - Get Project Members",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "apikey",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/rest/v1/get_project_members?project_id=eq.{{project_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["rest", "v1", "get_project_members"],
+          "query": [
+            {
+              "key": "project_id",
+              "value": "eq.{{project_id}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "12. Projects - Invite Member",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "apikey",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"p_email\": \"new_member@example.com\",\n  \"p_project_id\": \"{{project_id}}\",\n  \"p_app_url\": \"http://localhost:3000\",\n  \"p_base_url\": \"{{base_url}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/rest/v1/rpc/invite_member",
+          "host": ["{{base_url}}"],
+          "path": ["rest", "v1", "rpc", "invite_member"]
+        }
+      }
+    },
+    {
+      "name": "13. Projects - Accept Invitation",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "apikey",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"p_token\": \"INVIATION_TOKEN_HERE\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/rest/v1/rpc/accept_invitation",
+          "host": ["{{base_url}}"],
+          "path": ["rest", "v1", "rpc", "accept_invitation"]
+        }
+      }
+    },
+    {
+      "name": "14. Epics - Get Project Epics",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "apikey",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Prefer",
+            "value": "count=exact"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/rest/v1/project_epics?project_id=eq.{{project_id}}&limit=10&offset=0",
+          "host": ["{{base_url}}"],
+          "path": ["rest", "v1", "project_epics"],
+          "query": [
+            {
+              "key": "project_id",
+              "value": "eq.{{project_id}}"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            },
+            {
+              "key": "offset",
+              "value": "0"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "15. Epics - Create Epic",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "apikey",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Prefer",
+            "value": "return=representation"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Authentication & Security Module\",\n  \"description\": \"Design and implement auth features\",\n  \"assignee_id\": \"{{user_id}}\",\n  \"project_id\": \"{{project_id}}\",\n  \"deadline\": \"2026-12-31\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/rest/v1/epics",
+          "host": ["{{base_url}}"],
+          "path": ["rest", "v1", "epics"]
+        }
+      }
+    },
+    {
+      "name": "16. Epics - Get Epic Details",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "apikey",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/rest/v1/project_epics?project_id=eq.{{project_id}}&id=eq.{{epic_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["rest", "v1", "project_epics"],
+          "query": [
+            {
+              "key": "project_id",
+              "value": "eq.{{project_id}}"
+            },
+            {
+              "key": "id",
+              "value": "eq.{{epic_id}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "17. Epics - Update Epic",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "apikey",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Updated Epic Title\",\n  \"description\": \"Updated Epic description\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/rest/v1/epics?id=eq.{{epic_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["rest", "v1", "epics"],
+          "query": [
+            {
+              "key": "id",
+              "value": "eq.{{epic_id}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "18. Epics - Delete Epic",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "apikey",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/rest/v1/epics?id=eq.{{epic_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["rest", "v1", "epics"],
+          "query": [
+            {
+              "key": "id",
+              "value": "eq.{{epic_id}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "19. Tasks - Get Project Tasks",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "apikey",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Prefer",
+            "value": "count=exact"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/rest/v1/project_tasks?project_id=eq.{{project_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["rest", "v1", "project_tasks"],
+          "query": [
+            {
+              "key": "project_id",
+              "value": "eq.{{project_id}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "20. Tasks - Get Epic Tasks",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "apikey",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/rest/v1/project_tasks?epic_id=eq.{{epic_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["rest", "v1", "project_tasks"],
+          "query": [
+            {
+              "key": "epic_id",
+              "value": "eq.{{epic_id}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "21. Tasks - Create Task",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "apikey",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Prefer",
+            "value": "return=representation"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"project_id\": \"{{project_id}}\",\n  \"epic_id\": \"{{epic_id}}\",\n  \"title\": \"Implement Login Screen\",\n  \"description\": \"Create responsive UI for login form\",\n  \"assignee_id\": \"{{user_id}}\",\n  \"due_date\": \"2026-12-31T12:00:00Z\",\n  \"status\": \"TO_DO\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/rest/v1/tasks",
+          "host": ["{{base_url}}"],
+          "path": ["rest", "v1", "tasks"]
+        }
+      }
+    },
+    {
+      "name": "22. Tasks - Update Task Status",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "apikey",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"IN_PROGRESS\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/rest/v1/tasks?id=eq.{{task_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["rest", "v1", "tasks"],
+          "query": [
+            {
+              "key": "id",
+              "value": "eq.{{task_id}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "23. Tasks - Delete Task",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "apikey",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/rest/v1/tasks?id=eq.{{task_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["rest", "v1", "tasks"],
+          "query": [
+            {
+              "key": "id",
+              "value": "eq.{{task_id}}"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": ""
+    },
+    {
+      "key": "api_key",
+      "value": ""
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "refresh_token",
+      "value": ""
+    },
+    {
+      "key": "user_id",
+      "value": ""
+    },
+    {
+      "key": "project_id",
+      "value": ""
+    },
+    {
+      "key": "epic_id",
+      "value": ""
+    },
+    {
+      "key": "task_id",
+      "value": ""
+    }
+  ]
+}

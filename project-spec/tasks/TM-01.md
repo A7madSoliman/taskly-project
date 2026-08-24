@@ -1,0 +1,16 @@
+# Initialize Project Setup
+
+Status: To Do
+Task ID: TM-01
+
+**Description:**
+
+Set up the base project using any JS library or framework **+ TypeScrript** as the build tool. Use **pnpm** as the package manager. Configure **ESLint** and **Prettier** for code linting and formatting to ensure code quality and consistency.
+
+**Acceptance Criteria:**
+
+- Project is bootstrapped with JS library or framework **+ TypeScrript**.
+- **pnpm** is used for dependency management (no `npm` or `yarn`).
+- **ESLint** is installed and configured with recommended rules.
+- **Prettier** is installed and integrated with ESLint.
+- A script is added to `package.json` for linting and formatting.

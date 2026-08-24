@@ -1,0 +1,93 @@
+# Display Epic Details Popup
+
+Status: To Do
+Task ID: TM-18
+
+[https://www.figma.com/design/zAwYa5nDWE2YirHYPpNabw/Tasks-Management?node-id=58-2291&t=L7Jf026Stu5qCTd2-0](https://www.figma.com/design/zAwYa5nDWE2YirHYPpNabw/Tasks-Management?node-id=58-2291&t=L7Jf026Stu5qCTd2-0)
+
+### 📌 Goal
+
+Implement a **popup (modal)** that displays **details of a specific Epic** when the user clicks on an epic item from the epics list.
+
+The popup should fetch epic data from the API and render it according to the provided Figma design.
+
+---
+
+## 🗺️ Context
+
+- This feature belongs to the **Project Epics** section.
+- The popup displays **one epic’s details only**.
+- The popup opens as a **modal**, not a separate page.
+- Epic tasks will be shown as an **empty state** for now.
+
+---
+
+## 🎯 Trigger Behavior
+
+- User clicks on an epic epic row
+- A modal opens
+- Epic details are fetched from the API
+- Data is displayed inside the popup
+
+---
+
+## 🔗 API Details
+
+### Route
+
+```
+GET /rest/v1/project_epics
+```
+
+### Query Parameters
+
+```
+project_id = eq.{projectId}
+id         = eq.{epicId}
+```
+
+### Required Headers
+
+```
+apikey: <API_KEY>Authorization:
+Bearer <ACCESS_TOKEN>
+Content-Type: application/json
+```
+
+⚠️ API response is an **array** — use the **first item**.
+
+---
+
+## 🖼️ UI Reference (Figma)
+
+🔗 ﻿[Design FileFigma File](https://www.figma.com/design/zAwYa5nDWE2YirHYPpNabw/Tasks-Management?node-id=58-2291&t=L7Jf026Stu5qCTd2-0)
+
+---
+
+## 🧾 Popup Content Requirements
+
+### 1️⃣ Epic Information
+
+- **Epic Title**
+- **Epic Description**
+    - If empty → display `No description provided`
+- **Created By**
+    - Display user name
+    - Display avatar
+- **Assignee**
+    - Display user name
+    - Display avatar
+    - If no assignee → show `Unassigned`
+- **Created At**
+    - Format date in a human-readable way (e.g. `Dec 25, 2025`)
+
+---
+
+### 3️⃣ Epic Tasks Section
+
+- Section title: **Epic Tasks**
+- Display **empty state**
+    - Text: “No tasks have been added to this epic yet”
+    - Button to add new task with no functionality
+
+❌ Do NOT implement tasks fetching or listing

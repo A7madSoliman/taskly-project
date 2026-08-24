@@ -1,0 +1,12 @@
+# Dependencies and builds
+.next/
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+next-env.d.ts
+pnpm-lock.yaml
+
+# Immutable raw inputs and normalized tasks
+project-spec/source/**
+project-spec/tasks/**

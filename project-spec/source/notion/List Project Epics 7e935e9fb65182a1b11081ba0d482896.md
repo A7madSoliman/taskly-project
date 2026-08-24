@@ -1,0 +1,102 @@
+# List Project Epics
+
+Status: To Do
+Task ID: TM-16
+
+## 
+
+## 📄 Description
+
+Implement the **Epics listing view** for a project.
+
+This page will display all epics related to a specific project, using the backend api `project_epics`, which already returns epics enriched with **creator and assignee user objects**.
+
+The page should follow the provided Figma design and support loading, empty, and error states.
+
+---
+
+## 🌐 Route
+
+```
+/project/[projectId]/epics
+```
+
+---
+
+## 🔗 API Integration
+
+### Endpoint
+
+```
+GET <BASE_URL>/rest/v1/project_epics?project_id=eq.{projectId}
+```
+
+### Headers
+
+```
+apikey: <API_KEY>
+Authorization: Bearer <ACCESS_TOKEN>
+Content-Type: application/json
+```
+
+### Notes
+
+- `projectId` is taken from the route params
+- The API returns **all epics for the given project**
+- No pagination required for now
+
+---
+
+## 📦 Expected Response Shape (Simplified)
+
+```json
+{
+	"id": "uuid",
+	"epic_id": "EPIC-12",
+	"title": "Epic Title",
+	"description": "Optional description",
+	"deadline": "2025-12-30",
+	"created_at": "2025-09-28T21:12:16Z",
+	"created_by": {
+		"sub": "uuid",
+		"name": "User Name",
+		"email": "user@email.com",
+		"department": "Frontend"
+	},
+	"assignee": {
+		"sub": "uuid",
+		"name": "User Name",
+		"email": "user@email.com",
+		"department": "Frontend"
+	}
+}
+```
+
+---
+
+## 🎨 UI Requirements (Based on Figma)
+
+[https://www.figma.com/design/zAwYa5nDWE2YirHYPpNabw/Tasks-Management?node-id=45-2643&t=L7Jf026Stu5qCTd2-0](https://www.figma.com/design/zAwYa5nDWE2YirHYPpNabw/Tasks-Management?node-id=45-2643&t=L7Jf026Stu5qCTd2-0)
+
+### Epic Card / Row should display:
+
+- **Epic ID** (use epic_id column, e.g. `EPIC-12`)
+- **Epic title**
+- **Assignee**
+    - Name
+    - Avatar
+- **Created by** (name only)
+- **Created date**
+
+---
+
+## ⚙️ Functional Requirements
+
+- Fetch epics on page load
+- Refetch when `projectId` changes
+- Handle:
+    - Loading state  ‣
+    - Empty state ‣
+    - Error state (API failure) ‣
+
+### For pagination only display the UI (don’t handle the functionality)

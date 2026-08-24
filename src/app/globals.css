@@ -1,0 +1,54 @@
+@import "tailwindcss";
+@config "../../tailwind.config.ts";
+
+:root {
+  --color-primary: #0a328c;
+  --color-primary-container: #0054e6;
+  --color-surface-highest: #dce5ff;
+  --color-surface-low: #f3f5fa;
+  --color-background: #fbfbfe;
+
+  --color-neutral: #0f172a;
+  --color-slate-700: #475569;
+  --color-slate-300: #cbd5e1;
+
+  --color-success: #69f0ae;
+  --color-error: #d32f2f;
+  --color-warning: #ffb300;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-neutral);
+  font-family: "Inter", sans-serif;
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-action-primary text-white px-4 py-2 rounded-md font-semibold hover:bg-action-primaryContainer transition-colors;
+  }
+
+  .btn-secondary {
+    @apply border border-action-primary text-action-primary px-4 py-2 rounded-md font-semibold hover:bg-action-surfaceLow transition-colors;
+  }
+
+  .btn-ghost {
+    @apply text-action-primary px-4 py-2 rounded-md font-semibold hover:bg-action-surfaceLow transition-colors;
+  }
+
+  .input-field {
+    @apply w-full px-3 py-2 border border-slate-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-action-primaryContainer focus:border-transparent transition-all;
+  }
+
+  .input-error {
+    @apply border-semantic-error focus:ring-semantic-error bg-red-50;
+  }
+
+  .cta-gradient {
+    background: linear-gradient(
+      135deg,
+      var(--color-primary) 0%,
+      var(--color-primary-container) 100%
+    );
+  }
+}

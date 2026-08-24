@@ -1,0 +1,104 @@
+# List Tasks Board View
+
+Status: To Do
+Task ID: TM-22
+
+[https://www.figma.com/design/zAwYa5nDWE2YirHYPpNabw/Tasks-Management?node-id=58-3524&t=L7Jf026Stu5qCTd2-0](https://www.figma.com/design/zAwYa5nDWE2YirHYPpNabw/Tasks-Management?node-id=58-3524&t=L7Jf026Stu5qCTd2-0)
+
+## 📌 Description
+
+Implement the **Project Tasks page** with a **Board View** that displays tasks grouped by status. This page allows users to visualize tasks per status and quickly add new tasks directly from each status column.
+
+---
+
+## 🧭 Navigation
+
+- When the user clicks **“Project Tasks”** from the project sidebar
+- ➜ Navigate to:
+
+```
+/project/[projectId]/tasks?view=board
+```
+
+---
+
+## 🖥️ UI Requirements
+
+### 1️⃣ Page Header
+
+- **Search Input**
+    - Visible at the top of the page
+    - No functionality required (UI only)
+- **View Switcher (Select Input)**
+    - Options:
+        - List View
+        - Board View
+    - Default selected value: **Board View**
+    - Only Board View behavior is required in this task
+
+---
+
+### 2️⃣ Board View Layout
+
+- Display tasks grouped by **status columns**
+- Each column represents one task status:
+    - TO DO
+    - IN PROGRESS
+    - BLOCKED
+    - IN REVIEW
+    - READY FOR QA
+    - REOPENED
+    - READY FOR PRODUCTION
+    - DONE
+- Each column contains:
+    - Status title
+    - List of tasks belonging to this status
+    - **Plus (+) icon button** at the top of the column
+
+---
+
+### 3️⃣ Add New Task from Board
+
+- When user clicks the **plus (+) button** in any status column:
+    - Navigate to:
+
+```
+/project/[projectId]/tasks/new
+```
+
+- The **status field** in the Create Task page should be **pre-filled** with the status of the column where the user clicked the plus button.
+
+---
+
+## 🔗 API Integration
+
+### Fetch tasks by status
+
+For each status column, fetch tasks using:
+
+**Route**
+
+```
+/rest/v1/project_tasks
+```
+
+**Query Params**
+
+- `project_id=eq.<project_id>`
+- `status=eq.<status>`
+
+**Headers**
+
+- `apikey`
+- `Authorization: Bearer <access_token>`
+- `Content-Type: application/json`
+
+Each column should independently fetch and display its related tasks.
+
+---
+
+## 🎨 Design Reference
+
+Figma link:
+
+‣

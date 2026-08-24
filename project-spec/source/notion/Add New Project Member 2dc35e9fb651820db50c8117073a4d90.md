@@ -1,0 +1,140 @@
+# Add New Project Member
+
+Status: To Do
+Task ID: TM-28
+
+**Description:**
+
+Implement the frontend integration to support inviting users to a project and accepting invitations using REST APIs. The flow includes sending invitations from the project admin UI and allowing invited users to accept the invitation via a token-based link.
+
+---
+
+# **Requirements**
+
+## 1. Invite Member
+
+[https://www.figma.com/design/zAwYa5nDWE2YirHYPpNabw/Tasks-Management?node-id=43-1682&t=L7Jf026Stu5qCTd2-0](https://www.figma.com/design/zAwYa5nDWE2YirHYPpNabw/Tasks-Management?node-id=43-1682&t=L7Jf026Stu5qCTd2-0)
+
+### **API Endpoint**
+
+```
+POST <base_url>/rest/v1/rpc/invite_member
+```
+
+### **Headers**
+
+```
+apikey: <anon_key>
+Authorization: Bearer <user_access_token>
+Content-Type: application/json
+```
+
+### **Request Body**
+
+```json
+{
+  "p_email": "user@example.com",
+  "p_project_id": "project-uuid",
+  "p_app_url": "https://your-frontend-domain.com",
+  "p_base_url": "<base_url>"
+}
+```
+
+### **Frontend Behavior**
+
+- Trigger this API from an "Invite Member" form.
+- Collect:
+    - Email
+    - Project ID
+- On success:
+    - Show confirmation message (e.g., "Invitation sent successfully")
+- Handle errors (e.g., unauthorized, validation errors).
+
+---
+
+## 2. Accept Invitation (Invite Link Flow)
+
+### **Frontend Route**
+
+```
+/invite?token=<invitation_token>
+```
+
+### **API Endpoint**
+
+```
+POST <base_url>/rest/v1/rpc/accept_invitation
+```
+
+### **Headers**
+
+```
+apikey: <anon_key>
+Authorization: Bearer <user_access_token>
+Content-Type: application/json
+```
+
+### **Request Body**
+
+```json
+{
+  "p_token": "<invitation_token>"
+}
+```
+
+### **Frontend Behavior**
+
+- Extract `token` from query parameters.
+- Check if user is authenticated:
+    - If NOT authenticated → redirect to login page and return back to invite page after login.
+    - If authenticated → allow accepting invitation.
+- On clicking "Accept Invitation":
+    - Call the API.
+    - On success:
+        - Show success message
+        - Redirect user to the project dashboard or project page
+- Handle errors:
+    - Invalid token
+    - Expired invitation
+    - Unauthorized user
+
+---
+
+## 3. Authentication Handling
+
+- All API calls must include:
+    - `Authorization: Bearer <user_access_token>`
+- Ensure user is logged in before:
+    - Sending invite
+    - Accepting invite
+
+---
+
+## 4. Error Handling
+
+Frontend should handle and display:
+
+- Unauthorized (401)
+- Forbidden (403)
+- Invalid token
+- Expired invitation
+- Network/API errors
+
+---
+
+## 5. UX Notes
+
+- Disable invite button while request is in progress
+- Show loading indicators during API calls
+- Provide clear feedback messages for success and failure
+- Prevent duplicate submissions
+
+---
+
+## 6. Acceptance Criteria
+
+- Admin can successfully send an invitation via the invite API
+- Invited user receives an email with a token-based link
+- Invited user can open the link and accept the invitation
+- Only authenticated users can accept invitations
+- Proper error messages are displayed for all failure cases
