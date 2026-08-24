@@ -1,0 +1,272 @@
+[
+  {
+    "id": "TM-01",
+    "title": "Initialize Project Setup",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-01.md",
+    "source": "project-spec/source/notion/Initialize Project Setup b0735e9fb6518376ae7881999173bf58.md",
+    "hasFigma": false,
+    "hasAcceptanceCriteria": true
+  },
+  {
+    "id": "TM-02",
+    "title": "Install Tailwind CSS & Configure Project Variables",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-02.md",
+    "source": "project-spec/source/notion/Install Tailwind CSS & Configure Project Variables 6eb35e9fb651830f910481fc1c983963.md",
+    "hasFigma": true,
+    "hasAcceptanceCriteria": false
+  },
+  {
+    "id": "TM-03",
+    "title": "Implement User Sign Up",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-03.md",
+    "source": "project-spec/source/notion/Implement User Sign Up 52235e9fb6518286860281e70c906c34.md",
+    "hasFigma": true,
+    "hasAcceptanceCriteria": true
+  },
+  {
+    "id": "TM-04",
+    "title": "Implement User Login",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-04.md",
+    "source": "project-spec/source/notion/Implement User Login 85d35e9fb6518242aae70193ad848f5b.md",
+    "hasFigma": true,
+    "hasAcceptanceCriteria": true
+  },
+  {
+    "id": "TM-05",
+    "title": "Forget Password",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-05.md",
+    "source": "project-spec/source/notion/Forget Password 58f35e9fb6518349961a81a80312a843.md",
+    "hasFigma": true,
+    "hasAcceptanceCriteria": false
+  },
+  {
+    "id": "TM-06",
+    "title": "Page Layout (Sidebar + Navbar)",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-06.md",
+    "source": "project-spec/source/notion/Page Layout (Sidebar + Navbar) 18235e9fb65183b885ac815c3668cb78.md",
+    "hasFigma": true,
+    "hasAcceptanceCriteria": false
+  },
+  {
+    "id": "TM-08",
+    "title": "Handle User Logout",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-08.md",
+    "source": "project-spec/source/notion/Handle User Logout 6dc35e9fb65182f9accb81d32ad1c481.md",
+    "hasFigma": false,
+    "hasAcceptanceCriteria": false
+  },
+  {
+    "id": "TM-09",
+    "title": "Add New Project",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-09.md",
+    "source": "project-spec/source/notion/Add New Project b7935e9fb65182ab982701f6cd1ee1e2.md",
+    "hasFigma": true,
+    "hasAcceptanceCriteria": false
+  },
+  {
+    "id": "TM-10",
+    "title": "List Projects",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-10.md",
+    "source": "project-spec/source/notion/List Projects 91135e9fb65183178d05014d42a2664e.md",
+    "hasFigma": true,
+    "hasAcceptanceCriteria": false
+  },
+  {
+    "id": "TM-11",
+    "title": "Implement Pagination for Projects List",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-11.md",
+    "source": "project-spec/source/notion/Implement Pagination for Projects List a6a35e9fb651822cae57814a250696b7.md",
+    "hasFigma": false,
+    "hasAcceptanceCriteria": false
+  },
+  {
+    "id": "TM-12",
+    "title": "Project Navigation & Sidebar Structure",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-12.md",
+    "source": "project-spec/source/notion/Project Navigation & Sidebar Structure 2f435e9fb65183baaac301a73df9d138.md",
+    "hasFigma": false,
+    "hasAcceptanceCriteria": false
+  },
+  {
+    "id": "TM-13",
+    "title": "Update Project Details",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-13.md",
+    "source": "project-spec/source/notion/Update Project Details 85a35e9fb651829cbd7f01efc1611c9a.md",
+    "hasFigma": true,
+    "hasAcceptanceCriteria": false
+  },
+  {
+    "id": "TM-14",
+    "title": "List Project Members",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-14.md",
+    "source": "project-spec/source/notion/List Project Members d3635e9fb651820eaa1901ec987d751d.md",
+    "hasFigma": true,
+    "hasAcceptanceCriteria": false
+  },
+  {
+    "id": "TM-15",
+    "title": "Add New Epic",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-15.md",
+    "source": "project-spec/source/notion/Add New Epic 86535e9fb6518394991601f396ffae75.md",
+    "hasFigma": true,
+    "hasAcceptanceCriteria": false
+  },
+  {
+    "id": "TM-16",
+    "title": "List Project Epics",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-16.md",
+    "source": "project-spec/source/notion/List Project Epics 7e935e9fb65182a1b11081ba0d482896.md",
+    "hasFigma": true,
+    "hasAcceptanceCriteria": false
+  },
+  {
+    "id": "TM-17",
+    "title": "Implement Pagination for Project Epics",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-17.md",
+    "source": "project-spec/source/notion/Implement Pagination for Project Epics a7035e9fb65183e49a40013e9eb86522.md",
+    "hasFigma": false,
+    "hasAcceptanceCriteria": false
+  },
+  {
+    "id": "TM-18",
+    "title": "Display Epic Details Popup",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-18.md",
+    "source": "project-spec/source/notion/Display Epic Details Popup 42c35e9fb6518227881e0134a199090f.md",
+    "hasFigma": true,
+    "hasAcceptanceCriteria": false
+  },
+  {
+    "id": "TM-19",
+    "title": "Update Epic",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-19.md",
+    "source": "project-spec/source/notion/Update Epic 46035e9fb651820db1228118c1a7abbc.md",
+    "hasFigma": false,
+    "hasAcceptanceCriteria": false
+  },
+  {
+    "id": "TM-20",
+    "title": "Add New Task",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-20.md",
+    "source": "project-spec/source/notion/Add New Task 5d435e9fb651833d9c9e81e8cd2048b8.md",
+    "hasFigma": true,
+    "hasAcceptanceCriteria": false
+  },
+  {
+    "id": "TM-21",
+    "title": "Display Tasks Inside Epic Details Popup",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-21.md",
+    "source": "project-spec/source/notion/Display Tasks Inside Epic Details Popup f1a35e9fb6518393b7238107f5407856.md",
+    "hasFigma": true,
+    "hasAcceptanceCriteria": false
+  },
+  {
+    "id": "TM-22",
+    "title": "List Tasks Board View",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-22.md",
+    "source": "project-spec/source/notion/List Tasks Board View dc435e9fb6518281951e8183c8b78bda.md",
+    "hasFigma": true,
+    "hasAcceptanceCriteria": false
+  },
+  {
+    "id": "TM-23",
+    "title": "List Tasks List View",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-23.md",
+    "source": "project-spec/source/notion/List Tasks List View 4cf35e9fb651823a92ea013dea47eb2b.md",
+    "hasFigma": true,
+    "hasAcceptanceCriteria": false
+  },
+  {
+    "id": "TM-24",
+    "title": "Implement Task Details Popup",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-24.md",
+    "source": "project-spec/source/notion/Implement Task Details Popup 7fa35e9fb651827dbe3401452c20fe53.md",
+    "hasFigma": true,
+    "hasAcceptanceCriteria": false
+  },
+  {
+    "id": "TM-25",
+    "title": "Implement Pagination for Project Tasks",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-25.md",
+    "source": "project-spec/source/notion/Implement Pagination for Project Tasks 94235e9fb651820f8a3081f4cd9f9346.md",
+    "hasFigma": false,
+    "hasAcceptanceCriteria": false
+  },
+  {
+    "id": "TM-26",
+    "title": "Implement Search Functionality for Project Epics",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-26.md",
+    "source": "project-spec/source/notion/Implement Search Functionality for Project Epics e1535e9fb65182a6887381ae3d766f61.md",
+    "hasFigma": false,
+    "hasAcceptanceCriteria": false
+  },
+  {
+    "id": "TM-27",
+    "title": "Change Task Status Using Drag & Drop (Board View)",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-27.md",
+    "source": "project-spec/source/notion/Change Task Status Using Drag & Drop (Board View) 3a935e9fb6518267a966013b31767fb8.md",
+    "hasFigma": false,
+    "hasAcceptanceCriteria": false
+  },
+  {
+    "id": "TM-28",
+    "title": "Add New Project Member",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-28.md",
+    "source": "project-spec/source/notion/Add New Project Member 2dc35e9fb651820db50c8117073a4d90.md",
+    "hasFigma": true,
+    "hasAcceptanceCriteria": true
+  },
+  {
+    "id": "TM-29",
+    "title": "Implement Search Functionality for Project Tasks",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-29.md",
+    "source": "project-spec/source/notion/Implement Search Functionality for Project Tasks 34735e9fb65182199658016dd8ae4283.md",
+    "hasFigma": false,
+    "hasAcceptanceCriteria": false
+  },
+  {
+    "id": "TM-30",
+    "title": "Update Task Details",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-30.md",
+    "source": "project-spec/source/notion/Update Task Details 76f35e9fb65183a1912001ddaf2599c8.md",
+    "hasFigma": false,
+    "hasAcceptanceCriteria": false
+  },
+  {
+    "id": "TM-31",
+    "title": "Build \"My Statistics\" Page",
+    "status": "To Do",
+    "file": "project-spec/tasks/TM-31.md",
+    "source": "project-spec/source/notion/Build My Statistics Page 52635e9fb65182c39f3e81af4970814d.md",
+    "hasFigma": true,
+    "hasAcceptanceCriteria": false
+  }
+]
