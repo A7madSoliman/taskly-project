@@ -34,11 +34,8 @@ export const AuthService = {
       password: password || "",
     });
   },
-  getUser: async (token: string) => {
-    return fetch(`${SUPABASE_URL}/auth/v1/user`, {
-      method: "GET",
-      headers: getHeaders(token),
-    });
+  getUser: async (jwt?: string) => {
+    return supabase.auth.getUser(jwt);
   },
   updatePassword: async ({ password }: { password: string }) => {
     return supabase.auth.updateUser({
