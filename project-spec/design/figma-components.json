@@ -1,0 +1,72 @@
+{
+  "source": {
+    "type": "Figma Dev Mode MCP (get_metadata + get_design_context verification pass)",
+    "snapshotDate": "2026-08-25"
+  },
+  "componentSets": [],
+  "components": [],
+  "instancesSummary": [],
+  "repeatedVisualPatterns": [
+    {
+      "name": "Header - Top Navigation",
+      "category": "Application Shell",
+      "contexts": ["Sign Up (Desktop)", "Login (Desktop)", "Projects List (Desktop)", "Project Epics List"]
+    },
+    {
+      "name": "Email Field",
+      "category": "Forms",
+      "contexts": ["Sign Up", "Login", "Forgot Password"]
+    },
+    {
+      "name": "Password Field",
+      "category": "Forms",
+      "contexts": ["Sign Up", "Login"]
+    },
+    {
+      "name": "Validation Hints (Visualized State)",
+      "category": "Forms",
+      "contexts": ["Sign Up", "Reset Password"]
+    },
+    {
+      "name": "Button - Submit Action",
+      "category": "Actions",
+      "contexts": ["Sign Up", "Login", "Forgot Password", "Reset Password"]
+    },
+    {
+      "name": "Project Card",
+      "category": "Projects",
+      "contexts": ["Projects List (Mobile)", "Projects List (Desktop)"]
+    },
+    {
+      "name": "Epic Card",
+      "category": "Epics",
+      "contexts": ["Project Epics List (Desktop)"]
+    },
+    {
+      "name": "Floating Action Button",
+      "category": "Actions",
+      "contexts": ["Projects List (Mobile)", "Tasks (Mobile)"]
+    },
+    {
+      "name": "Modal Backdrop (Glassmorphism)",
+      "category": "Modals / Dialogs",
+      "contexts": ["Epic Details Modal", "Invite Member Popup Modal"]
+    },
+    {
+      "name": "BottomNavBar",
+      "category": "Application Shell",
+      "contexts": ["Mobile layouts"]
+    },
+    {
+      "name": "Bento Grid Layout",
+      "category": "Layout",
+      "contexts": ["Analytics", "Dashboard", "Project Tasks"]
+    }
+  ],
+  "unknownItems": [],
+  "limitations": [
+    "Figma MCP `get_metadata` outputs a flattened XML structure with layer types such as <frame>, <text>, and <vector>, without component/component-set indicators.",
+    "Targeted `get_design_context` calls across representative nodes in all product areas (Auth, App Shell, Forms, Actions, Projects, Epics, Tasks, Modals, Empty States) were verified to return reference React/Tailwind code and styling, but no explicit Figma Component Set, Variant, or Master Component definitions.",
+    "Therefore, all reusable design structures are strictly classified as 'Repeated Visual Patterns' to maintain contract integrity and avoid inventing unconfirmed component relationships."
+  ]
+}
