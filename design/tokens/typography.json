@@ -2,30 +2,31 @@
   "fontFamily": "Inter, sans-serif",
   "scales": {
     "display-lg": {
-      "fontSize": "3rem",
+      "fontSize": "56px",
       "fontWeight": "700",
-      "lineHeight": "1.2"
+      "lineHeight": "56px",
+      "letterSpacing": "-2.8px"
     },
     "headline-lg": {
-      "fontSize": "2.25rem",
+      "fontSize": "32px",
       "fontWeight": "600",
-      "lineHeight": "1.3"
+      "lineHeight": "40px"
     },
     "title-md": {
-      "fontSize": "1.5rem",
-      "fontWeight": "600",
-      "lineHeight": "1.4"
+      "fontSize": "18px",
+      "fontWeight": "500",
+      "lineHeight": "27px"
     },
     "body-md": {
-      "fontSize": "1rem",
+      "fontSize": "14px",
       "fontWeight": "400",
-      "lineHeight": "1.5"
+      "lineHeight": "22.75px"
     },
     "label-sm": {
-      "fontSize": "0.75rem",
-      "fontWeight": "600",
-      "lineHeight": "1.2",
-      "letterSpacing": "0.05em",
+      "fontSize": "12px",
+      "fontWeight": "700",
+      "lineHeight": "16px",
+      "letterSpacing": "1.2px",
       "textTransform": "uppercase"
     }
   }

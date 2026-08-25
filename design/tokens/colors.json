@@ -1,19 +1,19 @@
 {
   "actionBlue": {
-    "primary": "#0A328C",
-    "primaryContainer": "#0054E6",
-    "surfaceHighest": "#DCE5FF",
-    "surfaceLow": "#F3F5FA",
-    "background": "#FBFBFE"
+    "primary": "#003D9B",
+    "primaryContainer": "#0052CC",
+    "surfaceHighest": "#D7E2FF",
+    "surfaceLow": "#F1F3FF",
+    "background": "#F9F9FF"
   },
   "slateNeutrals": {
-    "neutral": "#0F172A",
-    "slate700": "#475569",
-    "slate300": "#CBD5E1"
+    "neutral": "#041B3C",
+    "slate700": "#4F5F7B",
+    "slate300": "#C3C6D6"
   },
   "semantic": {
-    "success": "#69F0AE",
-    "error": "#D32F2F",
+    "success": "#82F9BE",
+    "error": "#BA1A1A",
     "warning": "#FFB300"
   }
 }
