@@ -1,3 +1,4 @@
+import { supabase } from "@/lib/supabase/client";
 import { SUPABASE_URL, getHeaders } from "./config";
 
 export const ProjectsService = {
@@ -7,12 +8,8 @@ export const ProjectsService = {
       headers: getHeaders(token),
     });
   },
-  create: async (token: string, data: unknown) => {
-    return fetch(`${SUPABASE_URL}/rest/v1/projects`, {
-      method: "POST",
-      headers: { ...getHeaders(token), Prefer: "return=representation" },
-      body: JSON.stringify(data),
-    });
+  create: async (data: { name: string; description?: string }) => {
+    return supabase.from("projects").insert([data]);
   },
   update: async (token: string, projectId: string, data: unknown) => {
     return fetch(`${SUPABASE_URL}/rest/v1/projects?id=eq.${projectId}`, {
