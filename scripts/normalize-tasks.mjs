@@ -14,7 +14,7 @@ if (!fs.existsSync(TASKS_DIR)) {
   fs.mkdirSync(TASKS_DIR, { recursive: true });
 }
 
-// 1. Read all markdown files in source/notion (ignoring subdirectories)
+// 1. Read all raw Markdown files in source/notion (ignoring subdirectories)
 const entries = fs.readdirSync(SOURCE_DIR, { withFileTypes: true });
 const mdFiles = entries
   .filter((e) => e.isFile() && e.name.endsWith(".md"))
@@ -28,18 +28,36 @@ const seenIds = new Set();
 for (const fileName of mdFiles) {
   const filePath = path.join(SOURCE_DIR, fileName);
   const rawContent = fs.readFileSync(filePath, "utf-8");
+  const lines = rawContent.split(/\r?\n/);
 
-  // Extract Title
+  // 1. Extract Title
   const titleMatch = rawContent.match(/^#\s+(.+)$/m);
-  const title = titleMatch ? titleMatch[1].trim() : "";
-
-  // Extract Task ID
-  const idMatch = rawContent.match(/Task ID:\s*(TM-\d+)/i);
-  if (!idMatch) {
-    console.error(`ERROR: Missing Task ID in ${fileName}`);
+  if (!titleMatch) {
+    console.error(`ERROR: Missing title in ${fileName}`);
     process.exit(1);
   }
-  const taskId = idMatch[1].toUpperCase();
+  const title = titleMatch[1].trim();
+
+  // 2. Extract Metadata strictly from top header block (first 10 lines)
+  let taskId = "";
+  let status = "";
+  for (let i = 0; i < Math.min(10, lines.length); i++) {
+    const line = lines[i];
+    const idM = line.match(/^Task ID:\s*(TM-\d+)/i);
+    if (idM) taskId = idM[1].toUpperCase();
+    const stM = line.match(/^Status:\s*([^\r\n]+)/i);
+    if (stM) status = stM[1].trim();
+  }
+
+  // Strictly enforce non-invented metadata
+  if (!taskId) {
+    console.error(`ERROR: Missing explicit Task ID in ${fileName}`);
+    process.exit(1);
+  }
+  if (!status) {
+    console.error(`ERROR: Missing explicit Status in ${fileName}`);
+    process.exit(1);
+  }
 
   // Validate format
   if (!/^TM-\d{2,}$/.test(taskId)) {
@@ -54,16 +72,13 @@ for (const fileName of mdFiles) {
   }
   seenIds.add(taskId);
 
-  // Extract Status
-  const statusMatch = rawContent.match(/Status:\s*([^\r\n]+)/i);
-  const status = statusMatch ? statusMatch[1].trim() : "To Do";
+  // 3. Extract All Unique Figma URLs
+  const figmaMatches = [...rawContent.matchAll(/https:\/\/www\.figma\.com\/design\/[^\s\)\>\]]+/g)].map(
+    (m) => m[0]
+  );
+  const figmaUrls = [...new Set(figmaMatches)];
 
-  // Extract Clean Figma URL (without trailing markdown brackets or parentheses)
-  const figmaUrlMatch = rawContent.match(/https:\/\/www\.figma\.com\/design\/[^\s\)\>\]]+/);
-  const figmaUrl = figmaUrlMatch ? figmaUrlMatch[0] : null;
-
-  // Extract Body by stripping the first `# Title`, `Status: ...`, and `Task ID: ...`
-  const lines = rawContent.split(/\r?\n/);
+  // 4. Extract Body by stripping the first `# Title`, `Status: ...`, and `Task ID: ...`
   const bodyLines = [];
   let headerStripped = false;
 
@@ -85,14 +100,15 @@ for (const fileName of mdFiles) {
 
   let rawBody = bodyLines.join("\n").trim();
 
-  // Remove standalone Figma link block from rawBody if present
-  if (figmaUrl) {
-    rawBody = rawBody
-      .replace(/(?:^|\n)(?:Figma Link:\s*)?(?:\[https:\/\/www\.figma\.com\/design\/[^\s\]]+\]\([^\)]+\)|https:\/\/www\.figma\.com\/design\/[^\s\)\>]+)/gi, "")
-      .trim();
+  // Remove standalone Figma link blocks from rawBody so they don't duplicate
+  for (const url of figmaUrls) {
+    const escaped = url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`(?:^|\\n)(?:Figma Link:\\s*)?(?:\\[${escaped}\\]\\([^\\)]*\\)|${escaped})`, "gi");
+    rawBody = rawBody.replace(regex, "").trim();
   }
+  rawBody = rawBody.replace(/(?:^|\n)Figma Link:\s*(?=\n|$)/gi, "").trim();
 
-  // Parse sections: Description, Acceptance Criteria, Requirements
+  // 5. Parse sections: Description, Acceptance Criteria, Requirements
   let description = "";
   let acceptanceCriteria = "";
   let requirements = "";
@@ -115,7 +131,6 @@ for (const fileName of mdFiles) {
     description = preAC.slice(0, reqMatch.index).trim();
     requirements = preAC.slice(reqMatch.index + reqMatch[0].length).trim();
   } else {
-    // If no explicit Requirements header:
     // Check if preAC starts with **Description:** or Description header
     const descHeaderRegex = /(?:^|\n)(?:#{1,3}\s*Description|\*\*Description:\*\*)/i;
     const descMatch = preAC.match(descHeaderRegex);
@@ -137,9 +152,20 @@ for (const fileName of mdFiles) {
     description,
     acceptanceCriteria,
     requirements,
-    figmaUrl,
+    figmaUrls,
     sourceFile: fileName,
   });
+}
+
+// Dynamic inventory validation
+if (taskMap.size !== mdFiles.length) {
+  console.error(`ERROR: Unique Task IDs count (${taskMap.size}) does not match source file count (${mdFiles.length})`);
+  process.exit(1);
+}
+
+if (taskMap.has("TM-07")) {
+  console.error("ERROR: TM-07 found! It must not exist in this project.");
+  process.exit(1);
 }
 
 // Sort tasks by ID number
@@ -169,8 +195,10 @@ for (const t of sortedTasks) {
     sections.push(`## Acceptance Criteria\n\n${t.acceptanceCriteria}\n`);
   }
 
-  if (t.figmaUrl) {
-    sections.push(`## Figma Reference\n\n- [Figma Frame / Node](${t.figmaUrl})\n`);
+  if (t.figmaUrls && t.figmaUrls.length > 0) {
+    const heading = t.figmaUrls.length > 1 ? "## Figma References" : "## Figma Reference";
+    const links = t.figmaUrls.map((url) => `- [Figma Frame / Node](${url})`).join("\n");
+    sections.push(`${heading}\n\n${links}\n`);
   }
 
   const normalizedMd = sections.join("\n").trim() + "\n";
@@ -186,7 +214,7 @@ const indexData = sortedTasks.map((t) => ({
   status: t.status,
   file: `project-spec/tasks/${t.taskId}.md`,
   source: `project-spec/source/notion/${t.sourceFile}`,
-  hasFigma: Boolean(t.figmaUrl),
+  hasFigma: t.figmaUrls.length > 0,
   hasAcceptanceCriteria: Boolean(t.acceptanceCriteria),
 }));
 

@@ -7,11 +7,11 @@ This document records factual ambiguities and discrepancies between task require
 
 ---
 
-## 1. TM-31 — Statistics Endpoint Availability
+## 1. TM-31 — Statistics RPC Endpoints Availability
 
-- **Issue**: `TM-31` specifies a "My Statistics" page displaying task metrics and project overviews.
-- **Contract Observation**: No dedicated statistics endpoint (e.g. `/rest/v1/statistics` or RPC `get_statistics`) is defined in the supplied Postman collection.
-- **Resolution Required**: Determine during TM-31 planning whether statistics are derived from existing `/rest/v1/project_tasks` and `/rest/v1/rpc/get_projects` endpoints or if a dedicated backend function will be supplied.
+- **Issue**: `TM-31` specifies two RPC endpoints: `POST /rest/v1/rpc/get_tasks_calendar_stats` and `POST /rest/v1/rpc/get_tasks_count_per_project`.
+- **Contract Observation**: Neither RPC endpoint is present in the supplied Postman collection (`Tasks_Management.postman_collection.json`).
+- **Resolution Required**: Determine during TM-31 planning whether these backend RPC functions are deployed or if client-side aggregation over existing endpoints is required.
 
 ---
 
