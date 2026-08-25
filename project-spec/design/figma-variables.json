@@ -1,0 +1,67 @@
+{
+  "source": {
+    "type": "Figma Dev Mode",
+    "snapshotDate": "2026-08-25",
+    "context": "Node 0:1 (Ready For Dev)"
+  },
+  "collections": [
+    {
+      "name": "Unknown",
+      "variables": [
+        {
+          "name": "Color/Grey/800",
+          "type": "color",
+          "value": "#222529"
+        },
+        {
+          "name": "Color/Grey/500",
+          "type": "color",
+          "value": "#8c97a7"
+        },
+        {
+          "name": "var(--foreground)",
+          "type": "color",
+          "value": "#020617"
+        },
+        {
+          "name": "var(--accent-foreground)",
+          "type": "color",
+          "value": "#0f172a"
+        },
+        {
+          "name": "Space/4",
+          "type": "spacing",
+          "value": "16"
+        }
+      ]
+    }
+  ],
+  "observedRawValues": {
+    "colors": [
+      "#f9f9ff",
+      "#041b3c",
+      "#4f5f7b",
+      "#d7e2ff",
+      "#737685",
+      "#e8edff",
+      "#434654",
+      "#003d9b",
+      "linear-gradient(135deg, rgb(0, 61, 155) 0%, rgb(0, 82, 204) 100%)"
+    ],
+    "typography": {
+      "fonts": ["Inter:Semi_Bold", "Inter:Regular", "Inter:Bold", "Inter:Medium"],
+      "sizes": ["30px", "24px", "20px", "18px", "16px", "14px", "12px", "11px", "10px"]
+    },
+    "spacing": ["48px", "40px", "32px", "24px", "16px", "14px", "12px", "8px", "4px"],
+    "radius": ["12px", "8px", "4px", "2px"],
+    "shadows": [
+      "0px 24px 48px 0px rgba(4,27,60,0.06)",
+      "0px 1px 2px 0px rgba(0,0,0,0.05)"
+    ]
+  },
+  "limitations": [
+    "Figma MCP `get_variable_defs` output is flattened to key-value pairs.",
+    "Collection names, explicit variable types, modes, scopes, descriptions, and alias relationships are not exposed by the MCP.",
+    "Many structural design colors (like #041b3c) are applied as raw values without explicit Figma variable bindings exposed through the MCP."
+  ]
+}
