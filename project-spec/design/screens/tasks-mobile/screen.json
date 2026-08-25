@@ -1,0 +1,79 @@
+{
+  "identity": {
+    "canonicalKey": "tasks-mobile",
+    "name": "Project Tasks (Mobile)",
+    "nodeId": "67:118",
+    "page": "0:1",
+    "device": "Mobile",
+    "productArea": "Tasks",
+    "preservationPriority": "HIGH",
+    "stateType": "Mobile List View"
+  },
+  "source": {
+    "figmaNodeId": "67:118",
+    "pageName": "Ready For Dev"
+  },
+  "extraction": {
+    "method": "Figma Dev Mode MCP",
+    "designContextTool": "get_design_context",
+    "visualReferenceMethod": "Native Figma PNG export @1x"
+  },
+  "dimensions": {
+    "figmaFrame": {
+      "width": 390,
+      "height": 1057
+    }
+  },
+  "visualReference": {
+    "path": "reference.png",
+    "format": "PNG",
+    "source": "Native Figma export",
+    "scale": "1x",
+    "width": 406,
+    "height": 1057,
+    "bytes": 85184,
+    "sha256": "0149e16d6d8342f707f909820a1c58b5731231afb117ad67eb603a4a79f42902",
+    "boundsNote": "Native PNG export bounds differ from the logical Figma frame bounds; the export was preserved unmodified."
+  },
+  "designContextPreservation": {
+    "tool": "get_design_context",
+    "explicitNodeTargeting": true,
+    "toolExecutionVerified": true,
+    "directPayloadPreserved": false,
+    "status": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION"
+  },
+  "coverage": {
+    "layout": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION",
+    "typography": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION",
+    "verifiedVariables": "PRESERVED",
+    "rawColors": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION",
+    "spacing": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION",
+    "bordersEffects": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION",
+    "content": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION",
+    "assets": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION"
+  },
+  "layout": {},
+  "typography": [],
+  "colors": {
+    "verifiedVariables": [],
+    "observedRawValues": []
+  },
+  "spacing": [],
+  "bordersRadiusEffects": [],
+  "textContent": [],
+  "patterns": [],
+  "assets": [],
+  "states": [
+    {
+      "type": "Mobile List View",
+      "source": "screen-preservation-plan"
+    }
+  ],
+  "relationships": {
+    "responsiveCounterpart": "tasks-board-desktop"
+  },
+  "limitations": [
+    "The explicit-node get_design_context tool executed successfully, but its complete response exceeded the platform's directly consumable output limit. Antigravity internal output files were intentionally not used as preservation sources.",
+    "Verified variable definitions were preserved separately through get_variable_defs where available."
+  ]
+}

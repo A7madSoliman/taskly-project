@@ -1,0 +1,79 @@
+{
+  "identity": {
+    "canonicalKey": "members-list-mobile",
+    "name": "Project Members List (Mobile)",
+    "nodeId": "40:1119",
+    "page": "0:1",
+    "device": "Mobile",
+    "productArea": "Members & Invitations",
+    "preservationPriority": "HIGH",
+    "stateType": "Populated Cards"
+  },
+  "source": {
+    "figmaNodeId": "40:1119",
+    "pageName": "Ready For Dev"
+  },
+  "extraction": {
+    "method": "Figma Dev Mode MCP",
+    "designContextTool": "get_design_context",
+    "visualReferenceMethod": "Native Figma PNG export @1x"
+  },
+  "dimensions": {
+    "figmaFrame": {
+      "width": 390,
+      "height": 1057
+    }
+  },
+  "visualReference": {
+    "path": "reference.png",
+    "format": "PNG",
+    "source": "Native Figma export",
+    "scale": "1x",
+    "width": 438,
+    "height": 1077,
+    "bytes": 213324,
+    "sha256": "8c4173b923da5ab72cee6dda916ab38dac5b253ea0d424d8825f3ce6816966bd",
+    "boundsNote": "Native PNG export bounds differ from the logical Figma frame bounds; the export was preserved unmodified."
+  },
+  "designContextPreservation": {
+    "tool": "get_design_context",
+    "explicitNodeTargeting": true,
+    "toolExecutionVerified": true,
+    "directPayloadPreserved": false,
+    "status": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION"
+  },
+  "coverage": {
+    "layout": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION",
+    "typography": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION",
+    "verifiedVariables": "PRESERVED",
+    "rawColors": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION",
+    "spacing": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION",
+    "bordersEffects": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION",
+    "content": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION",
+    "assets": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION"
+  },
+  "layout": {},
+  "typography": [],
+  "colors": {
+    "verifiedVariables": [],
+    "observedRawValues": []
+  },
+  "spacing": [],
+  "bordersRadiusEffects": [],
+  "textContent": [],
+  "patterns": [],
+  "assets": [],
+  "states": [
+    {
+      "type": "Populated Cards",
+      "source": "screen-preservation-plan"
+    }
+  ],
+  "relationships": {
+    "responsiveCounterpart": "members-list-desktop"
+  },
+  "limitations": [
+    "The explicit-node get_design_context tool executed successfully, but its complete response exceeded the platform's directly consumable output limit. Antigravity internal output files were intentionally not used as preservation sources.",
+    "Verified variable definitions were preserved separately through get_variable_defs where available."
+  ]
+}

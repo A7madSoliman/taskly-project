@@ -1,0 +1,78 @@
+{
+  "identity": {
+    "canonicalKey": "layout-mobile-closed",
+    "name": "Layout (Mobile) - Menu Closed",
+    "nodeId": "1:401",
+    "page": "0:1",
+    "device": "Mobile",
+    "productArea": "Application Shell",
+    "preservationPriority": "HIGH",
+    "stateType": "Drawer Closed"
+  },
+  "source": {
+    "figmaNodeId": "1:401",
+    "pageName": "Ready For Dev"
+  },
+  "extraction": {
+    "method": "Figma Dev Mode MCP",
+    "designContextTool": "get_design_context",
+    "visualReferenceMethod": "Native Figma PNG export @1x"
+  },
+  "dimensions": {
+    "figmaFrame": {
+      "width": 390,
+      "height": 1057
+    }
+  },
+  "visualReference": {
+    "path": "reference.png",
+    "format": "PNG",
+    "source": "Native Figma export",
+    "scale": "1x",
+    "width": 390,
+    "height": 1057,
+    "bytes": 10224,
+    "sha256": "fad4e6e488045aef6fdf2045bdf9a31267d2034af175140a3c8698f9a80feb81"
+  },
+  "designContextPreservation": {
+    "tool": "get_design_context",
+    "explicitNodeTargeting": true,
+    "toolExecutionVerified": true,
+    "directPayloadPreserved": false,
+    "status": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION"
+  },
+  "coverage": {
+    "layout": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION",
+    "typography": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION",
+    "verifiedVariables": "PRESERVED",
+    "rawColors": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION",
+    "spacing": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION",
+    "bordersEffects": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION",
+    "content": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION",
+    "assets": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION"
+  },
+  "layout": {},
+  "typography": [],
+  "colors": {
+    "verifiedVariables": [],
+    "observedRawValues": []
+  },
+  "spacing": [],
+  "bordersRadiusEffects": [],
+  "textContent": [],
+  "patterns": [],
+  "assets": [],
+  "states": [
+    {
+      "type": "Drawer Closed",
+      "source": "screen-preservation-plan"
+    }
+  ],
+  "relationships": {
+    "responsiveCounterpart": "layout-desktop-default"
+  },
+  "limitations": [
+    "The explicit-node get_design_context tool executed successfully, but its complete response exceeded the platform's directly consumable output limit. Antigravity internal output files were intentionally not used as preservation sources.",
+    "Verified variable definitions were preserved separately through get_variable_defs where available."
+  ]
+}
