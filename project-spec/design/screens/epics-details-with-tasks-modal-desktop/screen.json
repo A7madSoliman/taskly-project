@@ -1,0 +1,81 @@
+{
+  "identity": {
+    "canonicalKey": "epics-details-with-tasks-modal-desktop",
+    "name": "Epic Details with Tasks Popup (Desktop)",
+    "nodeId": "19187:75",
+    "page": "0:1",
+    "device": "Desktop",
+    "productArea": "Epics",
+    "preservationPriority": "HIGH",
+    "stateType": "Populated Tasks Modal"
+  },
+  "source": {
+    "figmaNodeId": "19187:75",
+    "pageName": "Ready For Dev"
+  },
+  "extraction": {
+    "method": "Figma Dev Mode MCP",
+    "designContextTool": "get_design_context",
+    "visualReferenceMethod": "Native Figma PNG export @1x"
+  },
+  "dimensions": {
+    "figmaFrame": {
+      "width": 1280,
+      "height": 1024
+    }
+  },
+  "visualReference": {
+    "path": "reference.png",
+    "format": "PNG",
+    "source": "Native Figma export",
+    "scale": "1x",
+    "width": 1280,
+    "height": 1024,
+    "bytes": 568459,
+    "sha256": "42d626ad9cb22f54c4542de1e48524f8c98871a1ab241173b0daf939712c79fa"
+  },
+  "designContextPreservation": {
+    "tool": "get_design_context",
+    "explicitNodeTargeting": true,
+    "toolExecutionVerified": true,
+    "directPayloadPreserved": false,
+    "status": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION"
+  },
+  "coverage": {
+    "layout": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION",
+    "typography": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION",
+    "verifiedVariables": "PRESERVED",
+    "rawColors": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION",
+    "spacing": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION",
+    "bordersEffects": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION",
+    "content": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION",
+    "patterns": "NOT_INFERRED",
+    "assets": "UNAVAILABLE_DUE_TO_PLATFORM_TRUNCATION",
+    "relationship": "PRESERVED"
+  },
+  "layout": {},
+  "typography": [],
+  "colors": {
+    "verifiedVariables": [],
+    "observedRawValues": []
+  },
+  "spacing": [],
+  "bordersRadiusEffects": [],
+  "textContent": [],
+  "patterns": [],
+  "assets": [],
+  "states": [
+    {
+      "type": "Populated Tasks Modal",
+      "source": "screen-preservation-plan"
+    }
+  ],
+  "relationships": {
+    "parentScreen": "epics-list-desktop",
+    "responsiveCounterpart": "19187:771"
+  },
+  "limitations": [
+    "The explicit-node get_design_context tool executed successfully, but its complete response exceeded the platform's directly consumable output limit. Antigravity internal output files were intentionally not used as preservation sources.",
+    "Verified variable definitions were preserved separately through get_variable_defs where available."
+  ]
+}
