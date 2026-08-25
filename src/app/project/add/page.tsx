@@ -192,7 +192,7 @@ export default function AddProjectPage() {
             </div>
 
             {/* Desktop Action Row */}
-            <div className="flex items-center justify-between pt-6 border-t border-[rgba(195,198,214,0.2)] mt-2">
+            <div className="flex items-center justify-between w-full pt-6 border-t border-[rgba(195,198,214,0.2)] mt-2">
               <Link
                 href="/project"
                 className="text-[14px] font-bold text-slate-500 hover:text-slate-800 transition-colors focus:outline-none focus:underline"
@@ -201,8 +201,9 @@ export default function AddProjectPage() {
               </Link>
               <Button
                 type="submit"
+                fullWidth={false}
                 isLoading={isSubmitting}
-                className="px-6 py-3 min-w-[140px]"
+                className="px-6 py-3 shrink-0"
               >
                 Create Project
               </Button>

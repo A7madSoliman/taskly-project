@@ -1,12 +1,16 @@
 import { supabase } from "@/lib/supabase/client";
 import { SUPABASE_URL, getHeaders } from "./config";
 
+export interface Project {
+  id: string;
+  name: string;
+  description: string | null;
+  created_at: string;
+}
+
 export const ProjectsService = {
-  getAll: async (token: string) => {
-    return fetch(`${SUPABASE_URL}/rest/v1/rpc/get_projects`, {
-      method: "GET",
-      headers: getHeaders(token),
-    });
+  getAll: async () => {
+    return supabase.rpc("get_projects");
   },
   create: async (data: { name: string; description?: string }) => {
     return supabase.from("projects").insert([data]);

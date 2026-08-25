@@ -139,7 +139,30 @@ export function Sidebar({
 
       {/* Footer Actions */}
       <div className="p-3 border-t border-[rgba(195,198,214,0.3)] flex flex-col gap-1 shrink-0">
-        {/* Visual Logout Button (Functionality deferred to TM-08) */}
+        {/* Collapse / Expand Toggle */}
+        <button
+          type="button"
+          onClick={onToggleCollapse}
+          className={`flex items-center gap-3 px-3 py-3 rounded-[8px] text-[14px] font-semibold text-[#041b3c] hover:bg-white/60 transition-all text-left w-full ${
+            isCollapsed ? "justify-center px-0" : ""
+          }`}
+          title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <Image
+            src="/assets/svg/icons/icon-collapse.svg"
+            alt=""
+            width={12}
+            height={20}
+            className={`shrink-0 transition-transform duration-200 ${
+              isCollapsed ? "" : "rotate-180"
+            }`}
+            aria-hidden="true"
+          />
+          {!isCollapsed && <span>Collapse</span>}
+        </button>
+
+        {/* Logout Button */}
         <button
           type="button"
           onClick={onLogout}
@@ -160,29 +183,6 @@ export function Sidebar({
           {!isCollapsed && (
             <span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
           )}
-        </button>
-
-        {/* Collapse / Expand Toggle */}
-        <button
-          type="button"
-          onClick={onToggleCollapse}
-          className={`flex items-center gap-3 px-3 py-3 rounded-[8px] text-[14px] font-semibold text-[#041b3c] hover:bg-white/60 transition-all text-left w-full ${
-            isCollapsed ? "justify-center px-0" : ""
-          }`}
-          title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-          aria-label={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-        >
-          <Image
-            src="/assets/svg/icons/icon-collapse.svg"
-            alt=""
-            width={12}
-            height={20}
-            className={`shrink-0 transition-transform duration-200 ${
-              isCollapsed ? "rotate-180" : ""
-            }`}
-            aria-hidden="true"
-          />
-          {!isCollapsed && <span>Collapse</span>}
         </button>
       </div>
     </aside>

@@ -3,18 +3,21 @@ import React from "react";
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "ghost";
   isLoading?: boolean;
+  fullWidth?: boolean;
 }
 
 export function Button({
   className = "",
   variant = "primary",
   isLoading = false,
+  fullWidth = true,
   disabled,
   children,
   ...props
 }: ButtonProps) {
-  const baseClasses =
-    "flex h-[48px] items-center justify-center rounded-sm font-semibold text-[16px] transition-opacity drop-shadow-[0px_1px_1px_rgba(0,0,0,0.05)] w-full";
+  const baseClasses = `flex h-[48px] items-center justify-center rounded-sm font-semibold text-[16px] transition-opacity drop-shadow-[0px_1px_1px_rgba(0,0,0,0.05)] ${
+    fullWidth ? "w-full" : "w-auto"
+  }`;
 
   let variantClasses = "";
   if (variant === "primary") {
