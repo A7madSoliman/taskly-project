@@ -1,11 +1,24 @@
+import { supabase } from "@/lib/supabase/client";
 import { SUPABASE_URL, getHeaders } from "./config";
 
+export interface SignUpData {
+  email: string;
+  password?: string;
+  name: string;
+  jobTitle?: string;
+}
+
 export const AuthService = {
-  signUp: async (data: unknown) => {
-    return fetch(`${SUPABASE_URL}/auth/v1/signup`, {
-      method: "POST",
-      headers: getHeaders(),
-      body: JSON.stringify(data),
+  signUp: async ({ email, password, name, jobTitle }: SignUpData) => {
+    return supabase.auth.signUp({
+      email,
+      password: password || "",
+      options: {
+        data: {
+          name,
+          job_title: jobTitle,
+        },
+      },
     });
   },
   login: async (data: unknown) => {

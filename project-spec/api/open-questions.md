@@ -20,3 +20,9 @@ This document records factual ambiguities and discrepancies between task require
 - **Issue**: Tasks `TM-11`, `TM-17`, and `TM-25` require paginated listings for projects, epics, and tasks.
 - **Contract Observation**: Postman requests show standard list queries without explicitly documented pagination query parameters (`limit`, `offset`) or response headers (`Content-Range`).
 - **Resolution Required**: Standardize pagination query and header handling during the respective task planning phases.
+
+## TM-03 User Metadata Discrepancy
+
+- **Figma/TM-03 Source**: Specifies \job_title\ as the metadata field.
+- **Postman API Contract**: Specifies \department\ as the metadata field in the Signup payload.
+- **Resolution for TM-03**: Proceeding with \job_title\ as explicitly requested by product requirements, but this creates an inconsistency with the documented API contract.
