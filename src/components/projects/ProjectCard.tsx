@@ -25,19 +25,29 @@ export function ProjectCard({ project }: ProjectCardProps) {
   const formattedDate = formatProjectDate(project.created_at);
 
   return (
-    <div className="bg-white rounded-[8px] border border-[rgba(195,198,214,0.3)] shadow-[0px_1px_3px_0px_rgba(4,27,60,0.05)] p-5 flex flex-col justify-between h-full min-h-[190px]">
+    <div className="relative bg-white rounded-[8px] border border-[rgba(195,198,214,0.3)] shadow-[0px_1px_3px_0px_rgba(4,27,60,0.05)] p-5 flex flex-col justify-between h-full min-h-[190px]">
+      {/* Overlay Link for semantic, accessible card navigation */}
+      <Link
+        href={`/project/${project.id}/epics`}
+        className="absolute inset-0 z-0 cursor-pointer rounded-[8px] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        aria-label={`Open project ${project.name}`}
+      />
+
       {/* Top Header & Content */}
-      <div>
-        {/* Mobile Header with 3-dots actions (Visual only) */}
+      <div className="relative z-10 pointer-events-none">
+        {/* Mobile Header with 3-dots actions (Visual only, interactive sibling layered above overlay) */}
         <div className="flex items-start justify-between gap-2 md:hidden mb-2">
           <h2 className="text-[18px] font-semibold text-[#041b3c] leading-snug break-words">
             {project.name}
           </h2>
           <button
             type="button"
-            className="text-[#737685] p-1 shrink-0 -mr-1 hover:text-[#041b3c] transition-colors"
+            className="text-[#737685] p-1 shrink-0 -mr-1 hover:text-[#041b3c] transition-colors pointer-events-auto"
             aria-label="Project actions"
-            onClick={(e) => e.preventDefault()}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
           >
             <Image
               src="/assets/svg/icons/icon-vertical-actions.svg"
@@ -64,7 +74,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
       </div>
 
       {/* Footers */}
-      <div className="mt-auto pt-3 border-t border-[rgba(195,198,214,0.2)]">
+      <div className="relative z-10 pointer-events-none mt-auto pt-3 border-t border-[rgba(195,198,214,0.2)]">
         {/* Desktop Metadata Footer */}
         <div className="hidden md:flex items-center justify-between">
           <span className="text-[10px] font-bold text-[#737685] tracking-wider uppercase">

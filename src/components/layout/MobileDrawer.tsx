@@ -1,6 +1,9 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname, useParams } from "next/navigation";
 import { getInitials } from "@/lib/utils/avatar";
 
 export interface MobileDrawerProps {
@@ -20,9 +23,51 @@ export function MobileDrawer({
   onLogout,
   isLoggingOut,
 }: MobileDrawerProps) {
+  const pathname = usePathname() || "";
+  const params = useParams();
+
   if (!isOpen) return null;
 
   const initials = getInitials(userName);
+
+  const paramProjectId = params?.projectId as string | undefined;
+  const pathParts = pathname.split("/");
+  const urlProjectId =
+    pathParts[1] === "project" && pathParts[2] && pathParts[2] !== "add"
+      ? pathParts[2]
+      : undefined;
+
+  const projectId = paramProjectId || urlProjectId;
+  const isProjectScoped = Boolean(projectId);
+  const projectBase = isProjectScoped ? `/project/${projectId}` : "";
+
+  const isProjectsActive =
+    pathname === "/project" || pathname === "/project/add";
+  const isEpicsActive =
+    Boolean(isProjectScoped) &&
+    (pathname === `${projectBase}/epics` ||
+      pathname.startsWith(`${projectBase}/epics/`));
+  const isTasksActive =
+    Boolean(isProjectScoped) &&
+    (pathname === `${projectBase}/tasks` ||
+      pathname.startsWith(`${projectBase}/tasks/`));
+  const isMembersActive =
+    Boolean(isProjectScoped) &&
+    (pathname === `${projectBase}/members` ||
+      pathname.startsWith(`${projectBase}/members/`));
+  const isDetailsActive =
+    Boolean(isProjectScoped) &&
+    (pathname === `${projectBase}/edit` ||
+      pathname.startsWith(`${projectBase}/edit/`));
+
+  const activeLinkClass =
+    "flex items-center gap-3 px-3 py-3 rounded-[8px] text-[14px] font-semibold bg-white text-[#0052cc] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]";
+
+  const inactiveLinkClass =
+    "flex items-center gap-3 px-3 py-3 rounded-[8px] text-[14px] font-normal text-[#4f5f7b] hover:bg-white/60 transition-all text-left w-full";
+
+  const disabledButtonClass =
+    "flex items-center gap-3 px-3 py-3 rounded-[8px] text-[14px] font-normal text-[#4f5f7b] hover:bg-white/60 transition-all text-left w-full cursor-not-allowed opacity-60";
 
   return (
     <div
@@ -68,11 +113,11 @@ export function MobileDrawer({
 
         {/* Navigation list */}
         <nav className="flex-1 p-3 flex flex-col gap-1 overflow-y-auto">
-          {/* Projects (Active) */}
+          {/* Projects */}
           <Link
             href="/project"
             onClick={onClose}
-            className="flex items-center gap-3 px-3 py-3 rounded-[8px] text-[14px] font-semibold bg-white text-[#0052cc] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]"
+            className={isProjectsActive ? activeLinkClass : inactiveLinkClass}
           >
             <Image
               src="/assets/svg/icons/icon-projects.svg"
@@ -85,69 +130,129 @@ export function MobileDrawer({
             <span>Projects</span>
           </Link>
 
-          {/* Project Epics (Inactive) */}
-          <button
-            type="button"
-            className="flex items-center gap-3 px-3 py-3 rounded-[8px] text-[14px] font-normal text-[#4f5f7b] hover:bg-white/60 transition-all text-left w-full"
-          >
-            <Image
-              src="/assets/svg/icons/icon-epics.svg"
-              alt=""
-              width={20}
-              height={18}
-              className="shrink-0"
-              aria-hidden="true"
-            />
-            <span>Project Epics</span>
-          </button>
+          {/* Project Epics */}
+          {isProjectScoped ? (
+            <Link
+              href={`${projectBase}/epics`}
+              onClick={onClose}
+              className={isEpicsActive ? activeLinkClass : inactiveLinkClass}
+            >
+              <Image
+                src="/assets/svg/icons/icon-epics.svg"
+                alt=""
+                width={20}
+                height={18}
+                className="shrink-0"
+                aria-hidden="true"
+              />
+              <span>Project Epics</span>
+            </Link>
+          ) : (
+            <button type="button" className={disabledButtonClass} disabled>
+              <Image
+                src="/assets/svg/icons/icon-epics.svg"
+                alt=""
+                width={20}
+                height={18}
+                className="shrink-0"
+                aria-hidden="true"
+              />
+              <span>Project Epics</span>
+            </button>
+          )}
 
-          {/* Project Tasks (Inactive) */}
-          <button
-            type="button"
-            className="flex items-center gap-3 px-3 py-3 rounded-[8px] text-[14px] font-normal text-[#4f5f7b] hover:bg-white/60 transition-all text-left w-full"
-          >
-            <Image
-              src="/assets/svg/icons/icon-tasks.svg"
-              alt=""
-              width={20}
-              height={16}
-              className="shrink-0"
-              aria-hidden="true"
-            />
-            <span>Project Tasks</span>
-          </button>
+          {/* Project Tasks */}
+          {isProjectScoped ? (
+            <Link
+              href={`${projectBase}/tasks`}
+              onClick={onClose}
+              className={isTasksActive ? activeLinkClass : inactiveLinkClass}
+            >
+              <Image
+                src="/assets/svg/icons/icon-tasks.svg"
+                alt=""
+                width={20}
+                height={16}
+                className="shrink-0"
+                aria-hidden="true"
+              />
+              <span>Project Tasks</span>
+            </Link>
+          ) : (
+            <button type="button" className={disabledButtonClass} disabled>
+              <Image
+                src="/assets/svg/icons/icon-tasks.svg"
+                alt=""
+                width={20}
+                height={16}
+                className="shrink-0"
+                aria-hidden="true"
+              />
+              <span>Project Tasks</span>
+            </button>
+          )}
 
-          {/* Project Members (Inactive) */}
-          <button
-            type="button"
-            className="flex items-center gap-3 px-3 py-3 rounded-[8px] text-[14px] font-normal text-[#4f5f7b] hover:bg-white/60 transition-all text-left w-full"
-          >
-            <Image
-              src="/assets/svg/icons/icon-members.svg"
-              alt=""
-              width={22}
-              height={16}
-              className="shrink-0"
-              aria-hidden="true"
-            />
-            <span>Project Members</span>
-          </button>
+          {/* Project Members */}
+          {isProjectScoped ? (
+            <Link
+              href={`${projectBase}/members`}
+              onClick={onClose}
+              className={isMembersActive ? activeLinkClass : inactiveLinkClass}
+            >
+              <Image
+                src="/assets/svg/icons/icon-members.svg"
+                alt=""
+                width={22}
+                height={16}
+                className="shrink-0"
+                aria-hidden="true"
+              />
+              <span>Project Members</span>
+            </Link>
+          ) : (
+            <button type="button" className={disabledButtonClass} disabled>
+              <Image
+                src="/assets/svg/icons/icon-members.svg"
+                alt=""
+                width={22}
+                height={16}
+                className="shrink-0"
+                aria-hidden="true"
+              />
+              <span>Project Members</span>
+            </button>
+          )}
 
-          {/* Project Details (Inactive) */}
-          <button
-            type="button"
-            className="flex items-center gap-3 px-3 py-3 rounded-[8px] text-[14px] font-normal text-[#4f5f7b] hover:bg-white/60 transition-all text-left w-full"
-          >
-            <Image
-              src="/assets/svg/icons/icon-details.svg"
-              alt=""
-              width={20}
-              height={20}
-              className="shrink-0"
-              aria-hidden="true"
-            />
-            <span>Project Details</span>
-          </button>
+          {/* Project Details */}
+          {isProjectScoped ? (
+            <Link
+              href={`${projectBase}/edit`}
+              onClick={onClose}
+              className={isDetailsActive ? activeLinkClass : inactiveLinkClass}
+            >
+              <Image
+                src="/assets/svg/icons/icon-details.svg"
+                alt=""
+                width={20}
+                height={20}
+                className="shrink-0"
+                aria-hidden="true"
+              />
+              <span>Project Details</span>
+            </Link>
+          ) : (
+            <button type="button" className={disabledButtonClass} disabled>
+              <Image
+                src="/assets/svg/icons/icon-details.svg"
+                alt=""
+                width={20}
+                height={20}
+                className="shrink-0"
+                aria-hidden="true"
+              />
+              <span>Project Details</span>
+            </button>
+          )}
         </nav>
 
         {/* Footer: User profile & Logout */}
