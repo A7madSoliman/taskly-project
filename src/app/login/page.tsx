@@ -237,12 +237,12 @@ export default function LoginPage() {
                 </span>
               </label>
 
-              <button
-                type="button"
+              <a
+                href="/forgot-password"
                 className="text-primary hover:underline text-[12px] font-semibold focus:outline-none"
               >
                 Forgot Password?
-              </button>
+              </a>
             </div>
 
             <Button type="submit" isLoading={isLoading} className="mt-2">

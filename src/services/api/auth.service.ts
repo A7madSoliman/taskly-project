@@ -40,11 +40,9 @@ export const AuthService = {
       headers: getHeaders(token),
     });
   },
-  updatePassword: async (token: string, data: unknown) => {
-    return fetch(`${SUPABASE_URL}/auth/v1/user`, {
-      method: "PUT",
-      headers: getHeaders(token),
-      body: JSON.stringify(data),
+  updatePassword: async ({ password }: { password: string }) => {
+    return supabase.auth.updateUser({
+      password,
     });
   },
   refreshToken: async (refreshToken: string) => {
@@ -54,12 +52,22 @@ export const AuthService = {
       body: JSON.stringify({ refresh_token: refreshToken }),
     });
   },
-  forgotPassword: async (email: string) => {
-    return fetch(`${SUPABASE_URL}/auth/v1/recover`, {
-      method: "POST",
-      headers: getHeaders(),
-      body: JSON.stringify({ email }),
+  forgotPassword: async ({
+    email,
+    redirectTo,
+  }: {
+    email: string;
+    redirectTo?: string;
+  }) => {
+    return supabase.auth.resetPasswordForEmail(email, {
+      redirectTo,
     });
+  },
+  clearRecoverySession: async () => {
+    return supabase.auth.signOut({ scope: "local" });
+  },
+  getSession: async () => {
+    return supabase.auth.getSession();
   },
   logout: async (token: string) => {
     return fetch(`${SUPABASE_URL}/auth/v1/logout`, {
