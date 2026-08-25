@@ -3,12 +3,12 @@
   "preservationStatus": "PARTIAL",
   "documentedReferenceCount": 38,
   "visualAuditNewCandidateCount": 3,
-  "excludedVisualCandidateCount": 1,
-  "minimumPhysicalExportUnits": 44,
-  "exportedCandidateCount": 14,
-  "uniqueFileCount": 14,
-  "duplicateReferenceCount": 0,
-  "unresolvedCandidateCount": 30,
+  "excludedVisualCandidateCount": 2,
+  "minimumPhysicalExportUnits": 43,
+  "exportedCandidateCount": 29,
+  "uniqueFileCount": 29,
+  "duplicateReferenceCount": 1,
+  "unresolvedCandidateCount": 14,
   "fontDependencies": [
     {
       "family": "Inter",
@@ -302,6 +302,317 @@
       "originalExportFilename": "unit-06-validation-neutral.svg",
       "extractionMethod": "Native Figma export",
       "status": "PRESERVED"
+    },
+    {
+      "id": "icon-search",
+      "name": "Search Icon",
+      "type": "svg-icon",
+      "category": "common-action",
+      "format": "SVG",
+      "localPath": "files/svg/icons/icon-search.svg",
+      "bytes": 794,
+      "sha256": "e46498763004b86d103f0fc2e8cf406a770bc84fc2bc24240685e44b66b12694",
+      "sourceFrameNodes": [
+        "58:3524"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "tasks-board-desktop"
+      ],
+      "originalExportFilename": "unit-16-search.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-search-magnifier",
+      "name": "Search Magnifier Icon",
+      "type": "svg-icon",
+      "category": "common-action",
+      "format": "SVG",
+      "localPath": "files/svg/icons/icon-search-magnifier.svg",
+      "bytes": 1028,
+      "sha256": "cf35e6fb943ff1bbab0b7a71d494960896b5a168e474bfda6f1bb99d474cd51e",
+      "sourceFrameNodes": [
+        "45:2643"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "epics-list-desktop"
+      ],
+      "originalExportFilename": "unit-17-search-magnifier.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-plus",
+      "name": "Plus Icon",
+      "type": "svg-icon",
+      "category": "common-action",
+      "format": "SVG",
+      "localPath": "files/svg/icons/icon-plus.svg",
+      "bytes": 174,
+      "sha256": "1bd1831807a2ba74bbed1964721e932c3bd799fa5818300f3f8a17d35071f9a0",
+      "sourceFrameNodes": [
+        "45:2643",
+        "2:60",
+        "58:3524"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "epics-list-desktop",
+        "projects-list-desktop",
+        "tasks-board-desktop"
+      ],
+      "originalExportFilename": "unit-18-plus.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-user-invite-plus",
+      "name": "User Invite Plus Icon",
+      "type": "svg-icon",
+      "category": "common-action",
+      "format": "SVG",
+      "localPath": "files/svg/icons/icon-user-invite-plus.svg",
+      "bytes": 747,
+      "sha256": "8c4fc30c56d305c693a079ef61cb8ae00377d02222f71a84a1fdde162aa2e880",
+      "sourceFrameNodes": [
+        "15:912"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "members-list-desktop"
+      ],
+      "originalExportFilename": "unit-19-user-invite-plus.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-more-options",
+      "name": "More Options Vertical Dots Icon",
+      "type": "svg-icon",
+      "category": "common-action",
+      "format": "SVG",
+      "localPath": "files/svg/icons/icon-more-options.svg",
+      "bytes": 968,
+      "sha256": "f3bc0bfb41fef5e45838769e889391246824d972ae54b35de7b9296435f7dbf0",
+      "sourceFrameNodes": [
+        "45:2643"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "epics-list-desktop"
+      ],
+      "originalExportFilename": "unit-20-more-options-dots.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-vertical-actions",
+      "name": "Vertical Actions Dots Icon",
+      "type": "svg-icon",
+      "category": "common-action",
+      "format": "SVG",
+      "localPath": "files/svg/icons/icon-vertical-actions.svg",
+      "bytes": 949,
+      "sha256": "285534c10a1307430fe5312ebffcd7cdaa63f8f4e6a7987a506a541e3c9deeb1",
+      "sourceFrameNodes": [
+        "15:912"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "members-list-desktop"
+      ],
+      "originalExportFilename": "unit-21-vertical-actions-dots.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-pagination-left",
+      "name": "Pagination Arrow Left Icon",
+      "type": "svg-icon",
+      "category": "common-action",
+      "format": "SVG",
+      "localPath": "files/svg/icons/icon-pagination-left.svg",
+      "bytes": 197,
+      "sha256": "94541f1ceb2fdc71f4b6d1f9ce3774c96c0aedd0a631d11d7584f2dca4606fe5",
+      "sourceFrameNodes": [
+        "2:60"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "projects-list-desktop"
+      ],
+      "originalExportFilename": "unit-22-pagination-left.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-pagination-right",
+      "name": "Pagination Arrow Right Icon",
+      "type": "svg-icon",
+      "category": "common-action",
+      "format": "SVG",
+      "localPath": "files/svg/icons/icon-pagination-right.svg",
+      "bytes": 207,
+      "sha256": "e1493666b770915c9287d7574b9276248189c245b7612472303ee2b09e926b81",
+      "sourceFrameNodes": [
+        "2:60"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "projects-list-desktop"
+      ],
+      "originalExportFilename": "unit-23-pagination-right.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-list-view",
+      "name": "List View Switcher Icon",
+      "type": "svg-icon",
+      "category": "common-action",
+      "format": "SVG",
+      "localPath": "files/svg/icons/icon-list-view.svg",
+      "bytes": 1435,
+      "sha256": "30306128e3193439a738ed6c07286c6f3633aa228b22b0cdebcdf2094830e790",
+      "sourceFrameNodes": [
+        "58:3524"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "tasks-board-desktop"
+      ],
+      "originalExportFilename": "unit-25-list-view.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-warning-triangle",
+      "name": "Warning Triangle Icon",
+      "type": "svg-icon",
+      "category": "common-action",
+      "format": "SVG",
+      "localPath": "files/svg/icons/icon-warning-triangle.svg",
+      "bytes": 507,
+      "sha256": "90458dfa4fb3a79c1c5fabc34ad1ad24118399acc627aa220963248c18b4e1c9",
+      "sourceFrameNodes": [
+        "58:3524"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "tasks-board-desktop"
+      ],
+      "originalExportFilename": "unit-26-warning-triangle.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-clipboard-task",
+      "name": "Clipboard Task Icon",
+      "type": "svg-icon",
+      "category": "common-action",
+      "format": "SVG",
+      "localPath": "files/svg/icons/icon-clipboard-task.svg",
+      "bytes": 644,
+      "sha256": "105765f5b4eb2caac1a3afa1ec01016a0b5b6b4f3e79541776f753df32985cda",
+      "sourceFrameNodes": [
+        "6831:873"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "calendar-analytics-desktop"
+      ],
+      "originalExportFilename": "unit-27-clipboard-task.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-checkmark",
+      "name": "Checkmark Icon",
+      "type": "svg-icon",
+      "category": "common-action",
+      "format": "SVG",
+      "localPath": "files/svg/icons/icon-checkmark.svg",
+      "bytes": 1084,
+      "sha256": "0c06ef22c10ac7418c0131e26f955b0bfdc9898c565fb920dfd38170ac4a7a43",
+      "sourceFrameNodes": [
+        "6831:873"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "calendar-analytics-desktop"
+      ],
+      "originalExportFilename": "unit-28-checkmark.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-warning-alert",
+      "name": "Warning / Alert Icon",
+      "type": "svg-icon",
+      "category": "common-action",
+      "format": "SVG",
+      "localPath": "files/svg/icons/icon-warning-alert.svg",
+      "bytes": 507,
+      "sha256": "90458dfa4fb3a79c1c5fabc34ad1ad24118399acc627aa220963248c18b4e1c9",
+      "sourceFrameNodes": [
+        "6831:873"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "calendar-analytics-desktop"
+      ],
+      "originalExportFilename": "unit-29-warning-alert.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED",
+      "duplicateContentOf": "icon-warning-triangle"
+    },
+    {
+      "id": "icon-calendar",
+      "name": "Calendar Icon",
+      "type": "svg-icon",
+      "category": "common-action",
+      "format": "SVG",
+      "localPath": "files/svg/icons/icon-calendar.svg",
+      "bytes": 978,
+      "sha256": "a7b5b7da4b758476764802ad8337327b7e7a8fc44a9eb41e1736c62baf752b51",
+      "sourceFrameNodes": [
+        "6831:873",
+        "45:2643",
+        "2:60",
+        "58:3524"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "calendar-analytics-desktop",
+        "epics-list-desktop",
+        "projects-list-desktop",
+        "tasks-board-desktop"
+      ],
+      "originalExportFilename": "unit-30-calendar.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-chevron-dropdown",
+      "name": "Chevron Dropdown Icon",
+      "type": "svg-icon",
+      "category": "common-action",
+      "format": "SVG",
+      "localPath": "files/svg/icons/icon-chevron-dropdown.svg",
+      "bytes": 183,
+      "sha256": "e1276b5cc7396cab5db4871c1c29bf24a781c419ba5613baa4ed1e1065b42676",
+      "sourceFrameNodes": [
+        "6831:873"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "calendar-analytics-desktop"
+      ],
+      "originalExportFilename": "unit-31-chevron-dropdown.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
     }
   ],
   "excludedCandidates": [
@@ -313,11 +624,21 @@
       "finalStatus": "NOT_CONFIRMED_AFTER_MANUAL_FIGMA_INSPECTION",
       "reason": "Direct manual inspection of the Figma design did not confirm a standalone reusable close icon.",
       "physicalAssetCreated": false
+    },
+    {
+      "name": "Board / Kanban View Icon",
+      "sourceScreen": "tasks-board-desktop",
+      "sourceFrameNode": "58:3524",
+      "originalDetectionMethod": "reference.png visual audit",
+      "finalStatus": "NOT_CONFIRMED_AFTER_MANUAL_FIGMA_INSPECTION",
+      "reason": "Direct manual inspection of the Figma design did not confirm a standalone reusable Kanban/Board view icon.",
+      "physicalAssetCreated": false
     }
   ],
   "limitations": [
     "Exact Figma leaf node IDs were not recoverable through the available MCP code-generation tools; native manual frame-layer export was utilized.",
     "44 is the current minimum physical export-unit count across the design system, not the final unique asset count.",
     "Final unique physical asset count will be established after all batches undergo SHA-256 byte deduplication."
-  ]
+  ],
+  "uniqueHashCount": 28
 }
