@@ -1,0 +1,223 @@
+{
+  "version": "1.0.0",
+  "preservationStatus": "PARTIAL",
+  "documentedReferenceCount": 38,
+  "visualAuditNewCandidateCount": 3,
+  "excludedVisualCandidateCount": 1,
+  "minimumPhysicalExportUnits": 44,
+  "exportedCandidateCount": 9,
+  "uniqueFileCount": 9,
+  "duplicateReferenceCount": 0,
+  "unresolvedCandidateCount": 35,
+  "fontDependencies": [
+    {
+      "family": "Inter",
+      "weights": [
+        "Regular",
+        "Medium",
+        "Semi_Bold",
+        "Bold"
+      ],
+      "source": "Google Fonts / Next.js font loader",
+      "status": "DOCUMENTED_EXTERNAL_DEPENDENCY"
+    }
+  ],
+  "assets": [
+    {
+      "id": "brand-taskly-logomark",
+      "name": "TASKLY Brand Logomark",
+      "type": "brand-logo",
+      "category": "brand",
+      "format": "SVG",
+      "localPath": "files/svg/brand/logo-taskly.svg",
+      "bytes": 997,
+      "sha256": "95269076abce0afd71feb09969a99a41a6bf6557dbada12efccac6c250c817be",
+      "sourceFrameNodes": [
+        "1:351"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "auth-login-desktop"
+      ],
+      "originalExportFilename": "unit-01-brand-logomark.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-projects",
+      "name": "Projects Folder Icon",
+      "type": "svg-icon",
+      "category": "navigation",
+      "format": "SVG",
+      "localPath": "files/svg/icons/icon-projects.svg",
+      "bytes": 195,
+      "sha256": "dabe4e8d4cfa6b8d8bf0d08b8f9f0126268a152b453a92f9adde9b1ec57ad6a6",
+      "sourceFrameNodes": [
+        "1:986"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "layout-desktop-default"
+      ],
+      "originalExportFilename": "unit-07-projects-folder.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-epics",
+      "name": "Epics Icon",
+      "type": "svg-icon",
+      "category": "navigation",
+      "format": "SVG",
+      "localPath": "files/svg/icons/icon-epics.svg",
+      "bytes": 292,
+      "sha256": "7bf14cc1578087570e873c78103922cba619c9f5ab5b5fce6f541ae444fa6c2b",
+      "sourceFrameNodes": [
+        "1:986"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "layout-desktop-default"
+      ],
+      "originalExportFilename": "unit-08-epics.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-tasks",
+      "name": "Tasks Icon",
+      "type": "svg-icon",
+      "category": "navigation",
+      "format": "SVG",
+      "localPath": "files/svg/icons/icon-tasks.svg",
+      "bytes": 368,
+      "sha256": "04631eb0f9450a631161c75ad05861e7e69489c5488622312b4d10e5f8a88835",
+      "sourceFrameNodes": [
+        "1:986"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "layout-desktop-default"
+      ],
+      "originalExportFilename": "unit-09-tasks.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-members",
+      "name": "Members Icon",
+      "type": "svg-icon",
+      "category": "navigation",
+      "format": "SVG",
+      "localPath": "files/svg/icons/icon-members.svg",
+      "bytes": 1979,
+      "sha256": "8b9f2b6a7f3692c857dee90fbec6e440bb3ce0b70e704f1345cf08c513f35305",
+      "sourceFrameNodes": [
+        "1:986"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "layout-desktop-default"
+      ],
+      "originalExportFilename": "unit-10-members.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-details",
+      "name": "Details Icon",
+      "type": "svg-icon",
+      "category": "navigation",
+      "format": "SVG",
+      "localPath": "files/svg/icons/icon-details.svg",
+      "bytes": 1341,
+      "sha256": "fba8a3633254600bbf78f4eae3051fe65de46b86c763af9651e9e44f26e07ba8",
+      "sourceFrameNodes": [
+        "1:986"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "layout-desktop-default"
+      ],
+      "originalExportFilename": "unit-11-details.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-collapse",
+      "name": "Collapse Icon",
+      "type": "svg-icon",
+      "category": "navigation",
+      "format": "SVG",
+      "localPath": "files/svg/icons/icon-collapse.svg",
+      "bytes": 254,
+      "sha256": "6ae0a90062893ed51f31e8d9980eb058957e9ec21d3f51eea63eabe025a2902a",
+      "sourceFrameNodes": [
+        "1:986"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "layout-desktop-default"
+      ],
+      "originalExportFilename": "unit-12-collapse.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-logout",
+      "name": "Logout Icon",
+      "type": "svg-icon",
+      "category": "navigation",
+      "format": "SVG",
+      "localPath": "files/svg/icons/icon-logout.svg",
+      "bytes": 362,
+      "sha256": "cb3b38348d0ed40aee319f40a1fb2b6657eeae422ff59a95bc7146a1aaadc289",
+      "sourceFrameNodes": [
+        "1:986"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "layout-desktop-default"
+      ],
+      "originalExportFilename": "unit-13-logout.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-mobile-menu",
+      "name": "Mobile Hamburger Menu Icon",
+      "type": "svg-icon",
+      "category": "navigation",
+      "format": "SVG",
+      "localPath": "files/svg/icons/icon-mobile-menu.svg",
+      "bytes": 176,
+      "sha256": "fdfce2034804280ce7fcbf8fb29d6c0af87ca4b8285318d1711e1bcd90c5265b",
+      "sourceFrameNodes": [
+        "1:401"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "layout-mobile-closed"
+      ],
+      "originalExportFilename": "unit-14-mobile-hamburger.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    }
+  ],
+  "excludedCandidates": [
+    {
+      "name": "Mobile Close Drawer (X) Icon",
+      "sourceScreen": "layout-mobile-open",
+      "sourceFrameNode": "1:553",
+      "originalDetectionMethod": "reference.png visual audit",
+      "finalStatus": "NOT_CONFIRMED_AFTER_MANUAL_FIGMA_INSPECTION",
+      "reason": "Direct manual inspection of the Figma design did not confirm a standalone reusable close icon.",
+      "physicalAssetCreated": false
+    }
+  ],
+  "limitations": [
+    "Exact Figma leaf node IDs were not recoverable through the available MCP code-generation tools; native manual frame-layer export was utilized.",
+    "44 is the current minimum physical export-unit count across the design system, not the final unique asset count.",
+    "Final unique physical asset count will be established after all batches undergo SHA-256 byte deduplication."
+  ]
+}
