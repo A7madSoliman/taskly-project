@@ -1,14 +1,14 @@
 {
   "version": "1.0.0",
-  "preservationStatus": "PARTIAL",
+  "preservationStatus": "COMPLETE",
   "documentedReferenceCount": 38,
   "visualAuditNewCandidateCount": 3,
   "excludedVisualCandidateCount": 2,
   "minimumPhysicalExportUnits": 43,
-  "exportedCandidateCount": 41,
-  "uniqueFileCount": 41,
+  "exportedCandidateCount": 43,
+  "uniqueFileCount": 43,
   "duplicateReferenceCount": 1,
-  "unresolvedCandidateCount": 2,
+  "unresolvedCandidateCount": 0,
   "fontDependencies": [
     {
       "family": "Inter",
@@ -853,6 +853,46 @@
       "originalExportFilename": "unit-45-architecture.svg",
       "extractionMethod": "Native Figma export",
       "status": "PRESERVED"
+    },
+    {
+      "id": "illustration-empty-projects",
+      "name": "Empty Projects Blueprint Illustration",
+      "type": "illustration",
+      "category": "empty-state",
+      "format": "SVG",
+      "localPath": "files/svg/illustrations/illustration-empty-projects.svg",
+      "bytes": 757,
+      "sha256": "7648c4ddd5fbfedc4cd34c8dad0a524fc5da0b300f342bf71ad80a35f803e7e6",
+      "sourceFrameNodes": [
+        "15:545"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "projects-empty-desktop"
+      ],
+      "originalExportFilename": "unit-32-empty-projects-illustration.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "illustration-empty-epics",
+      "name": "Empty Epics Blueprint Illustration",
+      "type": "illustration",
+      "category": "empty-state",
+      "format": "SVG",
+      "localPath": "files/svg/illustrations/illustration-empty-epics.svg",
+      "bytes": 394,
+      "sha256": "3df59e5bfbe6de42de3500267bd3e685a23660c717ccb2c7d22b8d34f203bf80",
+      "sourceFrameNodes": [
+        "51:357"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "epics-empty-desktop"
+      ],
+      "originalExportFilename": "unit-33-empty-epics-illustration.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
     }
   ],
   "excludedCandidates": [
@@ -880,5 +920,5 @@
     "44 is the current minimum physical export-unit count across the design system, not the final unique asset count.",
     "Final unique physical asset count will be established after all batches undergo SHA-256 byte deduplication."
   ],
-  "uniqueHashCount": 40
+  "uniqueHashCount": 42
 }

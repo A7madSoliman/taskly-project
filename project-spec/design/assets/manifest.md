@@ -1,7 +1,7 @@
 # Taskly Design Asset Preservation
 
 ## Preservation Status
-PARTIAL — Batches A, B, C and D complete
+COMPLETE — All 43 confirmed planned native asset export units permanently preserved
 
 ## Preservation Model
 Figma native export
@@ -10,21 +10,34 @@ Figma native export
 → SHA-256 validation
 → local manifest
 
+## Figma-Independence Manifest Contract
+* **Figma Desktop**: NOT REQUIRED for normal design implementation after preservation.
+* **Figma Account**: NOT REQUIRED.
+* **Figma MCP**: NOT REQUIRED.
+* **Temporary Figma URLs**: NOT REQUIRED / NONE USED.
+* **Screen References**: 100% LOCAL (`project-spec/design/screens/` — all 46 canonical screens preserved).
+* **Design Tokens**: 100% LOCAL (`project-spec/design/figma-variables.json`, `tokens.md`).
+* **Component/Pattern Documentation**: 100% LOCAL (`project-spec/design/figma-components.json`, `figma-components.md`, `figma-inventory.md`).
+* **Reusable Visual Assets**: 100% LOCAL (`project-spec/design/assets/files/` — all 43 confirmed physical SVG files preserved).
+* **Asset Manifest**: 100% LOCAL (`project-spec/design/assets/manifest.json`, `manifest.md`).
+* **Font Dependency**: DOCUMENTED EXTERNAL DEPENDENCY — Inter (loaded via Next.js Google Fonts integration).
+* **External `.fig` Backup**: DISASTER RECOVERY ONLY.
+
 ## Preservation Policy Clarification
-During preservation, native Figma exports are retained as separate physical files unless physical deduplication is explicitly performed and documented. Identical SHA-256 values establish content identity but do not by themselves mean that physical files were merged. Therefore, **physical file count** (41) and **unique hash count** (40) are tracked as separate metrics.
+During preservation, native Figma exports are retained as separate physical files unless physical deduplication is explicitly performed and documented. Identical SHA-256 values establish content identity but do not by themselves mean that physical files were merged. Therefore, **physical file count** (43) and **unique hash count** (42) are tracked as separate metrics.
 
 ## Global Planning Counts
 * Documented references: 38
 * Confirmed visual-audit new candidates: 3
 * Excluded screenshot-derived candidates: 2
 * Minimum physical export units: 43
-* Processed export units: 41
-* Physical permanent SVG files: 41
-* Unique SHA-256 values: 40
+* Processed export units: 43
+* Physical permanent SVG files: 43
+* Unique SHA-256 values: 42
 * Duplicate logical/content relationships: 1
-* Remaining export units: 2
+* Remaining unresolved export units: 0
 
-*(Note: 43 is the minimum physical export-unit count across the full design, NOT the final unique-file count).*
+*(Note: 43 is the complete physical export-unit count across the full design).*
 
 ## Batch A — Brand & Application Shell Assets
 | ID | Asset Name | Category | Local Path | Size (Bytes) | SHA-256 | Source Screen | Source Frame |
@@ -94,6 +107,12 @@ During preservation, native Figma exports are retained as separate physical file
 | `icon-rocket` | Rocket Icon | domain-badge | `files/svg/domain/icon-rocket.svg` | 2346 | `91b464b768d27bfee262d472aa01b682d000c18456e8ed2710bd3872bd17e032` | design-style-guide | `76:1757` | None |
 | `icon-architecture` | Architecture Icon | domain-badge | `files/svg/domain/icon-architecture.svg` | 996 | `74e90a34be6a86d083f59126b8cb9c53c19acf9f5cfb4a99ac5da6bfdad369ac` | design-style-guide | `76:1757` | None |
 
+## Batch E — Empty-State Illustrations
+| ID | Asset Name | Category | Local Path | Size (Bytes) | SHA-256 | Source Screen | Source Frame | Duplicate Note |
+| :--- | :--- | :--- | :--- | :---: | :--- | :--- | :---: | :--- |
+| `illustration-empty-projects` | Empty Projects Blueprint Illustration | empty-state | `files/svg/illustrations/illustration-empty-projects.svg` | 757 | `7648c4ddd5fbfedc4cd34c8dad0a524fc5da0b300f342bf71ad80a35f803e7e6` | projects-empty-desktop | `15:545` | None |
+| `illustration-empty-epics` | Empty Epics Blueprint Illustration | empty-state | `files/svg/illustrations/illustration-empty-epics.svg` | 394 | `3df59e5bfbe6de42de3500267bd3e685a23660c717ccb2c7d22b8d34f203bf80` | epics-empty-desktop | `51:357` | None |
+
 ## Excluded Visual Candidates (False Positives)
 1. **Mobile Close Drawer (X) Icon**:
    * Source screen: `layout-mobile-open` (`1:553`)
@@ -105,18 +124,15 @@ During preservation, native Figma exports are retained as separate physical file
    * Rationale: Inferred from screenshot view switcher container, but direct manual inspection in Figma did not confirm a standalone Kanban icon.
 
 ## Duplicate Findings & Storage Model
-* **Processed export units (Batch A + B + C + D)**: 41
-* **Physical permanent SVG files**: 41
-* **Unique SHA-256 values**: 40
-* **Duplicate content relationships**: 0
+* **Processed export units (All Batches A through E)**: 43
+* **Physical permanent SVG files**: 43
+* **Unique SHA-256 values**: 42
+* **Duplicate content relationships**: 1
 * **Warning Triangle Icon (`icon-warning-triangle`) vs Warning / Alert Icon (`icon-warning-alert`)**:
   * Exported from different design contexts as two separate native files (`unit-26-warning-triangle.svg` from Tasks Board vs `unit-29-warning-alert.svg` from Calendar & Analytics).
   * Their exported bytes are identical (`90458dfa4fb3a79c1c5fabc34ad1ad24118399acc627aa220963248c18b4e1c9`).
   * Both physical files (`icon-warning-triangle.svg` and `icon-warning-alert.svg`) are intentionally retained as separate files during preservation.
   * No physical deduplication was applied.
-
-## Remaining Asset Batches
-* **Batch E**: Empty State Illustrations (2 confirmed planned export units)
 
 ## Font Dependency
 * **Inter**: Documented external web dependency (loaded via Next.js Google Fonts integration). Font binaries are intentionally not vendored in the repository.
