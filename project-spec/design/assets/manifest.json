@@ -5,10 +5,10 @@
   "visualAuditNewCandidateCount": 3,
   "excludedVisualCandidateCount": 1,
   "minimumPhysicalExportUnits": 44,
-  "exportedCandidateCount": 9,
-  "uniqueFileCount": 9,
+  "exportedCandidateCount": 14,
+  "uniqueFileCount": 14,
   "duplicateReferenceCount": 0,
-  "unresolvedCandidateCount": 35,
+  "unresolvedCandidateCount": 30,
   "fontDependencies": [
     {
       "family": "Inter",
@@ -200,6 +200,106 @@
         "layout-mobile-closed"
       ],
       "originalExportFilename": "unit-14-mobile-hamburger.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-eye",
+      "name": "Eye Icon",
+      "type": "svg-icon",
+      "category": "form-control",
+      "format": "SVG",
+      "localPath": "files/svg/icons/icon-eye.svg",
+      "bytes": 1319,
+      "sha256": "7cf49e6cf687ac72cc95b752d1adb4171859ea22acd0ae968c6e210a696d23c7",
+      "sourceFrameNodes": [
+        "1:351"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "auth-login-desktop"
+      ],
+      "originalExportFilename": "unit-02-eye.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-password-visibility-toggle",
+      "name": "Password Visibility Toggle Icon",
+      "type": "svg-icon",
+      "category": "form-control",
+      "format": "SVG",
+      "localPath": "files/svg/icons/icon-password-visibility-toggle.svg",
+      "bytes": 1145,
+      "sha256": "99f1d4b512261e1ca41657454a8f67345925b16fa9d0372b5d73ecb37a232e2c",
+      "sourceFrameNodes": [
+        "1:1219"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "auth-sign-up-desktop"
+      ],
+      "originalExportFilename": "unit-03-password-visibility-toggle.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-checkbox",
+      "name": "Checkbox Icon",
+      "type": "svg-icon",
+      "category": "form-control",
+      "format": "SVG",
+      "localPath": "files/svg/icons/icon-checkbox.svg",
+      "bytes": 191,
+      "sha256": "3e368c75bc3f1b9be59c8a748ad30c628bccaec777cdb3002ef978e3b795c5e6",
+      "sourceFrameNodes": [
+        "1:351"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "auth-login-desktop"
+      ],
+      "originalExportFilename": "unit-04-checkbox.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-validation-check",
+      "name": "Validation Checkmark Circle Icon",
+      "type": "svg-icon",
+      "category": "form-control",
+      "format": "SVG",
+      "localPath": "files/svg/icons/icon-validation-check.svg",
+      "bytes": 1268,
+      "sha256": "ab3b1025ed9c4d5d1c5447bc803ee787561af18cdb70fd30c67b9a7a3317f97b",
+      "sourceFrameNodes": [
+        "1:1219"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "auth-sign-up-desktop"
+      ],
+      "originalExportFilename": "unit-05-validation-check.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-validation-neutral",
+      "name": "Validation Neutral / Cross Circle Icon",
+      "type": "svg-icon",
+      "category": "form-control",
+      "format": "SVG",
+      "localPath": "files/svg/icons/icon-validation-neutral.svg",
+      "bytes": 1377,
+      "sha256": "7e0ffb3aec8d3e4a76076b527a81a6f1db3eb206d66ff3a29508214c236e712e",
+      "sourceFrameNodes": [
+        "1:1219"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "auth-sign-up-desktop"
+      ],
+      "originalExportFilename": "unit-06-validation-neutral.svg",
       "extractionMethod": "Native Figma export",
       "status": "PRESERVED"
     }
