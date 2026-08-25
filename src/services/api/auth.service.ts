@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase/client";
+import { supabase, setAuthRememberPreference } from "@/lib/supabase/client";
 import { SUPABASE_URL, getHeaders } from "./config";
 
 export interface SignUpData {
@@ -6,6 +6,12 @@ export interface SignUpData {
   password?: string;
   name: string;
   jobTitle?: string;
+}
+
+export interface LoginData {
+  email: string;
+  password?: string;
+  rememberMe?: boolean;
 }
 
 export const AuthService = {
@@ -21,11 +27,11 @@ export const AuthService = {
       },
     });
   },
-  login: async (data: unknown) => {
-    return fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-      method: "POST",
-      headers: getHeaders(),
-      body: JSON.stringify(data),
+  login: async ({ email, password, rememberMe = false }: LoginData) => {
+    setAuthRememberPreference(rememberMe);
+    return supabase.auth.signInWithPassword({
+      email,
+      password: password || "",
     });
   },
   getUser: async (token: string) => {
