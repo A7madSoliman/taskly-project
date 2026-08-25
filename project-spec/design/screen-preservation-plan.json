@@ -1,0 +1,1042 @@
+{
+  "source": {
+    "type": "Figma Dev Mode MCP",
+    "pageId": "0:1",
+    "pageName": "Ready For Dev",
+    "totalFramesDiscovered": 53,
+    "planGeneratedAt": "2026-08-25"
+  },
+  "summary": {
+    "canonicalScreensCount": 17,
+    "responsiveCounterpartsCount": 13,
+    "importantStatesCount": 9,
+    "modalsOrOverlaysCount": 7,
+    "redundantFramesCount": 7,
+    "unknownFramesCount": 0
+  },
+  "groups": [
+    "Authentication",
+    "Application Shell",
+    "Projects",
+    "Epics",
+    "Tasks",
+    "Members & Invitations",
+    "Calendar & Analytics",
+    "Design Reference",
+    "Non-Screen Artifacts"
+  ],
+  "screens": [
+    {
+      "canonicalKey": "auth-sign-up-desktop",
+      "name": "Sign Up (Desktop)",
+      "nodeId": "1:1219",
+      "page": "0:1",
+      "category": "CANONICAL_SCREEN",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1060
+      },
+      "productArea": "Authentication",
+      "parentScreen": null,
+      "responsiveCounterpart": "1:923",
+      "stateType": "Default",
+      "preservationPriority": "CRITICAL",
+      "notes": "Primary desktop registration view with full validation requirements grid"
+    },
+    {
+      "canonicalKey": "auth-sign-up-mobile",
+      "name": "Sign Up (Mobile)",
+      "nodeId": "1:923",
+      "page": "0:1",
+      "category": "RESPONSIVE_COUNTERPART",
+      "device": "Mobile",
+      "dimensions": {
+        "width": 390,
+        "height": 940
+      },
+      "productArea": "Authentication",
+      "parentScreen": "auth-sign-up-desktop",
+      "responsiveCounterpart": "1:1219",
+      "stateType": "Default",
+      "preservationPriority": "HIGH",
+      "notes": "Mobile counterpart of registration screen with single-column responsive form"
+    },
+    {
+      "canonicalKey": "auth-login-desktop",
+      "name": "Login (Desktop)",
+      "nodeId": "1:351",
+      "page": "0:1",
+      "category": "CANONICAL_SCREEN",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1024
+      },
+      "productArea": "Authentication",
+      "parentScreen": null,
+      "responsiveCounterpart": "1:289",
+      "stateType": "Default",
+      "preservationPriority": "CRITICAL",
+      "notes": "Primary desktop login interface with remember-me and forgot password navigation"
+    },
+    {
+      "canonicalKey": "auth-login-mobile",
+      "name": "Login (Mobile) - Updated",
+      "nodeId": "1:289",
+      "page": "0:1",
+      "category": "RESPONSIVE_COUNTERPART",
+      "device": "Mobile",
+      "dimensions": {
+        "width": 390,
+        "height": 885
+      },
+      "productArea": "Authentication",
+      "parentScreen": "auth-login-desktop",
+      "responsiveCounterpart": "1:351",
+      "stateType": "Default",
+      "preservationPriority": "HIGH",
+      "notes": "Mobile counterpart of user login screen"
+    },
+    {
+      "canonicalKey": "auth-forgot-password-desktop",
+      "name": "Forgot Password (Desktop)",
+      "nodeId": "1:216",
+      "page": "0:1",
+      "category": "CANONICAL_SCREEN",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1024
+      },
+      "productArea": "Authentication",
+      "parentScreen": null,
+      "responsiveCounterpart": "1:161",
+      "stateType": "Default",
+      "preservationPriority": "HIGH",
+      "notes": "Desktop password recovery request form including simulated success feedback"
+    },
+    {
+      "canonicalKey": "auth-forgot-password-mobile",
+      "name": "Forgot Password (Mobile)",
+      "nodeId": "1:161",
+      "page": "0:1",
+      "category": "RESPONSIVE_COUNTERPART",
+      "device": "Mobile",
+      "dimensions": {
+        "width": 390,
+        "height": 884
+      },
+      "productArea": "Authentication",
+      "parentScreen": "auth-forgot-password-desktop",
+      "responsiveCounterpart": "1:216",
+      "stateType": "Default",
+      "preservationPriority": "NORMAL",
+      "notes": "Mobile password recovery request form"
+    },
+    {
+      "canonicalKey": "auth-reset-password-desktop",
+      "name": "Reset Password (Desktop)",
+      "nodeId": "1:79",
+      "page": "0:1",
+      "category": "CANONICAL_SCREEN",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1024
+      },
+      "productArea": "Authentication",
+      "parentScreen": null,
+      "responsiveCounterpart": "1:2",
+      "stateType": "Default",
+      "preservationPriority": "HIGH",
+      "notes": "Desktop new password entry view with security requirements checklist grid"
+    },
+    {
+      "canonicalKey": "auth-reset-password-mobile",
+      "name": "Reset Password (Mobile)",
+      "nodeId": "1:2",
+      "page": "0:1",
+      "category": "RESPONSIVE_COUNTERPART",
+      "device": "Mobile",
+      "dimensions": {
+        "width": 390,
+        "height": 891.5
+      },
+      "productArea": "Authentication",
+      "parentScreen": "auth-reset-password-desktop",
+      "responsiveCounterpart": "1:79",
+      "stateType": "Default",
+      "preservationPriority": "NORMAL",
+      "notes": "Mobile password reset form"
+    },
+    {
+      "canonicalKey": "layout-desktop-default",
+      "name": "Layout (Desktop)",
+      "nodeId": "1:986",
+      "page": "0:1",
+      "category": "CANONICAL_SCREEN",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1024
+      },
+      "productArea": "Application Shell",
+      "parentScreen": null,
+      "responsiveCounterpart": "1:401",
+      "stateType": "Sidebar Expanded",
+      "preservationPriority": "CRITICAL",
+      "notes": "Primary desktop shell showing full sidebar navigation and top header bar"
+    },
+    {
+      "canonicalKey": "layout-desktop-collapsed",
+      "name": "Layout (Desktop) - Collapsed Sidebar",
+      "nodeId": "1:733",
+      "page": "0:1",
+      "category": "IMPORTANT_STATE",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1024
+      },
+      "productArea": "Application Shell",
+      "parentScreen": "layout-desktop-default",
+      "responsiveCounterpart": null,
+      "stateType": "Sidebar Collapsed",
+      "preservationPriority": "HIGH",
+      "notes": "Desktop shell with icon-only collapsed sidebar navigation"
+    },
+    {
+      "canonicalKey": "layout-mobile-closed",
+      "name": "Layout (Mobile) - Menu Closed",
+      "nodeId": "1:401",
+      "page": "0:1",
+      "category": "RESPONSIVE_COUNTERPART",
+      "device": "Mobile",
+      "dimensions": {
+        "width": 390,
+        "height": 1057
+      },
+      "productArea": "Application Shell",
+      "parentScreen": "layout-desktop-default",
+      "responsiveCounterpart": "1:986",
+      "stateType": "Drawer Closed",
+      "preservationPriority": "HIGH",
+      "notes": "Standard mobile shell with top app bar and bottom navigation bar"
+    },
+    {
+      "canonicalKey": "layout-mobile-open",
+      "name": "Layout (Mobile) - Menu Open",
+      "nodeId": "1:553",
+      "page": "0:1",
+      "category": "IMPORTANT_STATE",
+      "device": "Mobile",
+      "dimensions": {
+        "width": 390,
+        "height": 1296
+      },
+      "productArea": "Application Shell",
+      "parentScreen": "layout-mobile-closed",
+      "responsiveCounterpart": null,
+      "stateType": "Drawer Open",
+      "preservationPriority": "HIGH",
+      "notes": "Mobile shell with active slide-out navigation drawer and dimmed backdrop"
+    },
+    {
+      "canonicalKey": "projects-list-desktop",
+      "name": "Projects List (Desktop)",
+      "nodeId": "2:60",
+      "page": "0:1",
+      "category": "CANONICAL_SCREEN",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1024
+      },
+      "productArea": "Projects",
+      "parentScreen": null,
+      "responsiveCounterpart": "15:293",
+      "stateType": "Populated",
+      "preservationPriority": "CRITICAL",
+      "notes": "Main desktop projects dashboard displaying bento-style project cards grid"
+    },
+    {
+      "canonicalKey": "projects-list-mobile",
+      "name": "Projects List (Mobile)",
+      "nodeId": "15:293",
+      "page": "0:1",
+      "category": "RESPONSIVE_COUNTERPART",
+      "device": "Mobile",
+      "dimensions": {
+        "width": 390,
+        "height": 1306
+      },
+      "productArea": "Projects",
+      "parentScreen": "projects-list-desktop",
+      "responsiveCounterpart": "2:60",
+      "stateType": "Populated",
+      "preservationPriority": "HIGH",
+      "notes": "Mobile projects list with vertical card stacking and floating action button"
+    },
+    {
+      "canonicalKey": "projects-empty-desktop",
+      "name": "Projects Empty State (Desktop)",
+      "nodeId": "15:545",
+      "page": "0:1",
+      "category": "IMPORTANT_STATE",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1024
+      },
+      "productArea": "Projects",
+      "parentScreen": "projects-list-desktop",
+      "responsiveCounterpart": null,
+      "stateType": "Empty",
+      "preservationPriority": "HIGH",
+      "notes": "Empty projects dashboard with blueprint visual element and creation CTA"
+    },
+    {
+      "canonicalKey": "projects-loading-desktop",
+      "name": "Projects Loading State (Desktop)",
+      "nodeId": "15:643",
+      "page": "0:1",
+      "category": "IMPORTANT_STATE",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1024
+      },
+      "productArea": "Projects",
+      "parentScreen": "projects-list-desktop",
+      "responsiveCounterpart": null,
+      "stateType": "Loading Skeleton",
+      "preservationPriority": "NORMAL",
+      "notes": "Skeleton loading state for desktop projects grid"
+    },
+    {
+      "canonicalKey": "projects-error-desktop",
+      "name": "Projects Error State (Desktop)",
+      "nodeId": "15:826",
+      "page": "0:1",
+      "category": "IMPORTANT_STATE",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1024
+      },
+      "productArea": "Projects",
+      "parentScreen": "projects-list-desktop",
+      "responsiveCounterpart": null,
+      "stateType": "Error",
+      "preservationPriority": "NORMAL",
+      "notes": "Error banner and retry state for projects dashboard"
+    },
+    {
+      "canonicalKey": "projects-add-desktop",
+      "name": "Add New Project (Desktop)",
+      "nodeId": "44:2226",
+      "page": "0:1",
+      "category": "CANONICAL_SCREEN",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1024
+      },
+      "productArea": "Projects",
+      "parentScreen": null,
+      "responsiveCounterpart": "44:2461",
+      "stateType": "Default",
+      "preservationPriority": "HIGH",
+      "notes": "Desktop project creation form with title and description inputs"
+    },
+    {
+      "canonicalKey": "projects-add-mobile",
+      "name": "Add New Project (Mobile)",
+      "nodeId": "44:2461",
+      "page": "0:1",
+      "category": "RESPONSIVE_COUNTERPART",
+      "device": "Mobile",
+      "dimensions": {
+        "width": 390,
+        "height": 1175
+      },
+      "productArea": "Projects",
+      "parentScreen": "projects-add-desktop",
+      "responsiveCounterpart": "44:2226",
+      "stateType": "Default",
+      "preservationPriority": "NORMAL",
+      "notes": "Mobile project creation view"
+    },
+    {
+      "canonicalKey": "projects-edit-desktop",
+      "name": "Edit Project (Desktop)",
+      "nodeId": "82:2099",
+      "page": "0:1",
+      "category": "CANONICAL_SCREEN",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1024
+      },
+      "productArea": "Projects",
+      "parentScreen": null,
+      "responsiveCounterpart": null,
+      "stateType": "Default",
+      "preservationPriority": "HIGH",
+      "notes": "Desktop project settings and edit view"
+    },
+    {
+      "canonicalKey": "epics-list-desktop",
+      "name": "Project Epics List (Desktop)",
+      "nodeId": "45:2643",
+      "page": "0:1",
+      "category": "CANONICAL_SCREEN",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1024
+      },
+      "productArea": "Epics",
+      "parentScreen": null,
+      "responsiveCounterpart": "51:2",
+      "stateType": "Populated",
+      "preservationPriority": "CRITICAL",
+      "notes": "Desktop epics grid displaying epic cards with assignees and deadlines"
+    },
+    {
+      "canonicalKey": "epics-list-mobile",
+      "name": "Project Epics List (Mobile)",
+      "nodeId": "51:2",
+      "page": "0:1",
+      "category": "RESPONSIVE_COUNTERPART",
+      "device": "Mobile",
+      "dimensions": {
+        "width": 390,
+        "height": 1108.2
+      },
+      "productArea": "Epics",
+      "parentScreen": "epics-list-desktop",
+      "responsiveCounterpart": "45:2643",
+      "stateType": "Populated",
+      "preservationPriority": "HIGH",
+      "notes": "Mobile epics list with search, filter, and floating action button"
+    },
+    {
+      "canonicalKey": "epics-empty-desktop",
+      "name": "Project Epics Empty State (Desktop)",
+      "nodeId": "51:357",
+      "page": "0:1",
+      "category": "IMPORTANT_STATE",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1024
+      },
+      "productArea": "Epics",
+      "parentScreen": "epics-list-desktop",
+      "responsiveCounterpart": null,
+      "stateType": "Empty",
+      "preservationPriority": "HIGH",
+      "notes": "Epics empty state with glassmorphism illustration and helper bento cards"
+    },
+    {
+      "canonicalKey": "epics-loading-desktop",
+      "name": "Project Epics Loading State (Desktop)",
+      "nodeId": "51:719",
+      "page": "0:1",
+      "category": "IMPORTANT_STATE",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1024
+      },
+      "productArea": "Epics",
+      "parentScreen": "epics-list-desktop",
+      "responsiveCounterpart": null,
+      "stateType": "Loading Skeleton",
+      "preservationPriority": "NORMAL",
+      "notes": "Skeleton loading state for desktop epics grid"
+    },
+    {
+      "canonicalKey": "epics-error-desktop",
+      "name": "Project Epics Error State (Desktop)",
+      "nodeId": "51:282",
+      "page": "0:1",
+      "category": "IMPORTANT_STATE",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1024
+      },
+      "productArea": "Epics",
+      "parentScreen": "epics-list-desktop",
+      "responsiveCounterpart": null,
+      "stateType": "Error",
+      "preservationPriority": "NORMAL",
+      "notes": "Error feedback state for project epics screen"
+    },
+    {
+      "canonicalKey": "epics-add-desktop",
+      "name": "Add New Epic (Desktop)",
+      "nodeId": "52:1020",
+      "page": "0:1",
+      "category": "CANONICAL_SCREEN",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1024
+      },
+      "productArea": "Epics",
+      "parentScreen": null,
+      "responsiveCounterpart": "53:1431",
+      "stateType": "Default",
+      "preservationPriority": "HIGH",
+      "notes": "Epic creation form with title, description, assignee, and deadline fields"
+    },
+    {
+      "canonicalKey": "epics-add-mobile",
+      "name": "Add New Epic (Mobile)",
+      "nodeId": "53:1431",
+      "page": "0:1",
+      "category": "RESPONSIVE_COUNTERPART",
+      "device": "Mobile",
+      "dimensions": {
+        "width": 390,
+        "height": 1136
+      },
+      "productArea": "Epics",
+      "parentScreen": "epics-add-desktop",
+      "responsiveCounterpart": "52:1020",
+      "stateType": "Default",
+      "preservationPriority": "NORMAL",
+      "notes": "Mobile epic creation view"
+    },
+    {
+      "canonicalKey": "epics-details-modal-desktop",
+      "name": "Epic Details Popup (Desktop)",
+      "nodeId": "58:2291",
+      "page": "0:1",
+      "category": "MODAL_OR_OVERLAY",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1024
+      },
+      "productArea": "Epics",
+      "parentScreen": "epics-list-desktop",
+      "responsiveCounterpart": null,
+      "stateType": "Empty Tasks Modal",
+      "preservationPriority": "HIGH",
+      "notes": "Modal popup showing epic metadata, description, and empty tasks section"
+    },
+    {
+      "canonicalKey": "epics-details-with-tasks-modal-desktop",
+      "name": "Epic Details with Tasks Popup (Desktop)",
+      "nodeId": "19187:75",
+      "page": "0:1",
+      "category": "MODAL_OR_OVERLAY",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1024
+      },
+      "productArea": "Epics",
+      "parentScreen": "epics-list-desktop",
+      "responsiveCounterpart": "19187:771",
+      "stateType": "Populated Tasks Modal",
+      "preservationPriority": "HIGH",
+      "notes": "Modal popup showing epic metadata with embedded tasks list"
+    },
+    {
+      "canonicalKey": "epics-details-with-tasks-modal-mobile",
+      "name": "Epic Details with Tasks (Mobile) - Popup",
+      "nodeId": "19187:771",
+      "page": "0:1",
+      "category": "MODAL_OR_OVERLAY",
+      "device": "Mobile",
+      "dimensions": {
+        "width": 390,
+        "height": 1108.2
+      },
+      "productArea": "Epics",
+      "parentScreen": "epics-list-mobile",
+      "responsiveCounterpart": "19187:75",
+      "stateType": "Populated Tasks Modal",
+      "preservationPriority": "NORMAL",
+      "notes": "Mobile epic details popup modal with tasks list"
+    },
+    {
+      "canonicalKey": "tasks-board-desktop",
+      "name": "Project Tasks Board (Desktop)",
+      "nodeId": "58:3524",
+      "page": "0:1",
+      "category": "CANONICAL_SCREEN",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1024
+      },
+      "productArea": "Tasks",
+      "parentScreen": null,
+      "responsiveCounterpart": "67:118",
+      "stateType": "Kanban Board View",
+      "preservationPriority": "CRITICAL",
+      "notes": "Primary Kanban workboard with columns for TO DO, IN PROGRESS, BLOCKED, IN REVIEW, READY FOR QA, DONE"
+    },
+    {
+      "canonicalKey": "tasks-list-desktop",
+      "name": "Project Tasks List (Desktop)",
+      "nodeId": "64:3897",
+      "page": "0:1",
+      "category": "CANONICAL_SCREEN",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1024
+      },
+      "productArea": "Tasks",
+      "parentScreen": "tasks-board-desktop",
+      "responsiveCounterpart": null,
+      "stateType": "Table List View",
+      "preservationPriority": "HIGH",
+      "notes": "Alternative tabular view for project tasks with status, assignee, and priority rows"
+    },
+    {
+      "canonicalKey": "tasks-mobile",
+      "name": "Project Tasks (Mobile)",
+      "nodeId": "67:118",
+      "page": "0:1",
+      "category": "RESPONSIVE_COUNTERPART",
+      "device": "Mobile",
+      "dimensions": {
+        "width": 390,
+        "height": 1057
+      },
+      "productArea": "Tasks",
+      "parentScreen": "tasks-board-desktop",
+      "responsiveCounterpart": "58:3524",
+      "stateType": "Mobile List View",
+      "preservationPriority": "HIGH",
+      "notes": "Mobile task list representation with view switcher controls"
+    },
+    {
+      "canonicalKey": "tasks-add-desktop",
+      "name": "Add New Task (Desktop)",
+      "nodeId": "58:3098",
+      "page": "0:1",
+      "category": "CANONICAL_SCREEN",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1024
+      },
+      "productArea": "Tasks",
+      "parentScreen": null,
+      "responsiveCounterpart": "58:3338",
+      "stateType": "Default",
+      "preservationPriority": "HIGH",
+      "notes": "Task creation form with title, status dropdown, assignee, epic selector, and due date popover"
+    },
+    {
+      "canonicalKey": "tasks-add-mobile",
+      "name": "Add New Task (Mobile)",
+      "nodeId": "58:3338",
+      "page": "0:1",
+      "category": "RESPONSIVE_COUNTERPART",
+      "device": "Mobile",
+      "dimensions": {
+        "width": 390,
+        "height": 1131
+      },
+      "productArea": "Tasks",
+      "parentScreen": "tasks-add-desktop",
+      "responsiveCounterpart": "58:3098",
+      "stateType": "Default",
+      "preservationPriority": "NORMAL",
+      "notes": "Mobile task creation form view"
+    },
+    {
+      "canonicalKey": "tasks-details-modal-desktop",
+      "name": "Task Details Popup (Desktop)",
+      "nodeId": "67:454",
+      "page": "0:1",
+      "category": "MODAL_OR_OVERLAY",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1024
+      },
+      "productArea": "Tasks",
+      "parentScreen": "tasks-board-desktop",
+      "responsiveCounterpart": "1:9120",
+      "stateType": "Modal Dialog",
+      "preservationPriority": "HIGH",
+      "notes": "Desktop modal for task details with dual panel layout (content/metadata & side attributes)"
+    },
+    {
+      "canonicalKey": "tasks-details-modal-mobile",
+      "name": "Task Details Popup (Mobile)",
+      "nodeId": "1:9120",
+      "page": "0:1",
+      "category": "MODAL_OR_OVERLAY",
+      "device": "Mobile",
+      "dimensions": {
+        "width": 390,
+        "height": 884
+      },
+      "productArea": "Tasks",
+      "parentScreen": "tasks-mobile",
+      "responsiveCounterpart": "67:454",
+      "stateType": "Bottom Sheet",
+      "preservationPriority": "NORMAL",
+      "notes": "Mobile task details bottom sheet with drag handle and scrollable bento metadata"
+    },
+    {
+      "canonicalKey": "calendar-analytics-desktop",
+      "name": "Tasks Calendar & Project Analytics (Desktop)",
+      "nodeId": "6831:873",
+      "page": "0:1",
+      "category": "CANONICAL_SCREEN",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1268
+      },
+      "productArea": "Calendar & Analytics",
+      "parentScreen": null,
+      "responsiveCounterpart": "6831:2510",
+      "stateType": "Default",
+      "preservationPriority": "CRITICAL",
+      "notes": "Combined dashboard containing weekly calendar grid, doughnut status distribution chart, and bar chart analytics"
+    },
+    {
+      "canonicalKey": "calendar-analytics-mobile",
+      "name": "Tasks Calendar & Project Analytics (Mobile)",
+      "nodeId": "6831:2510",
+      "page": "0:1",
+      "category": "RESPONSIVE_COUNTERPART",
+      "device": "Mobile",
+      "dimensions": {
+        "width": 390,
+        "height": 1401
+      },
+      "productArea": "Calendar & Analytics",
+      "parentScreen": "calendar-analytics-desktop",
+      "responsiveCounterpart": "6831:873",
+      "stateType": "Default",
+      "preservationPriority": "HIGH",
+      "notes": "Mobile analytics dashboard with summary cards horizontal scroll, weekly calendar rows, and doughnut charts"
+    },
+    {
+      "canonicalKey": "members-list-desktop",
+      "name": "Project Members List (Desktop)",
+      "nodeId": "15:912",
+      "page": "0:1",
+      "category": "CANONICAL_SCREEN",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1024
+      },
+      "productArea": "Members & Invitations",
+      "parentScreen": null,
+      "responsiveCounterpart": "40:1119",
+      "stateType": "Populated Table",
+      "preservationPriority": "CRITICAL",
+      "notes": "Members management table with role badges, email records, and invite member header CTA"
+    },
+    {
+      "canonicalKey": "members-list-mobile",
+      "name": "Project Members List (Mobile)",
+      "nodeId": "40:1119",
+      "page": "0:1",
+      "category": "RESPONSIVE_COUNTERPART",
+      "device": "Mobile",
+      "dimensions": {
+        "width": 390,
+        "height": 1057
+      },
+      "productArea": "Members & Invitations",
+      "parentScreen": "members-list-desktop",
+      "responsiveCounterpart": "15:912",
+      "stateType": "Populated Cards",
+      "preservationPriority": "HIGH",
+      "notes": "Mobile members list rendered as asymmetric card rows"
+    },
+    {
+      "canonicalKey": "members-loading-desktop",
+      "name": "Project Members Loading (Desktop)",
+      "nodeId": "41:1377",
+      "page": "0:1",
+      "category": "IMPORTANT_STATE",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1024
+      },
+      "productArea": "Members & Invitations",
+      "parentScreen": "members-list-desktop",
+      "responsiveCounterpart": null,
+      "stateType": "Loading Skeleton",
+      "preservationPriority": "NORMAL",
+      "notes": "Skeleton loading rows for members management table"
+    },
+    {
+      "canonicalKey": "members-error-desktop",
+      "name": "Project Members Error State (Desktop)",
+      "nodeId": "41:1607",
+      "page": "0:1",
+      "category": "IMPORTANT_STATE",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1024
+      },
+      "productArea": "Members & Invitations",
+      "parentScreen": "members-list-desktop",
+      "responsiveCounterpart": null,
+      "stateType": "Error",
+      "preservationPriority": "NORMAL",
+      "notes": "Error feedback state for project members table"
+    },
+    {
+      "canonicalKey": "members-invite-modal-desktop",
+      "name": "Invite Member Popup (Desktop)",
+      "nodeId": "43:1682",
+      "page": "0:1",
+      "category": "MODAL_OR_OVERLAY",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1024
+      },
+      "productArea": "Members & Invitations",
+      "parentScreen": "members-list-desktop",
+      "responsiveCounterpart": null,
+      "stateType": "Modal Dialog",
+      "preservationPriority": "HIGH",
+      "notes": "Member invitation modal with email input, role dropdown, and send invite action"
+    },
+    {
+      "canonicalKey": "invitations-accept-desktop",
+      "name": "Accept Invitation (Desktop)",
+      "nodeId": "1:2545",
+      "page": "0:1",
+      "category": "CANONICAL_SCREEN",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 1024
+      },
+      "productArea": "Members & Invitations",
+      "parentScreen": null,
+      "responsiveCounterpart": null,
+      "stateType": "Default",
+      "preservationPriority": "HIGH",
+      "notes": "Transactional invitation acceptance view with project badge and join workspace CTA"
+    },
+    {
+      "canonicalKey": "design-style-guide",
+      "name": "Style Guide",
+      "nodeId": "76:1757",
+      "page": "0:1",
+      "category": "CANONICAL_SCREEN",
+      "device": "Desktop",
+      "dimensions": {
+        "width": 1280,
+        "height": 3205
+      },
+      "productArea": "Design Reference",
+      "parentScreen": null,
+      "responsiveCounterpart": null,
+      "stateType": "Default",
+      "preservationPriority": "HIGH",
+      "notes": "Preserved as an auxiliary visual design-system reference; not an application product screen."
+    }
+  ],
+  "relationships": [
+    {
+      "type": "RESPONSIVE_PAIR",
+      "desktopNodeId": "1:1219",
+      "mobileNodeId": "1:923",
+      "productArea": "Authentication",
+      "label": "Sign Up"
+    },
+    {
+      "type": "RESPONSIVE_PAIR",
+      "desktopNodeId": "1:351",
+      "mobileNodeId": "1:289",
+      "productArea": "Authentication",
+      "label": "Login"
+    },
+    {
+      "type": "RESPONSIVE_PAIR",
+      "desktopNodeId": "1:216",
+      "mobileNodeId": "1:161",
+      "productArea": "Authentication",
+      "label": "Forgot Password"
+    },
+    {
+      "type": "RESPONSIVE_PAIR",
+      "desktopNodeId": "1:79",
+      "mobileNodeId": "1:2",
+      "productArea": "Authentication",
+      "label": "Reset Password"
+    },
+    {
+      "type": "RESPONSIVE_PAIR",
+      "desktopNodeId": "1:986",
+      "mobileNodeId": "1:401",
+      "productArea": "Application Shell",
+      "label": "Layout Shell"
+    },
+    {
+      "type": "RESPONSIVE_PAIR",
+      "desktopNodeId": "2:60",
+      "mobileNodeId": "15:293",
+      "productArea": "Projects",
+      "label": "Projects List"
+    },
+    {
+      "type": "RESPONSIVE_PAIR",
+      "desktopNodeId": "44:2226",
+      "mobileNodeId": "44:2461",
+      "productArea": "Projects",
+      "label": "Add New Project"
+    },
+    {
+      "type": "RESPONSIVE_PAIR",
+      "desktopNodeId": "45:2643",
+      "mobileNodeId": "51:2",
+      "productArea": "Epics",
+      "label": "Project Epics List"
+    },
+    {
+      "type": "RESPONSIVE_PAIR",
+      "desktopNodeId": "52:1020",
+      "mobileNodeId": "53:1431",
+      "productArea": "Epics",
+      "label": "Add New Epic"
+    },
+    {
+      "type": "RESPONSIVE_PAIR",
+      "desktopNodeId": "19187:75",
+      "mobileNodeId": "19187:771",
+      "productArea": "Epics",
+      "label": "Epic Details with Tasks Modal"
+    },
+    {
+      "type": "RESPONSIVE_PAIR",
+      "desktopNodeId": "58:3524",
+      "mobileNodeId": "67:118",
+      "productArea": "Tasks",
+      "label": "Project Tasks"
+    },
+    {
+      "type": "RESPONSIVE_PAIR",
+      "desktopNodeId": "58:3098",
+      "mobileNodeId": "58:3338",
+      "productArea": "Tasks",
+      "label": "Add New Task"
+    },
+    {
+      "type": "RESPONSIVE_PAIR",
+      "desktopNodeId": "67:454",
+      "mobileNodeId": "1:9120",
+      "productArea": "Tasks",
+      "label": "Task Details Modal"
+    },
+    {
+      "type": "RESPONSIVE_PAIR",
+      "desktopNodeId": "6831:873",
+      "mobileNodeId": "6831:2510",
+      "productArea": "Calendar & Analytics",
+      "label": "Calendar & Analytics"
+    },
+    {
+      "type": "RESPONSIVE_PAIR",
+      "desktopNodeId": "15:912",
+      "mobileNodeId": "40:1119",
+      "productArea": "Members & Invitations",
+      "label": "Project Members List"
+    }
+  ],
+  "redundantFrames": [
+    {
+      "nodeId": "57:2080",
+      "name": "Project Epics List (Mobile)",
+      "dimensions": {
+        "width": 390,
+        "height": 1108.2
+      },
+      "preservedInsteadBy": "51:2",
+      "reason": "Exact canvas backdrop duplicate of Project Epics List (Mobile) placed behind modal popup 19187:771."
+    },
+    {
+      "nodeId": "28601:65",
+      "name": "Add New Task (Desktop)",
+      "dimensions": {
+        "width": 1280,
+        "height": 1024
+      },
+      "preservedInsteadBy": "58:3098",
+      "reason": "Off-canvas duplicate (x=-7047, y=22791) of Add New Task (Desktop) with identical form layout."
+    },
+    {
+      "nodeId": "6831:1800",
+      "name": "Tasks Calendar & Project Analytics (Desktop)",
+      "dimensions": {
+        "width": 1280,
+        "height": 1268
+      },
+      "preservedInsteadBy": "6831:873",
+      "reason": "Duplicate column variation of Tasks Calendar & Project Analytics (Desktop) containing identical analytics structure."
+    },
+    {
+      "nodeId": "43:2033",
+      "name": "Project Members List (Mobile)",
+      "dimensions": {
+        "width": 390,
+        "height": 1057
+      },
+      "preservedInsteadBy": "40:1119",
+      "reason": "Canvas backdrop duplicate of Project Members List (Mobile) positioned alongside Invite Member modal."
+    },
+    {
+      "nodeId": "71:1270",
+      "name": "Cover",
+      "dimensions": {
+        "width": 1920,
+        "height": 1080
+      },
+      "preservedInsteadBy": "NONE_PRESENTATION",
+      "reason": "Presentation and marketing canvas (1920x1080), not a functional application product screen."
+    },
+    {
+      "nodeId": "12:228",
+      "name": "BottomNavBar (Hidden on desktop as per Pivot Rule, but shown for Mobile context)",
+      "dimensions": {
+        "width": 390,
+        "height": 64
+      },
+      "preservedInsteadBy": "1:401",
+      "reason": "Isolated component test frame (390x64); preserved as part of full mobile layouts and component catalog."
+    },
+    {
+      "nodeId": "15:257",
+      "name": "Header - TopAppBar",
+      "dimensions": {
+        "width": 390,
+        "height": 80
+      },
+      "preservedInsteadBy": "1:401",
+      "reason": "Isolated component test frame (390x80); preserved as part of full mobile layouts and component catalog."
+    }
+  ],
+  "unknownFrames": [],
+  "limitations": [
+    "Figma metadata only exposes top-level frames and their bounds.",
+    "Dynamic interaction transitions between modal states and parent canvases are preserved via relationship references rather than live interactive states."
+  ]
+}
