@@ -1,0 +1,200 @@
+{
+  "identity": {
+    "canonicalKey": "layout-desktop-default",
+    "name": "Layout (Desktop)",
+    "nodeId": "1:986",
+    "page": "0:1",
+    "device": "Desktop",
+    "productArea": "Application Shell",
+    "preservationPriority": "CRITICAL",
+    "stateType": "Sidebar Expanded"
+  },
+  "source": {
+    "figmaNodeId": "1:986",
+    "pageName": "Ready For Dev"
+  },
+  "dimensions": {
+    "figmaFrame": {
+      "width": 1280,
+      "height": 1024
+    }
+  },
+  "layout": {
+    "hierarchy": "Desktop Shell (1280x1024) -> Left Sidebar (w=256, bg=#f1f3ff, full height) [Logo Header + Navigation Menu Items + Footer User/Collapse Action] -> Top Header Bar (h=64, border-b) -> Main Content Area Canvas"
+  },
+  "typography": [
+    {
+      "element": "Brand Logo",
+      "font": "Inter:Bold",
+      "size": "20px",
+      "weight": "700",
+      "tracking": "-0.5px",
+      "color": "#041b3c"
+    },
+    {
+      "element": "Nav Item Active",
+      "font": "Inter:Semi_Bold",
+      "size": "14px",
+      "weight": "600",
+      "color": "#0052cc"
+    },
+    {
+      "element": "Nav Item Inactive",
+      "font": "Inter:Regular",
+      "size": "14px",
+      "weight": "400",
+      "color": "#4f5f7b"
+    },
+    {
+      "element": "User Profile Name",
+      "font": "Inter:Bold",
+      "size": "14px",
+      "weight": "700",
+      "color": "#041b3c"
+    },
+    {
+      "element": "User Profile Role",
+      "font": "Inter:Semi_Bold",
+      "size": "11px",
+      "weight": "600",
+      "color": "#4f5f7b"
+    }
+  ],
+  "colors": {
+    "verifiedVariables": [],
+    "observedRaw": [
+      {
+        "role": "Sidebar Background",
+        "value": "#f1f3ff"
+      },
+      {
+        "role": "Main Canvas Background",
+        "value": "#f9f9ff"
+      },
+      {
+        "role": "Active Nav Item Background",
+        "value": "#ffffff"
+      },
+      {
+        "role": "Active Nav Text",
+        "value": "#0052cc"
+      },
+      {
+        "role": "Inactive Nav Text",
+        "value": "#4f5f7b"
+      },
+      {
+        "role": "User Avatar Background",
+        "value": "#0052cc"
+      },
+      {
+        "role": "Logout Action",
+        "value": "#d92d20"
+      }
+    ]
+  },
+  "spacing": [
+    "256px (sidebar width)",
+    "64px (header height)",
+    "16px (item padding)",
+    "12px (item gap)",
+    "24px (canvas padding)"
+  ],
+  "bordersRadiusEffects": {
+    "radius": [
+      "8px (Nav active pill)",
+      "12px (Avatar rounded)",
+      "4px (Utility icons)"
+    ],
+    "shadows": [
+      "0px 1px 2px 0px rgba(0,0,0,0.05) (Header border / sidebar active card)"
+    ],
+    "borders": [
+      "1px solid rgba(195,198,214,0.3) (Header separator)"
+    ]
+  },
+  "textContent": [
+    "TASKLY",
+    "Projects",
+    "Project Epics",
+    "Project Tasks",
+    "Project Members",
+    "Project Details",
+    "Mahmoud Taha",
+    "PROJECT MANAGER",
+    "MT",
+    "Collapse",
+    "Logout"
+  ],
+  "patterns": [
+    "Header - Top Navigation",
+    "BottomNavBar"
+  ],
+  "assets": [
+    "Projects Folder Icon (SVG)",
+    "Epics Icon (SVG)",
+    "Tasks Icon (SVG)",
+    "Members Icon (SVG)",
+    "Details Icon (SVG)",
+    "Collapse Icon (SVG)",
+    "Logout Icon (SVG)"
+  ],
+  "states": [
+    {
+      "type": "Sidebar Expanded",
+      "source": "screen-preservation-plan"
+    }
+  ],
+  "relationships": {
+    "responsiveCounterpart": "1:401 (Layout Mobile Closed)",
+    "parentScreen": null
+  },
+  "observedRawValues": [
+    {
+      "role": "Sidebar Background",
+      "value": "#f1f3ff"
+    },
+    {
+      "role": "Main Canvas Background",
+      "value": "#f9f9ff"
+    },
+    {
+      "role": "Active Nav Item Background",
+      "value": "#ffffff"
+    },
+    {
+      "role": "Active Nav Text",
+      "value": "#0052cc"
+    },
+    {
+      "role": "Inactive Nav Text",
+      "value": "#4f5f7b"
+    },
+    {
+      "role": "User Avatar Background",
+      "value": "#0052cc"
+    },
+    {
+      "role": "Logout Action",
+      "value": "#d92d20"
+    }
+  ],
+  "limitations": [
+    "Figma MCP returns design tree JSX and reference styles; dynamic browser interaction states are documented factually from visual frame properties."
+  ],
+  "extraction": {
+    "method": "Figma Dev Mode MCP",
+    "designContextTool": "get_design_context",
+    "visualReferenceMethod": "Native Figma PNG export @1x"
+  },
+  "visualReference": {
+    "path": "reference.png",
+    "format": "PNG",
+    "source": "Native Figma export",
+    "scale": "1x",
+    "width": 1280,
+    "height": 1024,
+    "bytes": 25378,
+    "sha256": "8b921205f6c6ba59de17bd29d81709442038b40cacd20361852a8e45f83ccb75"
+  }
+}

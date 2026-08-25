@@ -1,0 +1,210 @@
+{
+  "identity": {
+    "canonicalKey": "members-list-desktop",
+    "name": "Project Members List (Desktop)",
+    "nodeId": "15:912",
+    "page": "0:1",
+    "device": "Desktop",
+    "productArea": "Members & Invitations",
+    "preservationPriority": "CRITICAL",
+    "stateType": "Populated Table"
+  },
+  "source": {
+    "figmaNodeId": "15:912",
+    "pageName": "Ready For Dev"
+  },
+  "dimensions": {
+    "figmaFrame": {
+      "width": 1280,
+      "height": 1024
+    }
+  },
+  "layout": {
+    "hierarchy": "Layout Shell -> Breadcrumbs (PROJECTS > PROJECT NAME > MEMBERS) -> Header (Title + '+ Invite Member' CTA) -> Members Table Container (Table Headers: MEMBER, ROLE, ACTIONS) -> Member Rows (Avatar, Name, Email, Role Badge [OWNER, ADMIN, MEMBER, VIEWER], More Actions Dots)"
+  },
+  "typography": [
+    {
+      "element": "Page Heading",
+      "font": "Inter:Bold",
+      "size": "30px",
+      "weight": "700",
+      "color": "#041b3c"
+    },
+    {
+      "element": "Table Header",
+      "font": "Inter:Bold",
+      "size": "11px",
+      "weight": "700",
+      "uppercase": true,
+      "color": "#737685"
+    },
+    {
+      "element": "Member Name",
+      "font": "Inter:Semi_Bold",
+      "size": "14px",
+      "weight": "600",
+      "color": "#041b3c"
+    },
+    {
+      "element": "Member Email",
+      "font": "Inter:Regular",
+      "size": "12px",
+      "weight": "400",
+      "color": "#737685"
+    },
+    {
+      "element": "Role Badge",
+      "font": "Inter:Bold",
+      "size": "10px",
+      "weight": "700",
+      "uppercase": true,
+      "color": "#ffffff"
+    }
+  ],
+  "colors": {
+    "verifiedVariables": [],
+    "observedRaw": [
+      {
+        "role": "Canvas Background",
+        "value": "#f9f9ff"
+      },
+      {
+        "role": "Table Container Background",
+        "value": "#ffffff"
+      },
+      {
+        "role": "Owner Badge Blue",
+        "value": "#0052cc"
+      },
+      {
+        "role": "Admin Badge Soft Blue",
+        "value": "#d7e2ff"
+      },
+      {
+        "role": "Member Badge Lavender",
+        "value": "#e8edff"
+      },
+      {
+        "role": "Viewer Badge Gray",
+        "value": "#f1f3ff"
+      },
+      {
+        "role": "Avatar Blue MT",
+        "value": "#d7e2ff"
+      },
+      {
+        "role": "Avatar Green SJ",
+        "value": "#69f0ae"
+      }
+    ]
+  },
+  "spacing": [
+    "32px (canvas padding)",
+    "24px (table padding)",
+    "16px (row vertical padding)",
+    "12px (avatar to text gap)"
+  ],
+  "bordersRadiusEffects": {
+    "radius": [
+      "8px (Table container)",
+      "12px (Role badge rounded pill)",
+      "8px (Avatar square rounded)"
+    ],
+    "shadows": [
+      "0px 1px 3px 0px rgba(4,27,60,0.05)"
+    ],
+    "borders": [
+      "1px solid rgba(195,198,214,0.3) (Row dividers)"
+    ]
+  },
+  "textContent": [
+    "PROJECTS > PROJECT NAME > MEMBERS",
+    "Project Members",
+    "+ Invite Member",
+    "MEMBER",
+    "ROLE",
+    "ACTIONS",
+    "Mahmoud Taha",
+    "mahmoud.taha.dev@gmail.com",
+    "OWNER",
+    "Sarah Jenkins",
+    "s.jenkins@workspace.com",
+    "ADMIN",
+    "David Lee",
+    "d.lee@workspace.com",
+    "MEMBER",
+    "Alisa Mayer",
+    "a.mayer@workspace.com",
+    "VIEWER"
+  ],
+  "patterns": [
+    "Header - Top Navigation",
+    "Button - Submit Action"
+  ],
+  "assets": [
+    "User Invite Plus Icon (SVG)",
+    "Vertical Actions Dots Icon (SVG)"
+  ],
+  "states": [
+    {
+      "type": "Populated Table",
+      "source": "screen-preservation-plan"
+    }
+  ],
+  "relationships": {
+    "responsiveCounterpart": "40:1119 (Project Members List Mobile)",
+    "parentScreen": null
+  },
+  "observedRawValues": [
+    {
+      "role": "Canvas Background",
+      "value": "#f9f9ff"
+    },
+    {
+      "role": "Table Container Background",
+      "value": "#ffffff"
+    },
+    {
+      "role": "Owner Badge Blue",
+      "value": "#0052cc"
+    },
+    {
+      "role": "Admin Badge Soft Blue",
+      "value": "#d7e2ff"
+    },
+    {
+      "role": "Member Badge Lavender",
+      "value": "#e8edff"
+    },
+    {
+      "role": "Viewer Badge Gray",
+      "value": "#f1f3ff"
+    },
+    {
+      "role": "Avatar Blue MT",
+      "value": "#d7e2ff"
+    },
+    {
+      "role": "Avatar Green SJ",
+      "value": "#69f0ae"
+    }
+  ],
+  "limitations": [
+    "Figma MCP returns design tree JSX and reference styles; dynamic browser interaction states are documented factually from visual frame properties."
+  ],
+  "extraction": {
+    "method": "Figma Dev Mode MCP",
+    "designContextTool": "get_design_context",
+    "visualReferenceMethod": "Native Figma PNG export @1x"
+  },
+  "visualReference": {
+    "path": "reference.png",
+    "format": "PNG",
+    "source": "Native Figma export",
+    "scale": "1x",
+    "width": 1280,
+    "height": 1024,
+    "bytes": 73420,
+    "sha256": "82829bc7553da1c5bec53ca23b21f3433f31c71f8bc4034789e29746394f99f4"
+  }
+}

@@ -1,0 +1,194 @@
+{
+  "identity": {
+    "canonicalKey": "tasks-board-desktop",
+    "name": "Project Tasks Board (Desktop)",
+    "nodeId": "58:3524",
+    "page": "0:1",
+    "device": "Desktop",
+    "productArea": "Tasks",
+    "preservationPriority": "CRITICAL",
+    "stateType": "Kanban Board View"
+  },
+  "source": {
+    "figmaNodeId": "58:3524",
+    "pageName": "Ready For Dev"
+  },
+  "dimensions": {
+    "figmaFrame": {
+      "width": 1280,
+      "height": 1024
+    }
+  },
+  "layout": {
+    "hierarchy": "Layout Shell -> Breadcrumbs & Page Header -> Workboard Control Area (Search, View Switcher: Board View) -> Horizontal Scrollable Kanban Columns Container -> Column Header (Status Dot, Label, Count, '+') -> '+ ADD NEW TASK' Slot -> Draggable Task Cards"
+  },
+  "typography": [
+    {
+      "element": "Header Title",
+      "font": "Inter:Bold",
+      "size": "30px",
+      "weight": "700",
+      "color": "#041b3c"
+    },
+    {
+      "element": "Column Header",
+      "font": "Inter:Bold",
+      "size": "12px",
+      "weight": "700",
+      "uppercase": true,
+      "color": "#4f5f7b"
+    },
+    {
+      "element": "Task Title",
+      "font": "Inter:Semi_Bold",
+      "size": "14px",
+      "weight": "600",
+      "lineHeight": "20px",
+      "color": "#041b3c"
+    },
+    {
+      "element": "Task Date / Tag",
+      "font": "Inter:Medium",
+      "size": "11px",
+      "weight": "500",
+      "color": "#737685"
+    }
+  ],
+  "colors": {
+    "verifiedVariables": [],
+    "observedRaw": [
+      {
+        "role": "Canvas Background",
+        "value": "#f9f9ff"
+      },
+      {
+        "role": "Column Background",
+        "value": "rgba(241,243,255,0.6)"
+      },
+      {
+        "role": "Task Card Background",
+        "value": "#ffffff"
+      },
+      {
+        "role": "Status Dot TO DO",
+        "value": "#8c97a7"
+      },
+      {
+        "role": "Status Dot IN PROGRESS",
+        "value": "#0052cc"
+      },
+      {
+        "role": "Status Dot BLOCKED",
+        "value": "#d92d20"
+      },
+      {
+        "role": "Task Delayed Warning",
+        "value": "#d92d20"
+      }
+    ]
+  },
+  "spacing": [
+    "24px (column gap)",
+    "16px (card inner padding)",
+    "12px (card vertical gap)",
+    "8px (badge padding)"
+  ],
+  "bordersRadiusEffects": {
+    "radius": [
+      "8px (Kanban column)",
+      "6px (Task card)",
+      "12px (Avatar icon)"
+    ],
+    "shadows": [
+      "0px 1px 2px 0px rgba(0,0,0,0.05) (Task card elevation)"
+    ],
+    "borders": [
+      "2px dashed rgba(195,198,214,0.4) (Add Task slot)",
+      "1px solid rgba(195,198,214,0.3)"
+    ]
+  },
+  "textContent": [
+    "PROJECTS > RAFIQ > TASKS",
+    "Active Workboard",
+    "Curating Project Alpha's production pipeline and milestones.",
+    "Search tasks...",
+    "Board View",
+    "TO DO 2",
+    "IN PROGRESS 1",
+    "BLOCKED 1",
+    "+ ADD NEW TASK",
+    "Incorporate stakeholder feedback from v1.2 Review",
+    "Interactive Prototype for Curator Dashboard",
+    "Sync external assets database to Curator core",
+    "DELAYED"
+  ],
+  "patterns": [
+    "Bento Grid Layout",
+    "Header - Top Navigation"
+  ],
+  "assets": [
+    "Search Icon (SVG)",
+    "Board View Switcher Icon (SVG)",
+    "Plus Icon (SVG)",
+    "Calendar Icon (SVG)",
+    "Warning Triangle Icon (SVG)"
+  ],
+  "states": [
+    {
+      "type": "Kanban Board View",
+      "source": "screen-preservation-plan"
+    }
+  ],
+  "relationships": {
+    "responsiveCounterpart": "67:118 (Project Tasks Mobile)",
+    "parentScreen": null
+  },
+  "observedRawValues": [
+    {
+      "role": "Canvas Background",
+      "value": "#f9f9ff"
+    },
+    {
+      "role": "Column Background",
+      "value": "rgba(241,243,255,0.6)"
+    },
+    {
+      "role": "Task Card Background",
+      "value": "#ffffff"
+    },
+    {
+      "role": "Status Dot TO DO",
+      "value": "#8c97a7"
+    },
+    {
+      "role": "Status Dot IN PROGRESS",
+      "value": "#0052cc"
+    },
+    {
+      "role": "Status Dot BLOCKED",
+      "value": "#d92d20"
+    },
+    {
+      "role": "Task Delayed Warning",
+      "value": "#d92d20"
+    }
+  ],
+  "limitations": [
+    "Figma MCP returns design tree JSX and reference styles; dynamic browser interaction states are documented factually from visual frame properties."
+  ],
+  "extraction": {
+    "method": "Figma Dev Mode MCP",
+    "designContextTool": "get_design_context",
+    "visualReferenceMethod": "Native Figma PNG export @1x"
+  },
+  "visualReference": {
+    "path": "reference.png",
+    "format": "PNG",
+    "source": "Native Figma export",
+    "scale": "1x",
+    "width": 1280,
+    "height": 1024,
+    "bytes": 76118,
+    "sha256": "6b83e7b6c93baf81844abe7b6808f3e209ca0eec28531c748495bb3a20ab60d7"
+  }
+}

@@ -1,0 +1,198 @@
+{
+  "identity": {
+    "canonicalKey": "calendar-analytics-desktop",
+    "name": "Tasks Calendar & Project Analytics (Desktop)",
+    "nodeId": "6831:873",
+    "page": "0:1",
+    "device": "Desktop",
+    "productArea": "Calendar & Analytics",
+    "preservationPriority": "CRITICAL",
+    "stateType": "Default"
+  },
+  "source": {
+    "figmaNodeId": "6831:873",
+    "pageName": "Ready For Dev"
+  },
+  "dimensions": {
+    "figmaFrame": {
+      "width": 1280,
+      "height": 1268
+    }
+  },
+  "layout": {
+    "hierarchy": "Layout Shell -> Header Section (Weekly Planner) -> Filters Bar (Week Navigator, Project Selector, Status Selector) -> 3 Metric Summary Cards (Total Tasks: 24, Completed Tasks: 15, Overdue Tasks: 3) -> 7-Day Weekly Calendar Grid (Sun-Sat with task status counts) -> Bottom Analytics Row (Tasks by Status Doughnut Chart + All Projects Overview Table)"
+  },
+  "typography": [
+    {
+      "element": "Page Heading",
+      "font": "Inter:Bold",
+      "size": "30px",
+      "weight": "700",
+      "color": "#041b3c"
+    },
+    {
+      "element": "Metric Number",
+      "font": "Inter:Bold",
+      "size": "32px",
+      "weight": "700",
+      "color": "#041b3c"
+    },
+    {
+      "element": "Metric Label",
+      "font": "Inter:Bold",
+      "size": "11px",
+      "weight": "700",
+      "uppercase": true,
+      "color": "#737685"
+    },
+    {
+      "element": "Day Column Header",
+      "font": "Inter:Bold",
+      "size": "16px",
+      "weight": "700",
+      "color": "#041b3c"
+    },
+    {
+      "element": "Chart Total Label",
+      "font": "Inter:Bold",
+      "size": "24px",
+      "weight": "700",
+      "color": "#041b3c"
+    }
+  ],
+  "colors": {
+    "verifiedVariables": [],
+    "observedRaw": [
+      {
+        "role": "Canvas Background",
+        "value": "#f9f9ff"
+      },
+      {
+        "role": "Metric Card Background",
+        "value": "#ffffff"
+      },
+      {
+        "role": "Calendar Today Border",
+        "value": "#0052cc"
+      },
+      {
+        "role": "Doughnut In Progress",
+        "value": "#0052cc"
+      },
+      {
+        "role": "Doughnut Done",
+        "value": "#0a5c36"
+      },
+      {
+        "role": "Doughnut Blocked",
+        "value": "#b42318"
+      },
+      {
+        "role": "Overdue Text Red",
+        "value": "#d92d20"
+      }
+    ]
+  },
+  "spacing": [
+    "32px (canvas padding)",
+    "24px (grid & card gap)",
+    "16px (card inner padding)",
+    "8px (calendar day gap)"
+  ],
+  "bordersRadiusEffects": {
+    "radius": [
+      "8px (Metric & chart cards)",
+      "6px (Calendar day column)",
+      "12px (Summary icon rounded)"
+    ],
+    "shadows": [
+      "0px 1px 3px 0px rgba(4,27,60,0.05)"
+    ],
+    "borders": [
+      "2px solid #0052cc (Today calendar column highlight)",
+      "1px solid rgba(195,198,214,0.3)"
+    ]
+  },
+  "textContent": [
+    "Weekly Planner",
+    "Manage your deadlines and track team velocity.",
+    "May 11 - May 17, 2025",
+    "All Projects",
+    "All Statuses",
+    "TOTAL TASKS 24",
+    "COMPLETED TASKS 15",
+    "OVERDUE TASKS 3",
+    "WED 14 May TODAY",
+    "Tasks by Status",
+    "All Projects"
+  ],
+  "patterns": [
+    "Bento Grid Layout",
+    "Header - Top Navigation"
+  ],
+  "assets": [
+    "Clipboard Task Icon (SVG)",
+    "Checkmark Icon (SVG)",
+    "Warning Icon (SVG)",
+    "Calendar Icon (SVG)",
+    "Chevron Dropdown Icon (SVG)"
+  ],
+  "states": [
+    {
+      "type": "Default",
+      "source": "screen-preservation-plan"
+    }
+  ],
+  "relationships": {
+    "responsiveCounterpart": "6831:2510 (Tasks Calendar & Analytics Mobile)",
+    "parentScreen": null
+  },
+  "observedRawValues": [
+    {
+      "role": "Canvas Background",
+      "value": "#f9f9ff"
+    },
+    {
+      "role": "Metric Card Background",
+      "value": "#ffffff"
+    },
+    {
+      "role": "Calendar Today Border",
+      "value": "#0052cc"
+    },
+    {
+      "role": "Doughnut In Progress",
+      "value": "#0052cc"
+    },
+    {
+      "role": "Doughnut Done",
+      "value": "#0a5c36"
+    },
+    {
+      "role": "Doughnut Blocked",
+      "value": "#b42318"
+    },
+    {
+      "role": "Overdue Text Red",
+      "value": "#d92d20"
+    }
+  ],
+  "limitations": [
+    "Figma MCP returns design tree JSX and reference styles; dynamic browser interaction states are documented factually from visual frame properties."
+  ],
+  "extraction": {
+    "method": "Figma Dev Mode MCP",
+    "designContextTool": "get_design_context",
+    "visualReferenceMethod": "Native Figma PNG export @1x"
+  },
+  "visualReference": {
+    "path": "reference.png",
+    "format": "PNG",
+    "source": "Native Figma export",
+    "scale": "1x",
+    "width": 1280,
+    "height": 1268,
+    "bytes": 111704,
+    "sha256": "fedb78a9c5dd95f9b19d8e46e363f10a76588ac7be997fd7b0142abe6a3cce77"
+  }
+}
