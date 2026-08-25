@@ -1,7 +1,7 @@
 # Taskly Design Asset Preservation
 
 ## Preservation Status
-PARTIAL — Batches A, B and C complete
+PARTIAL — Batches A, B, C and D complete
 
 ## Preservation Model
 Figma native export
@@ -11,18 +11,18 @@ Figma native export
 → local manifest
 
 ## Preservation Policy Clarification
-During preservation, native Figma exports are retained as separate physical files unless physical deduplication is explicitly performed and documented. Identical SHA-256 values establish content identity but do not by themselves mean that physical files were merged. Therefore, **physical file count** (29) and **unique hash count** (28) are tracked as separate metrics.
+During preservation, native Figma exports are retained as separate physical files unless physical deduplication is explicitly performed and documented. Identical SHA-256 values establish content identity but do not by themselves mean that physical files were merged. Therefore, **physical file count** (41) and **unique hash count** (40) are tracked as separate metrics.
 
 ## Global Planning Counts
 * Documented references: 38
 * Confirmed visual-audit new candidates: 3
 * Excluded screenshot-derived candidates: 2
 * Minimum physical export units: 43
-* Processed export units: 29
-* Physical permanent SVG files: 29
-* Unique SHA-256 values: 28
+* Processed export units: 41
+* Physical permanent SVG files: 41
+* Unique SHA-256 values: 40
 * Duplicate logical/content relationships: 1
-* Remaining export units: 14
+* Remaining export units: 2
 
 *(Note: 43 is the minimum physical export-unit count across the full design, NOT the final unique-file count).*
 
@@ -78,6 +78,22 @@ During preservation, native Figma exports are retained as separate physical file
   2. `icon-pagination-right` (`Pagination Arrow Right Icon`)
 * **Board View Switcher Icon (`asset-cand-37`)**: Resolved as 1 confirmed physical export unit (`icon-list-view`, `List View Switcher Icon`). The previously inferred Kanban board toggle icon was not confirmed in Figma manual inspection and is excluded.
 
+## Batch D — Style Guide Domain Icons
+| ID | Asset Name | Category | Local Path | Size (Bytes) | SHA-256 | Source Screen | Source Frame | Duplicate Note |
+| :--- | :--- | :--- | :--- | :---: | :--- | :--- | :---: | :--- |
+| `icon-dashboard` | Dashboard Icon | domain-badge | `files/svg/domain/icon-dashboard.svg` | 260 | `66d330207444dd0539b7e9b7cb5e59a55e162685458935a2526dfe88538afbe0` | design-style-guide | `76:1757` | None |
+| `icon-monitoring` | Monitoring Icon | domain-badge | `files/svg/domain/icon-monitoring.svg` | 490 | `0b63434b2913f0d60fd5818b34d66c44b6b02497b2018d7427f44969e00360a4` | design-style-guide | `76:1757` | None |
+| `icon-inventory` | Inventory Icon | domain-badge | `files/svg/domain/icon-inventory.svg` | 632 | `c2ceb502505b8351556680bd39af822123c35cca29cdf522f7e5141ef1c6b6c9` | design-style-guide | `76:1757` | None |
+| `icon-groups` | Groups Icon | domain-badge | `files/svg/domain/icon-groups.svg` | 2264 | `241c6e5d7d0a3a6ae2cf0f7e7aaa07141f047775cf4db7b0db2caf5666bebc96` | design-style-guide | `76:1757` | None |
+| `icon-description` | Description Icon | domain-badge | `files/svg/domain/icon-description.svg` | 431 | `c4a3a5dbf305a79853fd472f0b5c7798ee853f35cc39e868cc1884846220a9ad` | design-style-guide | `76:1757` | None |
+| `icon-mail` | Mail Icon | domain-badge | `files/svg/domain/icon-mail.svg` | 482 | `8c8fca06ad002e5e5403bb6cc6ce5a79e3f29350b91e43cd63e183dda3551260` | design-style-guide | `76:1757` | None |
+| `icon-event` | Event Icon | domain-badge | `files/svg/domain/icon-event.svg` | 764 | `59538c706b28fdcf3b67bde115075d33d579cbb25a484e09c5df585870593d5d` | design-style-guide | `76:1757` | None |
+| `icon-settings` | Settings Icon | domain-badge | `files/svg/domain/icon-settings.svg` | 2167 | `516ebc8c4abb883e61feadc191e8b7ed52593c91e4feea1263506d478bf2ff24` | design-style-guide | `76:1757` | None |
+| `icon-shield` | Shield Icon | domain-badge | `files/svg/domain/icon-shield.svg` | 484 | `2bb9bac5843a356e4e4997d3258477f3f13e93d4c5cfcdfe4381bdc2aa965b36` | design-style-guide | `76:1757` | None |
+| `icon-hub` | Hub Icon | domain-badge | `files/svg/domain/icon-hub.svg` | 4222 | `e5179b460083bb8d36bcd15f857d1b8e950d66ea1aa69fa047c0c3776681f9ae` | design-style-guide | `76:1757` | None |
+| `icon-rocket` | Rocket Icon | domain-badge | `files/svg/domain/icon-rocket.svg` | 2346 | `91b464b768d27bfee262d472aa01b682d000c18456e8ed2710bd3872bd17e032` | design-style-guide | `76:1757` | None |
+| `icon-architecture` | Architecture Icon | domain-badge | `files/svg/domain/icon-architecture.svg` | 996 | `74e90a34be6a86d083f59126b8cb9c53c19acf9f5cfb4a99ac5da6bfdad369ac` | design-style-guide | `76:1757` | None |
+
 ## Excluded Visual Candidates (False Positives)
 1. **Mobile Close Drawer (X) Icon**:
    * Source screen: `layout-mobile-open` (`1:553`)
@@ -89,10 +105,10 @@ During preservation, native Figma exports are retained as separate physical file
    * Rationale: Inferred from screenshot view switcher container, but direct manual inspection in Figma did not confirm a standalone Kanban icon.
 
 ## Duplicate Findings & Storage Model
-* **Processed export units (Batch A + B + C)**: 29
-* **Physical permanent SVG files**: 29
-* **Unique SHA-256 values**: 28
-* **Duplicate content relationships**: 1
+* **Processed export units (Batch A + B + C + D)**: 41
+* **Physical permanent SVG files**: 41
+* **Unique SHA-256 values**: 40
+* **Duplicate content relationships**: 0
 * **Warning Triangle Icon (`icon-warning-triangle`) vs Warning / Alert Icon (`icon-warning-alert`)**:
   * Exported from different design contexts as two separate native files (`unit-26-warning-triangle.svg` from Tasks Board vs `unit-29-warning-alert.svg` from Calendar & Analytics).
   * Their exported bytes are identical (`90458dfa4fb3a79c1c5fabc34ad1ad24118399acc627aa220963248c18b4e1c9`).
@@ -100,8 +116,7 @@ During preservation, native Figma exports are retained as separate physical file
   * No physical deduplication was applied.
 
 ## Remaining Asset Batches
-* **Batch D**: Style Guide Domain Badges (~12 export units)
-* **Batch E**: Empty State Illustrations (~2 export units)
+* **Batch E**: Empty State Illustrations (2 confirmed planned export units)
 
 ## Font Dependency
 * **Inter**: Documented external web dependency (loaded via Next.js Google Fonts integration). Font binaries are intentionally not vendored in the repository.

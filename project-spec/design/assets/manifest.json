@@ -5,10 +5,10 @@
   "visualAuditNewCandidateCount": 3,
   "excludedVisualCandidateCount": 2,
   "minimumPhysicalExportUnits": 43,
-  "exportedCandidateCount": 29,
-  "uniqueFileCount": 29,
+  "exportedCandidateCount": 41,
+  "uniqueFileCount": 41,
   "duplicateReferenceCount": 1,
-  "unresolvedCandidateCount": 14,
+  "unresolvedCandidateCount": 2,
   "fontDependencies": [
     {
       "family": "Inter",
@@ -613,6 +613,246 @@
       "originalExportFilename": "unit-31-chevron-dropdown.svg",
       "extractionMethod": "Native Figma export",
       "status": "PRESERVED"
+    },
+    {
+      "id": "icon-dashboard",
+      "name": "Dashboard Icon",
+      "type": "svg-icon",
+      "category": "domain-badge",
+      "format": "SVG",
+      "localPath": "files/svg/domain/icon-dashboard.svg",
+      "bytes": 260,
+      "sha256": "66d330207444dd0539b7e9b7cb5e59a55e162685458935a2526dfe88538afbe0",
+      "sourceFrameNodes": [
+        "76:1757"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "design-style-guide"
+      ],
+      "originalExportFilename": "unit-34-dashboard.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-monitoring",
+      "name": "Monitoring Icon",
+      "type": "svg-icon",
+      "category": "domain-badge",
+      "format": "SVG",
+      "localPath": "files/svg/domain/icon-monitoring.svg",
+      "bytes": 490,
+      "sha256": "0b63434b2913f0d60fd5818b34d66c44b6b02497b2018d7427f44969e00360a4",
+      "sourceFrameNodes": [
+        "76:1757"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "design-style-guide"
+      ],
+      "originalExportFilename": "unit-35-monitoring.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-inventory",
+      "name": "Inventory Icon",
+      "type": "svg-icon",
+      "category": "domain-badge",
+      "format": "SVG",
+      "localPath": "files/svg/domain/icon-inventory.svg",
+      "bytes": 632,
+      "sha256": "c2ceb502505b8351556680bd39af822123c35cca29cdf522f7e5141ef1c6b6c9",
+      "sourceFrameNodes": [
+        "76:1757"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "design-style-guide"
+      ],
+      "originalExportFilename": "unit-36-inventory.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-groups",
+      "name": "Groups Icon",
+      "type": "svg-icon",
+      "category": "domain-badge",
+      "format": "SVG",
+      "localPath": "files/svg/domain/icon-groups.svg",
+      "bytes": 2264,
+      "sha256": "241c6e5d7d0a3a6ae2cf0f7e7aaa07141f047775cf4db7b0db2caf5666bebc96",
+      "sourceFrameNodes": [
+        "76:1757"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "design-style-guide"
+      ],
+      "originalExportFilename": "unit-37-groups.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-description",
+      "name": "Description Icon",
+      "type": "svg-icon",
+      "category": "domain-badge",
+      "format": "SVG",
+      "localPath": "files/svg/domain/icon-description.svg",
+      "bytes": 431,
+      "sha256": "c4a3a5dbf305a79853fd472f0b5c7798ee853f35cc39e868cc1884846220a9ad",
+      "sourceFrameNodes": [
+        "76:1757"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "design-style-guide"
+      ],
+      "originalExportFilename": "unit-38-description.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-mail",
+      "name": "Mail Icon",
+      "type": "svg-icon",
+      "category": "domain-badge",
+      "format": "SVG",
+      "localPath": "files/svg/domain/icon-mail.svg",
+      "bytes": 482,
+      "sha256": "8c8fca06ad002e5e5403bb6cc6ce5a79e3f29350b91e43cd63e183dda3551260",
+      "sourceFrameNodes": [
+        "76:1757"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "design-style-guide"
+      ],
+      "originalExportFilename": "unit-39-mail.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-event",
+      "name": "Event Icon",
+      "type": "svg-icon",
+      "category": "domain-badge",
+      "format": "SVG",
+      "localPath": "files/svg/domain/icon-event.svg",
+      "bytes": 764,
+      "sha256": "59538c706b28fdcf3b67bde115075d33d579cbb25a484e09c5df585870593d5d",
+      "sourceFrameNodes": [
+        "76:1757"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "design-style-guide"
+      ],
+      "originalExportFilename": "unit-40-event.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-settings",
+      "name": "Settings Icon",
+      "type": "svg-icon",
+      "category": "domain-badge",
+      "format": "SVG",
+      "localPath": "files/svg/domain/icon-settings.svg",
+      "bytes": 2167,
+      "sha256": "516ebc8c4abb883e61feadc191e8b7ed52593c91e4feea1263506d478bf2ff24",
+      "sourceFrameNodes": [
+        "76:1757"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "design-style-guide"
+      ],
+      "originalExportFilename": "unit-41-settings.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-shield",
+      "name": "Shield Icon",
+      "type": "svg-icon",
+      "category": "domain-badge",
+      "format": "SVG",
+      "localPath": "files/svg/domain/icon-shield.svg",
+      "bytes": 484,
+      "sha256": "2bb9bac5843a356e4e4997d3258477f3f13e93d4c5cfcdfe4381bdc2aa965b36",
+      "sourceFrameNodes": [
+        "76:1757"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "design-style-guide"
+      ],
+      "originalExportFilename": "unit-42-shield.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-hub",
+      "name": "Hub Icon",
+      "type": "svg-icon",
+      "category": "domain-badge",
+      "format": "SVG",
+      "localPath": "files/svg/domain/icon-hub.svg",
+      "bytes": 4222,
+      "sha256": "e5179b460083bb8d36bcd15f857d1b8e950d66ea1aa69fa047c0c3776681f9ae",
+      "sourceFrameNodes": [
+        "76:1757"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "design-style-guide"
+      ],
+      "originalExportFilename": "unit-43-hub.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-rocket",
+      "name": "Rocket Icon",
+      "type": "svg-icon",
+      "category": "domain-badge",
+      "format": "SVG",
+      "localPath": "files/svg/domain/icon-rocket.svg",
+      "bytes": 2346,
+      "sha256": "91b464b768d27bfee262d472aa01b682d000c18456e8ed2710bd3872bd17e032",
+      "sourceFrameNodes": [
+        "76:1757"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "design-style-guide"
+      ],
+      "originalExportFilename": "unit-44-rocket.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
+    },
+    {
+      "id": "icon-architecture",
+      "name": "Architecture Icon",
+      "type": "svg-icon",
+      "category": "domain-badge",
+      "format": "SVG",
+      "localPath": "files/svg/domain/icon-architecture.svg",
+      "bytes": 996,
+      "sha256": "74e90a34be6a86d083f59126b8cb9c53c19acf9f5cfb4a99ac5da6bfdad369ac",
+      "sourceFrameNodes": [
+        "76:1757"
+      ],
+      "assetLeafNodeIds": [],
+      "sourceScreens": [
+        "design-style-guide"
+      ],
+      "originalExportFilename": "unit-45-architecture.svg",
+      "extractionMethod": "Native Figma export",
+      "status": "PRESERVED"
     }
   ],
   "excludedCandidates": [
@@ -640,5 +880,5 @@
     "44 is the current minimum physical export-unit count across the design system, not the final unique asset count.",
     "Final unique physical asset count will be established after all batches undergo SHA-256 byte deduplication."
   ],
-  "uniqueHashCount": 28
+  "uniqueHashCount": 40
 }
