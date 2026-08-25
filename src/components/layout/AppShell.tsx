@@ -21,6 +21,8 @@ export function AppShell({ children }: AppShellProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState<string | null>(null);
   const [userMetadata, setUserMetadata] = useState<UserMetadataState>({
     name: "",
     jobTitle: "",
@@ -62,6 +64,25 @@ export function AppShell({ children }: AppShellProps) {
     };
   }, [router]);
 
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    setLogoutError(null);
+
+    try {
+      const { error } = await AuthService.logout();
+      if (error) {
+        setLogoutError("Logout failed, please try again.");
+        setIsLoggingOut(false);
+      } else {
+        router.replace("/login");
+      }
+    } catch {
+      setLogoutError("Logout failed, please try again.");
+      setIsLoggingOut(false);
+    }
+  };
+
   if (isLoadingUser) {
     return (
       <div className="min-h-screen bg-[#f9f9ff] flex items-center justify-center">
@@ -76,6 +97,8 @@ export function AppShell({ children }: AppShellProps) {
       <Sidebar
         isCollapsed={isCollapsed}
         onToggleCollapse={() => setIsCollapsed((prev) => !prev)}
+        onLogout={handleLogout}
+        isLoggingOut={isLoggingOut}
       />
 
       {/* Mobile Navigation Drawer */}
@@ -84,6 +107,8 @@ export function AppShell({ children }: AppShellProps) {
         onClose={() => setIsMobileOpen(false)}
         userName={userMetadata.name}
         jobTitle={userMetadata.jobTitle}
+        onLogout={handleLogout}
+        isLoggingOut={isLoggingOut}
       />
 
       {/* Main Column */}
@@ -93,7 +118,25 @@ export function AppShell({ children }: AppShellProps) {
           userName={userMetadata.name}
           jobTitle={userMetadata.jobTitle}
           onMenuClick={() => setIsMobileOpen(true)}
+          onLogout={handleLogout}
+          isLoggingOut={isLoggingOut}
         />
+
+        {/* Global Error Banner for App Shell */}
+        {logoutError && (
+          <div className="bg-[#fee4e2] border-b border-[#f04438] px-4 lg:px-8 py-3 flex items-center justify-between shrink-0 z-10">
+            <span className="text-[#d92d20] text-[14px] font-semibold">
+              {logoutError}
+            </span>
+            <button
+              onClick={() => setLogoutError(null)}
+              className="text-[#d92d20] hover:text-[#b42318] focus:outline-none"
+              aria-label="Dismiss error"
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         {/* Main Content Area Canvas */}
         <main className="flex-1 p-4 lg:p-8 overflow-y-auto">{children}</main>

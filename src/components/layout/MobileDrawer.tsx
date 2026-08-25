@@ -8,6 +8,8 @@ export interface MobileDrawerProps {
   onClose: () => void;
   userName?: string;
   jobTitle?: string;
+  onLogout?: () => void;
+  isLoggingOut?: boolean;
 }
 
 export function MobileDrawer({
@@ -15,6 +17,8 @@ export function MobileDrawer({
   onClose,
   userName,
   jobTitle,
+  onLogout,
+  isLoggingOut,
 }: MobileDrawerProps) {
   if (!isOpen) return null;
 
@@ -164,7 +168,9 @@ export function MobileDrawer({
 
           <button
             type="button"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-[8px] text-[14px] font-semibold text-[#d92d20] hover:bg-red-50/50 transition-all text-left w-full"
+            onClick={onLogout}
+            disabled={isLoggingOut}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-[8px] text-[14px] font-semibold text-[#d92d20] hover:bg-red-50/50 transition-all text-left w-full disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Image
               src="/assets/svg/icons/icon-logout.svg"
@@ -174,7 +180,7 @@ export function MobileDrawer({
               className="shrink-0"
               aria-hidden="true"
             />
-            <span>Logout</span>
+            <span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
           </button>
         </div>
       </div>

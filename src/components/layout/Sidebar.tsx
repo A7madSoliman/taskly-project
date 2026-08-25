@@ -5,9 +5,16 @@ import Image from "next/image";
 export interface SidebarProps {
   isCollapsed: boolean;
   onToggleCollapse: () => void;
+  onLogout?: () => void;
+  isLoggingOut?: boolean;
 }
 
-export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
+export function Sidebar({
+  isCollapsed,
+  onToggleCollapse,
+  onLogout,
+  isLoggingOut,
+}: SidebarProps) {
   return (
     <aside
       className={`hidden lg:flex flex-col bg-[#f1f3ff] border-r border-[rgba(195,198,214,0.3)] shrink-0 transition-all duration-200 h-screen sticky top-0 ${
@@ -135,7 +142,9 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
         {/* Visual Logout Button (Functionality deferred to TM-08) */}
         <button
           type="button"
-          className={`flex items-center gap-3 px-3 py-3 rounded-[8px] text-[14px] font-semibold text-[#d92d20] hover:bg-red-50/50 transition-all text-left w-full ${
+          onClick={onLogout}
+          disabled={isLoggingOut}
+          className={`flex items-center gap-3 px-3 py-3 rounded-[8px] text-[14px] font-semibold text-[#d92d20] hover:bg-red-50/50 transition-all text-left w-full disabled:opacity-50 disabled:cursor-not-allowed ${
             isCollapsed ? "justify-center px-0" : ""
           }`}
           title="Logout"
@@ -148,7 +157,9 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
             className="shrink-0"
             aria-hidden="true"
           />
-          {!isCollapsed && <span>Logout</span>}
+          {!isCollapsed && (
+            <span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
+          )}
         </button>
 
         {/* Collapse / Expand Toggle */}

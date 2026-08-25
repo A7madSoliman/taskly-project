@@ -66,10 +66,7 @@ export const AuthService = {
   getSession: async () => {
     return supabase.auth.getSession();
   },
-  logout: async (token: string) => {
-    return fetch(`${SUPABASE_URL}/auth/v1/logout`, {
-      method: "POST",
-      headers: getHeaders(token),
-    });
+  logout: async () => {
+    return supabase.auth.signOut();
   },
 };
