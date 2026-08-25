@@ -8,8 +8,21 @@ export interface Project {
   created_at: string;
 }
 
+export interface GetProjectsOptions {
+  page?: number;
+  limit?: number;
+}
+
 export const ProjectsService = {
-  getAll: async () => {
+  getAll: async (options?: GetProjectsOptions) => {
+    if (options?.limit) {
+      const page = options.page || 1;
+      const from = (page - 1) * options.limit;
+      const to = from + options.limit - 1;
+      return supabase
+        .rpc("get_projects", {}, { count: "exact" })
+        .range(from, to);
+    }
     return supabase.rpc("get_projects");
   },
   create: async (data: { name: string; description?: string }) => {
