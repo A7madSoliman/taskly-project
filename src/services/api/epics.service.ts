@@ -8,6 +8,24 @@ export interface NewEpicInput {
   deadline: string | null;
 }
 
+export interface EpicUser {
+  sub: string;
+  name: string;
+  email: string;
+  department: string;
+}
+
+export interface ProjectEpic {
+  id: string;
+  epic_id: string;
+  title: string;
+  description: string | null;
+  deadline: string | null;
+  created_at: string;
+  created_by: EpicUser | null;
+  assignee: EpicUser | null;
+}
+
 export const EpicsService = {
   create: async (projectId: string, data: NewEpicInput) => {
     return supabase.from("epics").insert({
@@ -18,19 +36,13 @@ export const EpicsService = {
       deadline: data.deadline,
     });
   },
-  getByProject: async (
-    token: string,
-    projectId: string,
-    limit = 10,
-    offset = 0
-  ) => {
-    return fetch(
-      `${SUPABASE_URL}/rest/v1/project_epics?project_id=eq.${projectId}&limit=${limit}&offset=${offset}`,
-      {
-        method: "GET",
-        headers: { ...getHeaders(token), Prefer: "count=exact" },
-      }
-    );
+  getByProject: async (projectId: string) => {
+    return supabase
+      .from("project_epics")
+      .select(
+        "id, epic_id, title, description, deadline, created_at, created_by, assignee"
+      )
+      .eq("project_id", projectId);
   },
   getDetails: async (token: string, projectId: string, epicId: string) => {
     return fetch(
