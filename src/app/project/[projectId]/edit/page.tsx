@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
 import { ProjectsService } from "@/services/api/projects.service";
+import { Lightbulb, SquarePen } from "lucide-react";
 
 type PreloadStatus = "loading" | "error" | "not-found" | "ready";
 
@@ -251,7 +252,8 @@ export default function ProjectEditPage() {
           <div className="hidden lg:block mb-6">
             <div className="text-[11px] font-bold text-slate-400 uppercase tracking-[1px] mb-2">
               Projects <span className="text-slate-300 mx-1">›</span> Project
-              Title <span className="text-slate-300 mx-1">›</span> Edit
+              Title <span className="text-slate-300 mx-1">›</span>{" "}
+              <span className="font-bold text-[#0052cc]">Edit</span>
             </div>
             <h1 className="text-[32px] font-bold text-[#041b3c] tracking-[-0.5px]">
               Edit Project
@@ -263,10 +265,18 @@ export default function ProjectEditPage() {
             {feedbackBanners}
             <form onSubmit={handleSubmit} className="p-8 flex flex-col gap-6">
               {/* Card Header */}
-              <div className="pb-6 border-b border-[rgba(195,198,214,0.2)]">
-                <h2 className="text-[18px] font-bold text-[#041b3c]">
-                  Edit Project
-                </h2>
+              <div className="flex items-start gap-4 pb-6 border-b border-[rgba(195,198,214,0.2)]">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[8px] bg-[#e3e9ff] text-[#0052cc]">
+                  <SquarePen size={22} strokeWidth={1.9} aria-hidden="true" />
+                </span>
+                <div>
+                  <h2 className="text-[18px] font-bold leading-6 text-[#041b3c]">
+                    Edit Project
+                  </h2>
+                  <p className="mt-1 text-[14px] leading-5 text-[#737685]">
+                    Define the scope and foundational details of your project.
+                  </p>
+                </div>
               </div>
 
               {formFields}
@@ -277,7 +287,7 @@ export default function ProjectEditPage() {
                   href="/project"
                   className="text-[14px] font-bold text-slate-500 hover:text-slate-800 transition-colors focus:outline-none focus:underline"
                 >
-                  Cancel
+                  Back
                 </Link>
                 <Button
                   type="submit"
@@ -289,6 +299,19 @@ export default function ProjectEditPage() {
                 </Button>
               </div>
             </form>
+            <div className="flex items-center gap-3 border-t border-[rgba(195,198,214,0.25)] bg-[#f7f8ff] px-8 py-5 text-[13px] leading-5 text-[#4f5f7b]">
+              <Lightbulb
+                size={19}
+                strokeWidth={1.9}
+                className="shrink-0 text-[#0052cc]"
+                aria-hidden="true"
+              />
+              <p>
+                <span className="font-semibold text-[#041b3c]">Pro Tip:</span>{" "}
+                You can invite project members and assign epics immediately
+                after the initial creation process.
+              </p>
+            </div>
           </div>
 
           {/* Mobile Design Container (Flat Layout) — MINIMAL RESPONSIVE ENGINEERING ADAPTATION */}
@@ -314,7 +337,7 @@ export default function ProjectEditPage() {
                   href="/project"
                   className="text-[14px] font-bold text-[#0052cc] hover:text-[#003d99] transition-colors py-2 text-center focus:outline-none focus:underline"
                 >
-                  Cancel
+                  Back
                 </Link>
               </div>
             </form>

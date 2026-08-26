@@ -30,6 +30,7 @@ export function MemberRow({ member }: MemberRowProps) {
   const initials = getInitials(name);
   const roleLabel = member.role ? member.role.toUpperCase() : "";
   const badgeClass = getRoleBadgeClass(member.role || "");
+  const isOwner = member.role?.toLowerCase() === "owner";
 
   return (
     <>
@@ -62,21 +63,25 @@ export function MemberRow({ member }: MemberRowProps) {
             {roleLabel}
           </span>
         </td>
-        <td className="px-6 py-4 text-right">
-          <button
-            type="button"
-            className="text-[#737685] p-1 hover:text-[#041b3c] transition-colors cursor-default"
-            aria-label={`Actions for ${name || "member"}`}
-          >
-            <Image
-              src="/assets/svg/icons/icon-vertical-actions.svg"
-              alt=""
-              width={4}
-              height={16}
-              className="w-1 h-4"
-              aria-hidden="true"
-            />
-          </button>
+        <td className="px-9 py-4 text-right">
+          {!isOwner && (
+            <button
+              type="button"
+              tabIndex={-1}
+              aria-disabled="true"
+              className="pointer-events-none p-1 text-[#737685]"
+              aria-label={`Actions for ${name || "member"} (not available yet)`}
+            >
+              <Image
+                src="/assets/svg/icons/icon-vertical-actions.svg"
+                alt=""
+                width={4}
+                height={16}
+                className="h-4 w-1"
+                aria-hidden="true"
+              />
+            </button>
+          )}
         </td>
       </tr>
     </>
@@ -89,6 +94,7 @@ export function MemberCard({ member }: MemberRowProps) {
   const initials = getInitials(name);
   const roleLabel = member.role ? member.role.toUpperCase() : "";
   const badgeClass = getRoleBadgeClass(member.role || "");
+  const isOwner = member.role?.toLowerCase() === "owner";
 
   return (
     <div className="bg-white rounded-[8px] border border-[rgba(195,198,214,0.3)] shadow-[0px_1px_3px_0px_rgba(4,27,60,0.05)] p-4 flex items-center gap-3">
@@ -111,6 +117,24 @@ export function MemberCard({ member }: MemberRowProps) {
       >
         {roleLabel}
       </span>
+      {!isOwner && (
+        <button
+          type="button"
+          tabIndex={-1}
+          aria-disabled="true"
+          className="pointer-events-none ml-1 p-1 text-[#737685]"
+          aria-label={`Actions for ${name || "member"} (not available yet)`}
+        >
+          <Image
+            src="/assets/svg/icons/icon-vertical-actions.svg"
+            alt=""
+            width={4}
+            height={16}
+            className="h-4 w-1"
+            aria-hidden="true"
+          />
+        </button>
+      )}
     </div>
   );
 }

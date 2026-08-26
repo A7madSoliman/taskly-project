@@ -223,6 +223,118 @@ export default function NewEpicPage() {
     </>
   );
 
+  const desktopFormFields = (
+    <div className="flex flex-col gap-6">
+      <div className="grid grid-cols-[160px_minmax(0,1fr)] items-start gap-6">
+        <label
+          htmlFor="epic-title-desktop"
+          className="pt-4 text-[11px] font-bold uppercase tracking-[0.55px] text-slate-700"
+        >
+          TITLE <span className="text-error">*</span>
+        </label>
+        <div>
+          <input
+            id="epic-title-desktop"
+            placeholder="e.g. Structural Foundation Phase"
+            value={title}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              if (errors.title)
+                setErrors((prev) => ({ ...prev, title: undefined }));
+            }}
+            disabled={isSubmitting}
+            required
+            aria-invalid={!!errors.title}
+            className={`h-12 w-full rounded-sm bg-surface-highest px-4 text-[16px] text-neutral outline-none transition-all placeholder:text-[#737685] focus:ring-2 focus:ring-primary-container ${errors.title ? "ring-2 ring-error" : ""}`}
+          />
+          {errors.title && (
+            <p className="mt-1 px-1 text-[11px] text-error" role="alert">
+              {errors.title}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-[160px_minmax(0,1fr)] items-start gap-6">
+        <div className="pt-3">
+          <label
+            htmlFor="epic-description-desktop"
+            className="text-[11px] font-bold uppercase tracking-[0.55px] text-slate-700"
+          >
+            DESCRIPTION
+          </label>
+          <p className="mt-1 text-[11px] font-medium text-[#737685]">
+            Optional
+          </p>
+        </div>
+        <textarea
+          id="epic-description-desktop"
+          rows={5}
+          placeholder="Describe the scope and objectives of this epic..."
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          disabled={isSubmitting}
+          className="min-h-[136px] w-full resize-y rounded-sm bg-surface-highest px-4 py-3 text-[16px] text-neutral outline-none transition-all placeholder:text-[#737685] focus:ring-2 focus:ring-primary-container"
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-6 border-t border-[rgba(195,198,214,0.2)] pt-6">
+        <div className="flex flex-col">
+          <label
+            htmlFor="epic-assignee-desktop"
+            className="mb-2 px-1 text-[11px] font-bold uppercase tracking-[0.55px] text-slate-700"
+          >
+            ASSIGNEE
+          </label>
+          <div className="relative">
+            <select
+              id="epic-assignee-desktop"
+              value={assigneeId}
+              onChange={(e) => setAssigneeId(e.target.value)}
+              disabled={isSubmitting}
+              className="h-12 w-full appearance-none rounded-sm bg-surface-highest px-4 pr-10 text-[16px] text-neutral outline-none transition-all focus:ring-2 focus:ring-primary-container"
+            >
+              <option value="">Select a member...</option>
+              {members.map((member) => (
+                <option key={member.member_id} value={member.user_id}>
+                  {member.metadata?.name || member.email}
+                </option>
+              ))}
+            </select>
+            <Image
+              src="/assets/svg/icons/icon-chevron-dropdown.svg"
+              alt=""
+              width={12}
+              height={8}
+              className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2"
+              aria-hidden="true"
+            />
+          </div>
+          {membersError && (
+            <p className="mt-1 px-1 text-[11px] text-error" role="alert">
+              {membersError}
+            </p>
+          )}
+        </div>
+
+        <Input
+          id="epic-deadline-desktop"
+          label="DEADLINE"
+          type="date"
+          min={getTodayLocal()}
+          value={deadline}
+          onChange={(e) => {
+            setDeadline(e.target.value);
+            if (errors.deadline)
+              setErrors((prev) => ({ ...prev, deadline: undefined }));
+          }}
+          error={errors.deadline}
+          disabled={isSubmitting}
+        />
+      </div>
+    </div>
+  );
+
   return (
     <AppShell>
       <div className="max-w-[1024px] mx-auto py-2">
@@ -231,7 +343,8 @@ export default function NewEpicPage() {
           <div className="text-[11px] font-bold text-slate-400 uppercase tracking-[1px] mb-2">
             Projects <span className="text-slate-300 mx-1">›</span>{" "}
             {projectName} <span className="text-slate-300 mx-1">›</span> Epics{" "}
-            <span className="text-slate-300 mx-1">›</span> New Epic
+            <span className="text-slate-300 mx-1">›</span>{" "}
+            <span className="font-bold text-[#0052cc]">New Epic</span>
           </div>
           <h1 className="text-[32px] font-bold text-[#041b3c] tracking-[-0.5px]">
             Create New Epic
@@ -247,9 +360,9 @@ export default function NewEpicPage() {
         {/* Desktop card layout */}
         <div className="hidden lg:block bg-white rounded-lg border border-[rgba(195,198,214,0.3)] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.05)] overflow-hidden">
           <form onSubmit={handleSubmit} className="p-8 flex flex-col gap-6">
-            {formFields}
+            {desktopFormFields}
 
-            <div className="flex items-center justify-between w-full pt-6 border-t border-[rgba(195,198,214,0.2)] mt-2">
+            <div className="flex items-center justify-end gap-4 w-full pt-6 border-t border-[rgba(195,198,214,0.2)] mt-2">
               <Link
                 href={`/project/${projectId}/epics`}
                 className="text-[14px] font-bold text-slate-500 hover:text-slate-800 transition-colors focus:outline-none focus:underline"

@@ -72,7 +72,8 @@ export default function ProjectMembersPage() {
       {/* Breadcrumb */}
       <div className="text-[11px] font-bold text-slate-400 uppercase tracking-[1px] mb-2">
         Projects <span className="text-slate-300 mx-1">›</span> {projectName}{" "}
-        <span className="text-slate-300 mx-1">›</span> Members
+        <span className="text-slate-300 mx-1">›</span>{" "}
+        <span className="font-bold text-[#0052cc]">Members</span>
       </div>
       {/* Heading + CTA row */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -84,7 +85,7 @@ export default function ProjectMembersPage() {
           fullWidth={false}
           tabIndex={-1}
           aria-disabled="true"
-          className="px-5 py-2.5 pointer-events-none shrink-0"
+          className="h-12 px-6 pointer-events-none shrink-0 shadow-[0_5px_12px_rgba(0,82,204,0.20)]"
         >
           <span className="flex items-center gap-2">
             <Image
@@ -92,6 +93,7 @@ export default function ProjectMembersPage() {
               alt=""
               width={18}
               height={18}
+              className="brightness-0 invert"
               aria-hidden="true"
             />
             Invite Member
@@ -107,7 +109,7 @@ export default function ProjectMembersPage() {
         {headerSection}
 
         {/* Content container */}
-        <div className="mt-6 bg-white rounded-lg border border-[rgba(195,198,214,0.3)] shadow-[0px_1px_3px_0px_rgba(4,27,60,0.05)] overflow-hidden">
+        <div className="mx-auto mt-6 w-full max-w-[790px] bg-white rounded-lg border border-[rgba(195,198,214,0.3)] shadow-[0px_1px_3px_0px_rgba(4,27,60,0.05)] overflow-hidden md:mt-20">
           {/* Loading — PRESERVED skeleton structure (desktop) / card adaptation (mobile) */}
           {status === "loading" && (
             <div className="p-6">
@@ -169,13 +171,13 @@ export default function ProjectMembersPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-[rgba(195,198,214,0.3)]">
-                      <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-[#737685]">
+                      <th className="w-1/2 px-9 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-[#737685]">
                         MEMBER
                       </th>
-                      <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-[#737685]">
+                      <th className="w-1/4 px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-[#737685]">
                         ROLE
                       </th>
-                      <th className="px-6 py-4 text-right text-[11px] font-bold uppercase tracking-wider text-[#737685]">
+                      <th className="w-1/4 px-9 py-4 text-right text-[11px] font-bold uppercase tracking-wider text-[#737685]">
                         ACTIONS
                       </th>
                     </tr>

@@ -83,7 +83,7 @@ export function Navbar({
           <span className="font-bold text-[14px] text-[#041b3c] leading-tight">
             {userName || "User"}
           </span>
-          <span className="font-semibold text-[11px] text-[#4f5f7b] uppercase tracking-[0.5px]">
+          <span className="mt-0.5 text-[11px] font-semibold uppercase leading-none tracking-[0.7px] text-[#0052cc]">
             {jobTitle || "WORKSPACE MEMBER"}
           </span>
         </div>

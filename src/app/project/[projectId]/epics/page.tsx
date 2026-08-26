@@ -8,6 +8,15 @@ import { AppShell } from "@/components/layout/AppShell";
 import { EpicsService, ProjectEpic } from "@/services/api/epics.service";
 import { ProjectsService } from "@/services/api/projects.service";
 import { EpicCard, EpicCardSkeletonGrid } from "@/components/epics/EpicCard";
+import {
+  ChartNoAxesCombined,
+  DraftingCompass,
+  Grid3X3,
+  Rocket,
+  Sparkles,
+  Workflow,
+  Zap,
+} from "lucide-react";
 
 type EpicsStatus = "loading" | "error" | "empty" | "ready";
 
@@ -68,26 +77,47 @@ export default function ProjectEpicsPage() {
   const headerSection = (
     <>
       {/* Breadcrumb */}
-      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-[1px] mb-2">
+      <div className="mb-1 hidden text-[11px] font-bold uppercase tracking-[1px] text-slate-400 lg:block">
         Projects <span className="text-slate-300 mx-1">›</span> {projectName}{" "}
-        <span className="text-slate-300 mx-1">›</span> Epics
+        <span className="text-slate-300 mx-1">›</span>{" "}
+        <span className="text-[#0052cc]">Epics</span>
       </div>
       {/* Heading + search + CTA row */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-[30px] font-bold text-[#041b3c] tracking-[-0.5px]">
+        <h1 className="hidden text-[30px] font-bold leading-[45px] tracking-[-0.5px] text-[#041b3c] lg:block">
           Project Epics
         </h1>
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex w-full items-center gap-3 lg:w-auto lg:gap-8">
           {/* Inert search — visible per preserved design; TM-16 owns no
               search behavior: readOnly, no state, no handlers. */}
-          <div className="relative w-full sm:w-[240px]">
+          <div className="relative w-full lg:hidden">
+            <Image
+              src="/assets/svg/icons/icon-search-magnifier.svg"
+              alt=""
+              width={18}
+              height={18}
+              aria-hidden="true"
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2"
+            />
+            <input
+              type="text"
+              placeholder="Search Epics..."
+              value=""
+              readOnly
+              aria-readonly="true"
+              aria-label="Search epics (not available yet)"
+              tabIndex={-1}
+              className="h-12 w-full cursor-default rounded-[8px] bg-[#d7e2ff] pl-[58px] pr-4 text-[14px] text-[#041b3c] outline-none placeholder:text-[#7b8398]"
+            />
+          </div>
+          <div className="relative hidden w-[303px] lg:block">
             <Image
               src="/assets/svg/icons/icon-search-magnifier.svg"
               alt=""
               width={16}
               height={16}
               aria-hidden="true"
-              className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
             />
             <input
               type="text"
@@ -97,12 +127,12 @@ export default function ProjectEpicsPage() {
               aria-readonly="true"
               aria-label="Search epics (not available yet)"
               tabIndex={-1}
-              className="w-full h-[40px] rounded-[4px] bg-[#d7e2ff] pl-9 pr-3 text-[14px] text-[#041b3c] placeholder:text-[#5b6b8c] outline-none cursor-default"
+              className="h-12 w-full cursor-default rounded-[4px] bg-[#d7e2ff] pl-9 pr-3 text-[14px] text-[#041b3c] outline-none placeholder:text-[#5b6b8c]"
             />
           </div>
           <Link
             href={`/project/${projectId}/epics/new`}
-            className="flex h-[40px] items-center gap-2 rounded-[4px] bg-[#0052cc] px-4 text-[14px] font-semibold text-white transition-opacity hover:opacity-90 shrink-0"
+            className="hidden h-12 shrink-0 items-center gap-2 rounded-[4px] bg-[#0052cc] px-[22px] text-[16px] font-semibold text-white transition-opacity hover:opacity-90 lg:flex"
           >
             <Image
               src="/assets/svg/icons/icon-plus.svg"
@@ -120,74 +150,156 @@ export default function ProjectEpicsPage() {
 
   return (
     <AppShell>
-      <div className="w-full max-w-[1216px] mx-auto py-2">
-        {headerSection}
+      <div className="mx-auto w-full max-w-[1216px] px-2 pb-2 pt-4 lg:p-0">
+        {status === "ready" && headerSection}
 
         {/* Loading — PRESERVED DESIGN (epics-loading-desktop): 6 skeleton
             cards in the same grid; mobile stacks via responsive grid. */}
         {status === "loading" && (
-          <div className="mt-6">
-            <EpicCardSkeletonGrid count={6} />
-          </div>
+          <>
+            <div className="hidden lg:block">
+              <div className="h-4 w-44 animate-pulse rounded bg-[#eceef5]" />
+              <div className="mt-4 flex items-center justify-between">
+                <div className="h-10 w-64 animate-pulse rounded bg-[#e8ebf8]" />
+                <div className="flex gap-4">
+                  <div className="h-12 w-[128px] animate-pulse rounded bg-[#e8ebf8]" />
+                  <div className="h-12 w-40 animate-pulse rounded bg-[#e8ebf8]" />
+                </div>
+              </div>
+            </div>
+            <div className="h-12 w-full animate-pulse rounded-[8px] bg-[#e8ebf8] lg:hidden" />
+            <div className="mt-6 lg:mt-14">
+              <EpicCardSkeletonGrid count={6} />
+            </div>
+          </>
         )}
 
         {/* Error — approved copy + Retry Connection; no reload/redirect */}
         {status === "error" && (
-          <div className="mt-6 p-10 flex flex-col items-center text-center gap-3 bg-white rounded-lg border border-[rgba(195,198,214,0.3)] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.05)]">
+          <div className="flex min-h-[calc(100vh-128px)] flex-col items-center justify-center gap-3 text-center lg:translate-y-8">
             <h2 className="text-[20px] font-bold text-[#041b3c]">
               Something went wrong
             </h2>
-            <p className="text-[14px] text-[#737685] max-w-md">
+            <p className="max-w-[320px] text-[16px] leading-6 text-[#4f5262]">
               We&apos;re having trouble retrieving your project epics right now.
               Please try again in a moment.
             </p>
             <button
               type="button"
               onClick={loadEpics}
-              className="mt-2 rounded-[4px] bg-[#0052cc] px-6 py-2.5 text-[14px] font-semibold text-white transition-opacity hover:opacity-90"
+              className="mt-2 flex h-11 items-center rounded-[4px] bg-[#0052cc] px-6 text-[16px] font-semibold text-white transition-opacity hover:opacity-90"
             >
               Retry Connection
             </button>
           </div>
         )}
 
-        {/* Empty — preserved illustration + approved copy + create CTA */}
+        {/* Empty — canonical four-tile composition, CTA, and benefit cards. */}
         {status === "empty" && (
-          <div className="mt-6 p-10 flex flex-col items-center text-center gap-4">
-            <Image
-              src="/assets/svg/illustrations/illustration-empty-epics.svg"
-              alt=""
-              width={160}
-              height={160}
-              priority
-            />
-            <h2 className="text-[22px] font-bold text-[#041b3c] mt-2">
+          <div className="flex flex-col items-center pb-16 pt-8 text-center lg:pb-8 lg:pt-12">
+            <div
+              className="grid grid-cols-2 gap-2 rounded-[20px] border border-[#e1e6f3] bg-white p-3 shadow-[0_12px_32px_rgba(4,27,60,0.08)]"
+              aria-hidden="true"
+            >
+              <span className="flex h-16 w-16 items-center justify-center rounded-[8px] bg-[#e8edff]">
+                <Rocket
+                  size={30}
+                  strokeWidth={1.8}
+                  className="text-[#0052cc]"
+                />
+              </span>
+              <span className="flex h-16 w-16 items-center justify-center rounded-[8px] bg-[#f1f3ff]">
+                <DraftingCompass
+                  size={31}
+                  strokeWidth={1.8}
+                  className="text-[#003d9b]"
+                />
+              </span>
+              <span className="flex h-16 w-16 items-center justify-center rounded-[8px] bg-[#f1f3ff]">
+                <Grid3X3
+                  size={29}
+                  strokeWidth={1.7}
+                  className="text-[#5b6b8c]"
+                />
+              </span>
+              <Image
+                src="/assets/svg/illustrations/illustration-empty-epics.svg"
+                alt=""
+                width={64}
+                height={64}
+              />
+            </div>
+
+            <h2 className="mt-8 text-[26px] font-bold leading-[34px] text-[#041b3c] lg:text-[30px] lg:leading-[38px]">
               No epics in this project yet.
             </h2>
-            <p className="text-[14px] text-[#737685] max-w-md">
+            <p className="mt-3 max-w-md text-[16px] leading-6 text-[#4f5262] lg:text-[18px] lg:leading-[29px]">
               Break down your large project into manageable epics to track
               progress better and maintain architectural clarity.
             </p>
             <Link
               href={`/project/${projectId}/epics/new`}
-              className="mt-2 flex h-[44px] items-center gap-2 rounded-[4px] bg-[#0052cc] px-6 text-[15px] font-semibold text-white transition-opacity hover:opacity-90"
+              className="mt-7 flex h-12 items-center gap-2.5 rounded-[4px] bg-[#0052cc] px-7 text-[16px] font-semibold text-white shadow-[0_5px_12px_rgba(0,82,204,0.22)] transition-opacity hover:opacity-90 lg:h-[52px] lg:px-8"
             >
+              <Zap
+                size={18}
+                strokeWidth={2}
+                fill="currentColor"
+                aria-hidden="true"
+              />
               Create First Epic
             </Link>
+
+            <div className="mt-12 grid w-full max-w-[936px] grid-cols-1 gap-4 text-left md:grid-cols-3 lg:mt-16 lg:gap-6">
+              {[
+                {
+                  title: "High-Level Goals",
+                  copy: "Define the broad objectives that span across multiple cycles.",
+                  Icon: Sparkles,
+                },
+                {
+                  title: "Hierarchy Design",
+                  copy: "Link individual tasks to parent epics for a consolidated view.",
+                  Icon: Workflow,
+                },
+                {
+                  title: "Track Velocity",
+                  copy: "Visualize percentage completion at a macro project level.",
+                  Icon: ChartNoAxesCombined,
+                },
+              ].map(({ title, copy, Icon }) => (
+                <article
+                  key={title}
+                  className="min-h-[184px] rounded-[8px] border border-[#e8ebf4] bg-[#f7f8ff] p-6"
+                >
+                  <span className="flex h-10 w-10 items-center justify-center rounded-[8px] bg-[#e3e9ff] text-[#0052cc]">
+                    <Icon size={21} strokeWidth={1.9} aria-hidden="true" />
+                  </span>
+                  <h3 className="mt-5 text-[16px] font-semibold text-[#041b3c]">
+                    {title}
+                  </h3>
+                  <p className="mt-2 max-w-[210px] text-[14px] leading-[21px] text-[#5d6578]">
+                    {copy}
+                  </p>
+                </article>
+              ))}
+            </div>
           </div>
         )}
 
         {/* Ready — desktop 2-col grid / mobile single column (same grid) */}
         {status === "ready" && (
           <>
-            <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="mt-6 grid grid-cols-1 gap-6 lg:mt-10 lg:grid-cols-2">
               {epics.map((epic) => (
                 <EpicCard key={epic.id} epic={epic} />
               ))}
             </div>
 
             {/* Pagination — DISPLAY ONLY (TM-17 owns functionality).
-                Real loaded data only; all controls inert/disabled. */}
+                Real loaded data only; all controls inert/disabled.
+                Styling grounded on reference.png: 30×30 controls, active
+                page #003d9b, light-bordered squares with gray chevrons. */}
             <div className="hidden lg:flex mt-6 items-center justify-between">
               <span className="text-[13px] text-[#737685]">
                 Showing {epics.length} of {epics.length} epics
@@ -201,19 +313,20 @@ export default function ProjectEpicsPage() {
                   disabled
                   aria-disabled="true"
                   aria-label="Previous page"
-                  className="p-2 opacity-50 cursor-not-allowed"
+                  className="flex h-[30px] w-[30px] items-center justify-center rounded-[3px] border border-[#e9eaf3] bg-[#f9f9ff] cursor-not-allowed"
                 >
                   <Image
                     src="/assets/svg/icons/icon-pagination-left.svg"
                     alt=""
-                    width={16}
-                    height={16}
+                    width={5}
+                    height={7}
+                    className="opacity-40 grayscale"
                     aria-hidden="true"
                   />
                 </button>
                 <span
                   aria-current="page"
-                  className="flex h-8 min-w-8 items-center justify-center rounded-[4px] bg-[#041b3c] px-2 text-[13px] font-semibold text-white"
+                  className="flex h-[30px] min-w-[30px] items-center justify-center rounded-[3px] bg-[#003d9b] px-2 text-[13px] font-semibold text-white"
                 >
                   1
                 </span>
@@ -222,13 +335,14 @@ export default function ProjectEpicsPage() {
                   disabled
                   aria-disabled="true"
                   aria-label="Next page"
-                  className="p-2 opacity-50 cursor-not-allowed"
+                  className="flex h-[30px] w-[30px] items-center justify-center rounded-[3px] border border-[#e9eaf3] bg-[#f9f9ff] cursor-not-allowed"
                 >
                   <Image
                     src="/assets/svg/icons/icon-pagination-right.svg"
                     alt=""
-                    width={16}
-                    height={16}
+                    width={5}
+                    height={7}
+                    className="opacity-40 grayscale"
                     aria-hidden="true"
                   />
                 </button>
@@ -237,20 +351,22 @@ export default function ProjectEpicsPage() {
           </>
         )}
 
-        {/* Mobile FAB — functional navigation to create route (TM-16 owns) */}
-        <Link
-          href={`/project/${projectId}/epics/new`}
-          aria-label="New Epic"
-          className="lg:hidden fixed bottom-20 right-5 z-20 flex h-12 w-12 items-center justify-center rounded-[12px] bg-[#0052cc] shadow-[0px_4px_10px_0px_rgba(4,27,60,0.25)] transition-opacity hover:opacity-90"
-        >
-          <Image
-            src="/assets/svg/icons/icon-plus.svg"
-            alt=""
-            width={20}
-            height={20}
-            aria-hidden="true"
-          />
-        </Link>
+        {/* Mobile FAB — populated list navigation only. Empty state has its own CTA. */}
+        {status === "ready" && (
+          <Link
+            href={`/project/${projectId}/epics/new`}
+            aria-label="New Epic"
+            className="fixed bottom-[100px] right-6 z-20 flex h-14 w-14 items-center justify-center rounded-[8px] bg-[#0052cc] shadow-[0px_4px_10px_0px_rgba(4,27,60,0.25)] transition-opacity hover:opacity-90 lg:hidden"
+          >
+            <Image
+              src="/assets/svg/icons/icon-plus.svg"
+              alt=""
+              width={20}
+              height={20}
+              aria-hidden="true"
+            />
+          </Link>
+        )}
       </div>
     </AppShell>
   );

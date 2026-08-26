@@ -9,6 +9,7 @@ import { ProjectsService, Project } from "@/services/api/projects.service";
 import { AuthService } from "@/services/api/auth.service";
 import { ProjectCard, AddProjectCard } from "@/components/projects/ProjectCard";
 import { Button } from "@/components/ui/Button";
+import { Boxes, DraftingCompass, Layers3, Ruler } from "lucide-react";
 
 const PAGE_SIZE = 6;
 
@@ -365,55 +366,69 @@ export default function ProjectPage() {
         {/* Empty State */}
         {!isLoading && !hasError && totalCount === 0 && (
           <div className="flex-1 flex flex-col items-center justify-center text-center py-12 px-4">
-            <div className="mb-6 relative flex items-center justify-center">
-              <div className="w-56 h-56 relative flex items-center justify-center">
+            <div className="mb-8 relative flex items-center justify-center">
+              <div className="w-72 h-72 relative flex items-center justify-center">
                 <Image
                   src="/assets/svg/illustrations/illustration-empty-projects.svg"
                   alt=""
-                  width={224}
-                  height={224}
+                  width={288}
+                  height={288}
                   className="w-full h-full object-contain"
                   aria-hidden="true"
                 />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-16 h-16 rounded-2xl bg-[#0052cc]/10 flex items-center justify-center">
-                    <svg
-                      width="32"
-                      height="32"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#0052cc"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <circle cx="12" cy="5" r="2" />
-                      <path d="m9 20 3-6 3 6" />
-                      <path d="m6 8 6 2 6-2" />
-                      <path d="M12 10v4" />
-                    </svg>
+                <div
+                  className="absolute inset-0 flex items-center justify-center"
+                  aria-hidden="true"
+                >
+                  <div className="relative flex h-24 w-24 items-center justify-center rounded-[20px] border border-[#cdd8f6] bg-[#e8edff] shadow-[0_8px_24px_rgba(0,61,155,0.12)]">
+                    <DraftingCompass
+                      size={46}
+                      strokeWidth={1.8}
+                      className="text-[#0052cc]"
+                    />
+                    <span className="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-[8px] border border-[#d5ddf2] bg-white shadow-sm">
+                      <Boxes
+                        size={17}
+                        strokeWidth={1.8}
+                        className="text-[#003d9b]"
+                      />
+                    </span>
                   </div>
+                  <span className="absolute right-6 top-11 flex h-12 w-12 rotate-6 items-center justify-center rounded-[10px] border border-[#d5ddf2] bg-white shadow-[0_6px_18px_rgba(4,27,60,0.10)]">
+                    <Layers3
+                      size={24}
+                      strokeWidth={1.8}
+                      className="text-[#0052cc]"
+                    />
+                  </span>
+                  <span className="absolute bottom-12 left-6 flex h-12 w-12 -rotate-6 items-center justify-center rounded-[10px] border border-[#d5ddf2] bg-white shadow-[0_6px_18px_rgba(4,27,60,0.10)]">
+                    <Ruler
+                      size={24}
+                      strokeWidth={1.8}
+                      className="text-[#0052cc]"
+                    />
+                  </span>
                 </div>
               </div>
             </div>
-            <h2 className="text-[24px] font-bold text-[#041b3c] mb-2">
+            <h2 className="text-[30px] leading-[38px] font-bold text-[#041b3c] mb-3">
               No Projects
             </h2>
-            <p className="text-[14px] text-[#4f5f7b] max-w-md mb-6 leading-relaxed">
+            <p className="text-[16px] text-[#4f5f7b] max-w-[500px] mb-8 leading-6">
               You don’t have any projects yet. Start by defining your first
               architectural workspace to begin tracking tasks and epics.
             </p>
             <Link href="/project/add">
               <Button
                 variant="primary"
-                className="gap-2 h-10 px-5 text-sm font-medium"
+                className="gap-2 h-12 px-6 text-[16px] font-semibold"
               >
                 <Image
                   src="/assets/svg/icons/icon-plus.svg"
                   alt=""
-                  width={11}
-                  height={11}
-                  className="w-[11px] h-[11px]"
+                  width={14}
+                  height={14}
+                  className="w-[14px] h-[14px]"
                   aria-hidden="true"
                 />
                 <span>Create New Project</span>

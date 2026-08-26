@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useParams } from "next/navigation";
+import { FolderOpen, LayoutGrid } from "lucide-react";
 
 export interface SidebarProps {
   isCollapsed: boolean;
@@ -65,9 +66,8 @@ export function Sidebar({
 
   return (
     <aside
-      className={`hidden lg:flex flex-col bg-[#f1f3ff] border-r border-[rgba(195,198,214,0.3)] shrink-0 transition-all duration-200 h-screen sticky top-0 ${
-        isCollapsed ? "w-[72px]" : "w-64"
-      }`}
+      className="hidden lg:flex flex-col bg-[#f1f3ff] border-r border-[rgba(195,198,214,0.3)] shrink-0 transition-all duration-200 h-screen sticky top-0"
+      style={{ width: isCollapsed ? 72 : 256 }}
       aria-label="Desktop Sidebar"
     >
       {/* Brand Header */}
@@ -95,14 +95,16 @@ export function Sidebar({
           className={isProjectsActive ? activeLinkClass : inactiveLinkClass}
           title="Projects"
         >
-          <Image
-            src="/assets/svg/icons/icon-projects.svg"
-            alt=""
-            width={18}
-            height={18}
-            className="shrink-0"
+          <span
+            className="flex h-5 w-5 shrink-0 items-center justify-center"
             aria-hidden="true"
-          />
+          >
+            {isCollapsed ? (
+              <LayoutGrid size={18} strokeWidth={2} />
+            ) : (
+              <FolderOpen size={20} strokeWidth={2} />
+            )}
+          </span>
           {!isCollapsed && <span>Projects</span>}
         </Link>
 
