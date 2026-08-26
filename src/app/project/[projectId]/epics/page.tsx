@@ -14,6 +14,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { EpicsService, ProjectEpic } from "@/services/api/epics.service";
 import { ProjectsService } from "@/services/api/projects.service";
 import { EpicCard, EpicCardSkeletonGrid } from "@/components/epics/EpicCard";
+import { EpicDetailsModal } from "@/components/epics/EpicDetailsModal";
 import {
   ChartNoAxesCombined,
   DraftingCompass,
@@ -47,6 +48,7 @@ export default function ProjectEpicsPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreError, setLoadMoreError] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [selectedEpicId, setSelectedEpicId] = useState<string | null>(null);
 
   // Stale-response guards: a monotonic sequence invalidates superseded
   // async results (project change, rapid navigation). Refs harden against
@@ -526,7 +528,13 @@ export default function ProjectEpicsPage() {
               {pageTransitionLoading ? (
                 <EpicCardSkeletonGrid count={PAGE_SIZE} />
               ) : (
-                epics.map((epic) => <EpicCard key={epic.id} epic={epic} />)
+                epics.map((epic) => (
+                  <EpicCard
+                    key={epic.id}
+                    epic={epic}
+                    onOpenDetails={() => setSelectedEpicId(epic.id)}
+                  />
+                ))
               )}
             </div>
 
@@ -662,6 +670,15 @@ export default function ProjectEpicsPage() {
             />
           </Link>
         )}
+
+        {selectedEpicId ? (
+          <EpicDetailsModal
+            key={selectedEpicId}
+            projectId={projectId}
+            epicId={selectedEpicId}
+            onClose={() => setSelectedEpicId(null)}
+          />
+        ) : null}
       </div>
     </AppShell>
   );

@@ -25,7 +25,7 @@ function AccentStripe() {
   return (
     <span
       aria-hidden="true"
-      className="absolute inset-y-0 left-0 hidden w-[3px] bg-[#004e32] lg:block"
+      className="pointer-events-none absolute inset-y-0 left-0 hidden w-[3px] bg-[#004e32] lg:block"
     />
   );
 }
@@ -50,19 +50,38 @@ export function formatCreatedDate(created_at: string): string | null {
   return dateFormat.format(date);
 }
 
-export function EpicCard({ epic }: { epic: ProjectEpic }) {
+export function EpicCard({
+  epic,
+  onOpenDetails,
+}: {
+  epic: ProjectEpic;
+  onOpenDetails?: () => void;
+}) {
   // Null-assignee contract (§11): omit the identity block entirely;
   // content-driven layout lets the card collapse without blank gaps.
   const initials = getInitials(epic.assignee?.name);
   const createdDate = formatCreatedDate(epic.created_at);
 
   return (
-    <div data-testid="epic-card" className={`${CARD_BASE} flex flex-col`}>
+    <div
+      data-testid="epic-card"
+      className={`${CARD_BASE} flex flex-col ${
+        onOpenDetails ? "cursor-pointer" : ""
+      }`}
+    >
+      {onOpenDetails ? (
+        <button
+          type="button"
+          onClick={onOpenDetails}
+          aria-label={`Open details for ${epic.title}`}
+          className="absolute inset-0 z-0 cursor-pointer rounded-[8px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0052cc]"
+        />
+      ) : null}
       <AccentStripe />
 
       {/* Body — grounded on epics-list-desktop.png: 16px top/side padding,
           badge h≈23px, badge→title ≈12px, title→assignee ≈16px. */}
-      <div className="pl-5 pr-4 pt-4">
+      <div className="pointer-events-none relative z-[1] pl-5 pr-4 pt-4">
         {/* Badge + inert 3-dots (canonical icon is 4×16px, inset ~15px
             from top/right, aligned with the badge row) */}
         <div className="flex items-start justify-between">
@@ -76,7 +95,9 @@ export function EpicCard({ epic }: { epic: ProjectEpic }) {
             aria-label="More options"
             tabIndex={-1}
             aria-disabled="true"
-            className="-m-1 p-1 pointer-events-none shrink-0"
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => event.stopPropagation()}
+            className="pointer-events-auto -m-1 shrink-0 cursor-default p-1"
           >
             <Image
               src="/assets/svg/icons/icon-more-options.svg"
@@ -115,7 +136,7 @@ export function EpicCard({ epic }: { epic: ProjectEpic }) {
       {/* Footer — PRESERVED DESIGN: subtle #f0f0f6 divider across the full
           card width, then a compact white metadata strip (created-by left,
           calendar + created-date right). */}
-      <div className="mt-auto flex h-[50px] flex-wrap items-center justify-between gap-x-4 gap-y-1 border-[#f0f0f6] bg-white pl-5 pr-4 lg:border-t">
+      <div className="pointer-events-none relative z-[1] mt-auto flex h-[50px] flex-wrap items-center justify-between gap-x-4 gap-y-1 border-[#f0f0f6] bg-white pl-5 pr-4 lg:border-t">
         {/* Created-by (§12): omit the whole line when created_by is null */}
         {epic.created_by?.name ? (
           <span className="text-[12px] text-[#737685] truncate">

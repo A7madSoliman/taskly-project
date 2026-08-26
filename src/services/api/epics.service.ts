@@ -56,14 +56,28 @@ export const EpicsService = {
       .eq("project_id", projectId)
       .range(from, to);
   },
-  getDetails: async (token: string, projectId: string, epicId: string) => {
-    return fetch(
-      `${SUPABASE_URL}/rest/v1/project_epics?project_id=eq.${projectId}&id=eq.${epicId}`,
-      {
-        method: "GET",
-        headers: getHeaders(token),
-      }
-    );
+  getDetails: async (
+    projectId: string,
+    epicId: string
+  ): Promise<{ data: ProjectEpic | null; error: unknown | null }> => {
+    try {
+      const { data, error } = await supabase
+        .from("project_epics")
+        .select(
+          "id, epic_id, title, description, deadline, created_at, created_by, assignee"
+        )
+        .eq("project_id", projectId)
+        .eq("id", epicId);
+
+      if (error) return { data: null, error };
+
+      return {
+        data: (data?.[0] as ProjectEpic | undefined) ?? null,
+        error: null,
+      };
+    } catch (error) {
+      return { data: null, error };
+    }
   },
   update: async (token: string, epicId: string, data: unknown) => {
     return fetch(`${SUPABASE_URL}/rest/v1/epics?id=eq.${epicId}`, {
