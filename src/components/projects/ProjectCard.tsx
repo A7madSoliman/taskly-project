@@ -33,6 +33,24 @@ export function ProjectCard({ project }: ProjectCardProps) {
         aria-label={`Open project ${project.name}`}
       />
 
+      {/* TM-13 Edit Entry — independently actionable above the overlay Link */}
+      <div className="absolute top-3 right-3 z-20 hidden md:block">
+        <Link
+          href={`/project/${project.id}/edit`}
+          className="text-[12px] font-bold text-[#0052cc] hover:text-[#003d99] bg-white/90 rounded-[6px] px-3 py-1.5 border border-[rgba(0,82,204,0.2)] transition-colors focus:outline-none focus:underline"
+        >
+          Edit
+        </Link>
+      </div>
+      <div className="absolute bottom-3 right-3 z-20 md:hidden">
+        <Link
+          href={`/project/${project.id}/edit`}
+          className="text-[12px] font-bold text-[#0052cc] hover:text-[#003d99] bg-white/90 rounded-[6px] px-3 py-1.5 border border-[rgba(0,82,204,0.2)] transition-colors focus:outline-none focus:underline"
+        >
+          Edit
+        </Link>
+      </div>
+
       {/* Top Header & Content */}
       <div className="relative z-10 pointer-events-none">
         {/* Mobile Header with 3-dots actions (Visual only, interactive sibling layered above overlay) */}

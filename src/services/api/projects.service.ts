@@ -28,12 +28,18 @@ export const ProjectsService = {
   create: async (data: { name: string; description?: string }) => {
     return supabase.from("projects").insert([data]);
   },
-  update: async (token: string, projectId: string, data: unknown) => {
-    return fetch(`${SUPABASE_URL}/rest/v1/projects?id=eq.${projectId}`, {
-      method: "PATCH",
-      headers: getHeaders(token),
-      body: JSON.stringify(data),
-    });
+  getById: async (projectId: string) => {
+    const { data, error } = await supabase.rpc("get_projects");
+    if (error) return { data: null, error };
+    const project =
+      (data as Project[] | null)?.find((p) => p.id === projectId) || null;
+    return { data: project, error: null };
+  },
+  update: async (
+    projectId: string,
+    data: { name: string; description: string | null }
+  ) => {
+    return supabase.from("projects").update(data).eq("id", projectId);
   },
   getMembers: async (token: string, projectId: string) => {
     return fetch(
