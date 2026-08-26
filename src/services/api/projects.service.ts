@@ -13,6 +13,24 @@ export interface GetProjectsOptions {
   limit?: number;
 }
 
+export interface ProjectMemberMetadata {
+  sub: string;
+  name: string;
+  email: string;
+  job_title: string;
+  email_verified: boolean;
+  phone_verified: boolean;
+}
+
+export interface ProjectMember {
+  member_id: string;
+  project_id: string;
+  user_id: string;
+  role: string;
+  email: string;
+  metadata: ProjectMemberMetadata;
+}
+
 export const ProjectsService = {
   getAll: async (options?: GetProjectsOptions) => {
     if (options?.limit) {
@@ -41,14 +59,11 @@ export const ProjectsService = {
   ) => {
     return supabase.from("projects").update(data).eq("id", projectId);
   },
-  getMembers: async (token: string, projectId: string) => {
-    return fetch(
-      `${SUPABASE_URL}/rest/v1/get_project_members?project_id=eq.${projectId}`,
-      {
-        method: "GET",
-        headers: getHeaders(token),
-      }
-    );
+  getMembers: async (projectId: string) => {
+    return supabase
+      .from("get_project_members")
+      .select("member_id, project_id, user_id, role, email, metadata")
+      .eq("project_id", projectId);
   },
   invite: async (token: string, data: unknown) => {
     return fetch(`${SUPABASE_URL}/rest/v1/rpc/invite_member`, {
