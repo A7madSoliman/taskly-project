@@ -1,6 +1,23 @@
+import { supabase } from "@/lib/supabase/client";
 import { SUPABASE_URL, getHeaders } from "./config";
 
+export interface NewEpicInput {
+  title: string;
+  description: string | null;
+  assignee_id: string | null;
+  deadline: string | null;
+}
+
 export const EpicsService = {
+  create: async (projectId: string, data: NewEpicInput) => {
+    return supabase.from("epics").insert({
+      title: data.title,
+      description: data.description,
+      assignee_id: data.assignee_id,
+      project_id: projectId,
+      deadline: data.deadline,
+    });
+  },
   getByProject: async (
     token: string,
     projectId: string,
@@ -14,13 +31,6 @@ export const EpicsService = {
         headers: { ...getHeaders(token), Prefer: "count=exact" },
       }
     );
-  },
-  create: async (token: string, data: unknown) => {
-    return fetch(`${SUPABASE_URL}/rest/v1/epics`, {
-      method: "POST",
-      headers: { ...getHeaders(token), Prefer: "return=representation" },
-      body: JSON.stringify(data),
-    });
   },
   getDetails: async (token: string, projectId: string, epicId: string) => {
     return fetch(
