@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -20,6 +26,14 @@ import {
 
 type EpicsStatus = "loading" | "error" | "empty" | "ready";
 
+/**
+ * TM-17 — pagination contract.
+ * Page size 6 (canonical Desktop design: 2 columns × 3 rows = 6;
+ * "Showing 6 of 24 epics"). Task's "10" is only an example.
+ * Same chunk size used for Mobile infinite scroll.
+ */
+const PAGE_SIZE = 6;
+
 export default function ProjectEpicsPage() {
   const params = useParams();
   const projectId = params?.projectId as string;
@@ -27,6 +41,35 @@ export default function ProjectEpicsPage() {
   const [status, setStatus] = useState<EpicsStatus>("loading");
   const [epics, setEpics] = useState<ProjectEpic[]>([]);
   const [projectName, setProjectName] = useState<string>("Project");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [pageTransitionLoading, setPageTransitionLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Stale-response guards: a monotonic sequence invalidates superseded
+  // async results (project change, rapid navigation). Refs harden against
+  // double-trigger races that async setState cannot catch in time.
+  const requestSeq = useRef(0);
+  const pageLoadingRef = useRef(false);
+  const loadingMoreRef = useRef(false);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  // Live-state mirrors for the Mobile infinite-scroll observer. loadMore and
+  // the IntersectionObserver callback read these refs instead of closure-
+  // captured state, so a stale epics.length / totalCount / currentPage can
+  // never short-circuit loadMore (the original page-2 blocker).
+  const currentPageRef = useRef(1);
+  const totalCountRef = useRef(0);
+  const loadedCountRef = useRef(0);
+  const loadMoreErrorRef = useRef(false);
+  const projectIdRef = useRef(projectId);
+  // Highest page index whose fetch has STARTED. Hardens against a second
+  // loadMore (e.g. a sticky IntersectionObserver burst or a re-render before
+  // state settles) kicking off a duplicate next-page request. Only the
+  // monotonic requestSeq guard can advance it back on project change.
+  const startedPageRef = useRef(1);
 
   // Breadcrumb metadata only — failure must not corrupt the epics data (§33).
   useEffect(() => {
@@ -39,40 +82,224 @@ export default function ProjectEpicsPage() {
     };
   }, [projectId]);
 
-  const loadEpics = useCallback(async () => {
+  // Mobile detection — functional (not CSS-only). Drives append vs replace
+  // and whether the Desktop footer renders.
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 1023px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  // Keep live-state mirrors in sync with React state after every render, so
+  // loadMore and the observer always read current pagination values.
+  useEffect(() => {
+    currentPageRef.current = currentPage;
+    totalCountRef.current = totalCount;
+    loadedCountRef.current = epics.length;
+    loadMoreErrorRef.current = loadMoreError;
+    projectIdRef.current = projectId;
+  });
+
+  // Initial fetch + projectId reset. Resets ALL pagination state and
+  // invalidates any in-flight request for the previous project.
+  const loadInitial = useCallback(async () => {
+    const reqId = ++requestSeq.current;
+    pageLoadingRef.current = false;
+    loadingMoreRef.current = false;
+    startedPageRef.current = 1;
+    setStatus("loading");
+    setEpics([]);
+    setCurrentPage(1);
+    setTotalCount(0);
+    setPageTransitionLoading(false);
+    setLoadingMore(false);
+    setLoadMoreError(false);
     try {
-      const { data, error } = await EpicsService.getByProject(projectId);
+      const { data, error, count } = await EpicsService.getByProject(
+        projectId,
+        { page: 1, limit: PAGE_SIZE }
+      );
+      if (reqId !== requestSeq.current) return;
       if (error) {
         setStatus("error");
         return;
       }
-      if (!data || data.length === 0) {
+      const rows = data ?? [];
+      const total = count ?? 0;
+      setTotalCount(total);
+      if (rows.length === 0 && total === 0) {
         setEpics([]);
         setStatus("empty");
-        return;
+      } else {
+        setEpics(rows);
+        setCurrentPage(1);
+        setStatus("ready");
       }
-      setEpics(data);
-      setStatus("ready");
     } catch {
-      setStatus("error");
+      if (reqId === requestSeq.current) setStatus("error");
     }
   }, [projectId]);
 
-  // Initial fetch + refetch whenever projectId changes (§32).
-  // Loading is the render-phase default state; setState only happens in
-  // async callbacks (consistent with the members page lint pattern).
+  // Re-run on projectId change (resets via loadInitial).
+  // Defer the async call past a microtask so the synchronous setStates
+  // inside loadInitial are not flagged as cascade-risk in the effect body
+  // (matches the members/epics loading pattern).
   useEffect(() => {
     let isMounted = true;
     const run = async () => {
       await Promise.resolve();
       if (!isMounted) return;
-      await loadEpics();
+      await loadInitial();
     };
     run();
     return () => {
       isMounted = false;
     };
-  }, [loadEpics]);
+  }, [loadInitial]);
+
+  // Desktop page change — replace grid, keep header/footer geometry.
+  const goToPage = useCallback(
+    (page: number) => {
+      if (pageLoadingRef.current) return;
+      const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+      if (page < 1 || page > totalPages || page === currentPage) return;
+      const reqId = ++requestSeq.current;
+      pageLoadingRef.current = true;
+      setPageTransitionLoading(true);
+      (async () => {
+        try {
+          const { data, error, count } = await EpicsService.getByProject(
+            projectId,
+            { page, limit: PAGE_SIZE }
+          );
+          if (reqId !== requestSeq.current) return;
+          if (error) {
+            setStatus("error");
+            return;
+          }
+          setEpics(data ?? []);
+          setTotalCount(count ?? 0);
+          setCurrentPage(page);
+        } catch {
+          if (reqId === requestSeq.current) setStatus("error");
+        } finally {
+          if (reqId === requestSeq.current) {
+            pageLoadingRef.current = false;
+            setPageTransitionLoading(false);
+          }
+        }
+      })();
+    },
+    [projectId, totalCount, currentPage]
+  );
+
+  // Mobile infinite scroll — append next page, never replace. Eligibility is
+  // read from live refs (not closure state) so the IntersectionObserver can
+  // never fire a loadMore whose closure captured a stale epics.length /
+  // totalCount / currentPage — the original TM-17 Mobile page-2 blocker.
+  // Stable identity (empty deps) keeps the observer from needless churn.
+  const loadMore = useCallback(() => {
+    // Single authoritative guard — no duplicated/divergent semantics:
+    //  • not already loading more        (loadingMoreRef)
+    //  • no prior failed page to clear    (loadMoreErrorRef)
+    //  • more rows remain to load         (loadedCountRef < totalCountRef)
+    //  • this exact next page not already started (startedPageRef dedup)
+    if (loadingMoreRef.current) return;
+    if (loadMoreErrorRef.current) return;
+    if (loadedCountRef.current >= totalCountRef.current) return;
+    const next = currentPageRef.current + 1;
+    if (next <= startedPageRef.current) return;
+    const reqId = ++requestSeq.current;
+    startedPageRef.current = next;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    setLoadMoreError(false);
+    (async () => {
+      try {
+        const { data, error, count } = await EpicsService.getByProject(
+          projectIdRef.current,
+          { page: next, limit: PAGE_SIZE }
+        );
+        if (reqId !== requestSeq.current) return;
+        if (error) {
+          // Roll back the dedup marker so the SAME failed page is retryable
+          // (Retry must never skip a page or become permanently blocked).
+          startedPageRef.current = currentPageRef.current;
+          setLoadMoreError(true);
+          return;
+        }
+        // Append ONLY the successful page for the current project/request.
+        setEpics((prev) => [...prev, ...(data ?? [])]);
+        setTotalCount(count ?? 0);
+        setCurrentPage(next);
+      } catch {
+        if (reqId === requestSeq.current) {
+          startedPageRef.current = currentPageRef.current;
+          setLoadMoreError(true);
+        }
+      } finally {
+        if (reqId === requestSeq.current) {
+          loadingMoreRef.current = false;
+          setLoadingMore(false);
+        }
+      }
+    })();
+  }, []);
+
+  // Mobile infinite-scroll observer.
+  //
+  // ROOT CAUSE OF THE TM-17 BLOCKER (confirmed via runtime QA):
+  // the previous effect observed `sentinelRef.current` only when the
+  // `[isMobile, status, loadMore]` deps changed. The sentinel node mounts
+  // AFTER `status` flips to "ready", so at the single render where the
+  // effect runs, `sentinelRef.current` is still `null` and the observer is
+  // never attached — infinite scroll silently dies. An independent observer
+  // attached to the live node fires correctly, proving the IO environment
+  // works; the bug was the attach timing.
+  //
+  // FIX: attach the observer from a callback ref, the instant the sentinel
+  // node actually mounts. The callback ref runs after the DOM node exists,
+  // so the observer always binds to the real element. The IntersectionObserver
+  // fires once per real intersection change, so a burst of sentinel callbacks
+  // cannot spawn parallel requests — reinforced by the guards inside loadMore.
+  const setSentinelRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      const prev = sentinelRef.current as unknown as {
+        __io?: IntersectionObserver;
+      } | null;
+      if (prev && prev.__io) prev.__io.disconnect();
+      sentinelRef.current = node;
+      if (!node || !isMobile) return;
+      const io = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting) loadMore();
+        },
+        { rootMargin: "200px" }
+      );
+      (node as unknown as { __io?: IntersectionObserver }).__io = io;
+      io.observe(node);
+    },
+    [isMobile, loadMore]
+  );
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+  // Compact, production-quality page sequence with ellipsis (non-interactive).
+  const pageNumbers = useMemo<(number | "...")[]>(() => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    const pages: (number | "...")[] = [1];
+    const left = Math.max(2, currentPage - 1);
+    const right = Math.min(totalPages - 1, currentPage + 1);
+    if (left > 2) pages.push("...");
+    for (let p = left; p <= right; p++) pages.push(p);
+    if (right < totalPages - 1) pages.push("...");
+    pages.push(totalPages);
+    return pages;
+  }, [totalPages, currentPage]);
 
   const headerSection = (
     <>
@@ -148,9 +375,12 @@ export default function ProjectEpicsPage() {
     </>
   );
 
+  const pageBtnBase =
+    "flex h-[30px] w-[30px] items-center justify-center rounded-[3px] border border-[#e9eaf3] bg-[#f9f9ff] transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d9b] focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40";
+
   return (
     <AppShell>
-      <div className="mx-auto w-full max-w-[1216px] px-2 pb-2 pt-4 lg:p-0">
+      <div className="mx-auto w-full max-w-[1216px] px-2 pb-40 pt-4 lg:p-0">
         {status === "ready" && headerSection}
 
         {/* Loading — PRESERVED DESIGN (epics-loading-desktop): 6 skeleton
@@ -174,7 +404,8 @@ export default function ProjectEpicsPage() {
           </>
         )}
 
-        {/* Error — approved copy + Retry Connection; no reload/redirect */}
+        {/* Error — approved copy + Retry Connection; no reload/redirect.
+            Retry now re-runs the paginated initial fetch (page 1). */}
         {status === "error" && (
           <div className="flex min-h-[calc(100vh-128px)] flex-col items-center justify-center gap-3 text-center lg:translate-y-8">
             <h2 className="text-[20px] font-bold text-[#041b3c]">
@@ -186,7 +417,7 @@ export default function ProjectEpicsPage() {
             </p>
             <button
               type="button"
-              onClick={loadEpics}
+              onClick={loadInitial}
               className="mt-2 flex h-11 items-center rounded-[4px] bg-[#0052cc] px-6 text-[16px] font-semibold text-white transition-opacity hover:opacity-90"
             >
               Retry Connection
@@ -194,7 +425,8 @@ export default function ProjectEpicsPage() {
           </div>
         )}
 
-        {/* Empty — canonical four-tile composition, CTA, and benefit cards. */}
+        {/* Empty — canonical four-tile composition, CTA, and benefit cards.
+            PRESERVED (TM-16 / Final Workspace UI Polish). */}
         {status === "empty" && (
           <div className="flex flex-col items-center pb-16 pt-8 text-center lg:pb-8 lg:pt-12">
             <div
@@ -291,63 +523,126 @@ export default function ProjectEpicsPage() {
         {status === "ready" && (
           <>
             <div className="mt-6 grid grid-cols-1 gap-6 lg:mt-10 lg:grid-cols-2">
-              {epics.map((epic) => (
-                <EpicCard key={epic.id} epic={epic} />
-              ))}
+              {pageTransitionLoading ? (
+                <EpicCardSkeletonGrid count={PAGE_SIZE} />
+              ) : (
+                epics.map((epic) => <EpicCard key={epic.id} epic={epic} />)
+              )}
             </div>
 
-            {/* Pagination — DISPLAY ONLY (TM-17 owns functionality).
-                Real loaded data only; all controls inert/disabled.
-                Styling grounded on reference.png: 30×30 controls, active
-                page #003d9b, light-bordered squares with gray chevrons. */}
+            {/* Desktop pagination — FUNCTIONAL (TM-17). Hidden on mobile;
+                mobile uses infinite scroll. Geometry preserved from reference:
+                30×30 controls, 3px radius, #e9eaf3 border, #f9f9ff bg, active
+                #003d9b, preserved chevron SVGs (5×7). */}
             <div className="hidden lg:flex mt-6 items-center justify-between">
               <span className="text-[13px] text-[#737685]">
-                Showing {epics.length} of {epics.length} epics
+                Showing {Math.min(currentPage * PAGE_SIZE, totalCount)} of{" "}
+                {totalCount} epics
               </span>
-              <nav
-                aria-label="Pagination (coming soon)"
-                className="flex items-center gap-2"
-              >
+              <nav aria-label="Pagination" className="flex items-center gap-2">
                 <button
                   type="button"
-                  disabled
-                  aria-disabled="true"
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={pageTransitionLoading || currentPage === 1}
+                  aria-disabled={pageTransitionLoading || currentPage === 1}
                   aria-label="Previous page"
-                  className="flex h-[30px] w-[30px] items-center justify-center rounded-[3px] border border-[#e9eaf3] bg-[#f9f9ff] cursor-not-allowed"
+                  className={pageBtnBase}
                 >
                   <Image
                     src="/assets/svg/icons/icon-pagination-left.svg"
                     alt=""
                     width={5}
                     height={7}
-                    className="opacity-40 grayscale"
+                    className={currentPage === 1 ? "opacity-40 grayscale" : ""}
                     aria-hidden="true"
                   />
                 </button>
-                <span
-                  aria-current="page"
-                  className="flex h-[30px] min-w-[30px] items-center justify-center rounded-[3px] bg-[#003d9b] px-2 text-[13px] font-semibold text-white"
-                >
-                  1
-                </span>
+                {pageNumbers.map((p, i) =>
+                  typeof p === "string" ? (
+                    <span
+                      key={`ellipsis-${i}`}
+                      aria-hidden="true"
+                      className="flex h-[30px] min-w-[30px] items-center justify-center text-[13px] text-[#737685]"
+                    >
+                      …
+                    </span>
+                  ) : (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => goToPage(p)}
+                      disabled={pageTransitionLoading}
+                      aria-disabled={pageTransitionLoading}
+                      aria-current={p === currentPage ? "page" : undefined}
+                      className={`flex h-[30px] min-w-[30px] items-center justify-center rounded-[3px] px-2 text-[13px] font-semibold transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d9b] focus-visible:ring-offset-1 ${
+                        p === currentPage
+                          ? "bg-[#003d9b] text-white"
+                          : "border border-[#e9eaf3] bg-[#f9f9ff] text-[#041b3c]"
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  )
+                )}
                 <button
                   type="button"
-                  disabled
-                  aria-disabled="true"
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={pageTransitionLoading || currentPage === totalPages}
+                  aria-disabled={
+                    pageTransitionLoading || currentPage === totalPages
+                  }
                   aria-label="Next page"
-                  className="flex h-[30px] w-[30px] items-center justify-center rounded-[3px] border border-[#e9eaf3] bg-[#f9f9ff] cursor-not-allowed"
+                  className={pageBtnBase}
                 >
                   <Image
                     src="/assets/svg/icons/icon-pagination-right.svg"
                     alt=""
                     width={5}
                     height={7}
-                    className="opacity-40 grayscale"
+                    className={
+                      currentPage === totalPages ? "opacity-40 grayscale" : ""
+                    }
                     aria-hidden="true"
                   />
                 </button>
               </nav>
             </div>
+
+            {/* Mobile infinite-scroll sentinel + load-more treatment.
+                No Desktop paginator on mobile. Existing cards are preserved
+                on load; only a lightweight bottom indicator appears. */}
+            {isMobile && (
+              <>
+                <div
+                  ref={setSentinelRef}
+                  aria-hidden="true"
+                  className="h-px w-full"
+                />
+                {loadingMore && (
+                  <div className="mt-6">
+                    <EpicCardSkeletonGrid count={2} />
+                  </div>
+                )}
+                {loadMoreError && (
+                  <div className="mt-6 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // Clear the error gate so the Retry (the SAME failed
+                        // next page) is eligible; the observer stays blocked
+                        // while loadMoreError is set, so only the explicit
+                        // Retry button can re-trigger a request.
+                        loadMoreErrorRef.current = false;
+                        loadMore();
+                      }}
+                      className="flex h-11 items-center rounded-[4px] bg-[#0052cc] px-6 text-[16px] font-semibold text-white transition-opacity hover:opacity-90"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
           </>
         )}
 

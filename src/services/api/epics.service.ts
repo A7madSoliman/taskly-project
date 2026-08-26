@@ -36,13 +36,25 @@ export const EpicsService = {
       deadline: data.deadline,
     });
   },
-  getByProject: async (projectId: string) => {
+  getByProject: async (
+    projectId: string,
+    options: { page: number; limit: number }
+  ) => {
+    const { page, limit } = options;
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+    // Server-side pagination via PostgREST range + exact count.
+    // No .order() — TM-17 / Postman contract do not specify ordering.
+    // count:"exact" is the SDK-approved equivalent of Prefer: count=exact
+    // (responds with total in `count`, mirroring Content-Range).
     return supabase
       .from("project_epics")
       .select(
-        "id, epic_id, title, description, deadline, created_at, created_by, assignee"
+        "id, epic_id, title, description, deadline, created_at, created_by, assignee",
+        { count: "exact" }
       )
-      .eq("project_id", projectId);
+      .eq("project_id", projectId)
+      .range(from, to);
   },
   getDetails: async (token: string, projectId: string, epicId: string) => {
     return fetch(
