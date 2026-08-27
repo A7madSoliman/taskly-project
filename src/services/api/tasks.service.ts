@@ -47,6 +47,15 @@ export interface ProjectTask {
   assignee: ProjectTaskAssignee;
 }
 
+export interface BoardTask {
+  id: string;
+  task_id: string;
+  title: string;
+  due_date: string | null;
+  status: TaskStatus;
+  assignee: ProjectTaskAssignee | null;
+}
+
 export const TasksService = {
   getByProject: async (token: string, projectId: string) => {
     return fetch(
@@ -56,6 +65,22 @@ export const TasksService = {
         headers: { ...getHeaders(token), Prefer: "count=exact" },
       }
     );
+  },
+  getByProjectStatus: async (
+    projectId: string,
+    status: TaskStatus
+  ): Promise<{
+    data: BoardTask[] | null;
+    error: PostgrestError | null;
+  }> => {
+    const { data, error } = await supabase
+      .from("project_tasks")
+      .select("id, task_id, title, due_date, status, assignee")
+      .eq("project_id", projectId)
+      .eq("status", status);
+
+    if (error) return { data: null, error };
+    return { data: (data as BoardTask[]) ?? [], error: null };
   },
   getByEpic: async (
     epicId: string

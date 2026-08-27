@@ -34,6 +34,24 @@ const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = [
   { value: "DONE", label: "DONE" },
 ];
 
+const VALID_STATUSES: Set<TaskStatus> = new Set([
+  "TO_DO",
+  "IN_PROGRESS",
+  "BLOCKED",
+  "IN_REVIEW",
+  "READY_FOR_QA",
+  "REOPENED",
+  "READY_FOR_PRODUCTION",
+  "DONE",
+]);
+
+function parseInitialStatus(statusParam: string | null): TaskStatus {
+  if (statusParam && VALID_STATUSES.has(statusParam as TaskStatus)) {
+    return statusParam as TaskStatus;
+  }
+  return "TO_DO";
+}
+
 function formatEpicDisplay(epicId: string, title: string): string {
   const full = `${epicId} ${title}`.trim();
   if (full.length <= 100) return full;
@@ -46,9 +64,12 @@ export default function NewTaskPage() {
   const searchParams = useSearchParams();
   const projectId = params?.projectId as string;
   const initialEpicIdParam = searchParams.get("epicId");
+  const initialStatusParam = searchParams.get("status");
 
   const [title, setTitle] = useState("");
-  const [status, setStatus] = useState<TaskStatus>("TO_DO");
+  const [status, setStatus] = useState<TaskStatus>(() =>
+    parseInitialStatus(initialStatusParam)
+  );
   const [epicIdState, setEpicIdState] = useState<string>("");
   const [assigneeId, setAssigneeId] = useState<string>("");
   const [dueDate, setDueDate] = useState<string>("");
