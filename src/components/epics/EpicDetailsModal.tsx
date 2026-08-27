@@ -3,7 +3,14 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronDown, Link2, ListTodo, X } from "lucide-react";
+import {
+  ChevronDown,
+  CirclePlus,
+  Link2,
+  ListTodo,
+  UserRound,
+  X,
+} from "lucide-react";
 import {
   EpicsService,
   ProjectEpic,
@@ -13,6 +20,7 @@ import {
   ProjectMember,
   ProjectsService,
 } from "@/services/api/projects.service";
+import { ProjectTask, TasksService } from "@/services/api/tasks.service";
 import { getInitials } from "@/lib/utils/avatar";
 
 interface EpicDetailsModalProps {
@@ -33,11 +41,23 @@ const createdDateFormat = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 });
 
+const taskDueDateFormat = new Intl.DateTimeFormat("en-GB", {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+});
+
 function formatDate(value: string): string | null {
   const date = new Date(
     /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T00:00:00` : value
   );
   return Number.isNaN(date.getTime()) ? null : createdDateFormat.format(date);
+}
+
+function formatTaskDueDate(value: string | null): string {
+  if (!value) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "—" : taskDueDateFormat.format(date);
 }
 
 function DetailsSkeleton() {
@@ -92,6 +112,54 @@ function Person({
   );
 }
 
+function TaskAssignee({ task }: { task: ProjectTask }) {
+  const name = task.assignee?.name?.trim() || null;
+
+  return (
+    <div className="flex min-w-0 items-center gap-2">
+      {name ? (
+        <span
+          aria-hidden="true"
+          className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#0052cc] text-[8px] font-semibold text-white"
+        >
+          {getInitials(name)}
+        </span>
+      ) : (
+        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] bg-[#eef2ff] text-[#60708b]">
+          <UserRound size={11} strokeWidth={1.8} aria-hidden="true" />
+        </span>
+      )}
+      <span className="truncate text-[12px] font-medium text-[#68758c]">
+        {name || "Unassigned"}
+      </span>
+    </div>
+  );
+}
+
+function TasksLoading() {
+  return (
+    <div
+      className="mt-6 flex min-h-[248px] items-center justify-center rounded-[8px] border border-dashed border-[#d9deeb] bg-[#f8f9ff]"
+      aria-label="Loading tasks"
+    >
+      <span className="h-7 w-7 animate-spin rounded-full border-[3px] border-[#d7e2ff] border-t-[#0052cc]" />
+    </div>
+  );
+}
+
+function TasksError() {
+  return (
+    <div
+      className="mt-6 flex min-h-[248px] items-center justify-center rounded-[8px] border border-dashed border-[#e0e4ed] bg-[#f8f9fc] px-5 text-center"
+      role="alert"
+    >
+      <p className="text-[16px] font-medium text-[#041b3c]">
+        Failed to load tasks
+      </p>
+    </div>
+  );
+}
+
 export function EpicDetailsModal({
   projectId,
   epicId,
@@ -100,6 +168,9 @@ export function EpicDetailsModal({
 }: EpicDetailsModalProps) {
   const [status, setStatus] = useState<DetailsStatus>("loading");
   const [epic, setEpic] = useState<ProjectEpic | null>(null);
+  const [tasks, setTasks] = useState<ProjectTask[]>([]);
+  const [tasksLoading, setTasksLoading] = useState(true);
+  const [tasksError, setTasksError] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
   const [descriptionDraft, setDescriptionDraft] = useState("");
   const [titleError, setTitleError] = useState<string | null>(null);
@@ -114,6 +185,7 @@ export function EpicDetailsModal({
   const [members, setMembers] = useState<ProjectMember[]>([]);
   const [toastVisible, setToastVisible] = useState(false);
   const requestSequence = useRef(0);
+  const tasksRequestSequence = useRef(0);
   const membersRequestSequence = useRef(0);
   const fieldRequestSequence = useRef<Record<EditableField, number>>({
     title: 0,
@@ -160,6 +232,30 @@ export function EpicDetailsModal({
     setStatus("ready");
   }, [epicId, projectId]);
 
+  const loadTasks = useCallback(async () => {
+    const requestId = ++tasksRequestSequence.current;
+    setTasks([]);
+    setTasksLoading(true);
+    setTasksError(false);
+
+    try {
+      const result = await TasksService.getByEpic(epicId);
+      if (requestId !== tasksRequestSequence.current) return;
+
+      if (result.error) {
+        setTasksError(true);
+        return;
+      }
+
+      setTasks(result.data ?? []);
+    } catch {
+      if (requestId !== tasksRequestSequence.current) return;
+      setTasksError(true);
+    } finally {
+      if (requestId === tasksRequestSequence.current) setTasksLoading(false);
+    }
+  }, [epicId]);
+
   useEffect(() => {
     let isMounted = true;
     const run = async () => {
@@ -174,6 +270,19 @@ export function EpicDetailsModal({
       if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
     };
   }, [loadDetails]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const run = async () => {
+      await Promise.resolve();
+      if (isMounted) await loadTasks();
+    };
+    run();
+    return () => {
+      isMounted = false;
+      tasksRequestSequence.current += 1;
+    };
+  }, [loadTasks]);
 
   useEffect(() => {
     if (!assigneeOpen) return;
@@ -638,9 +747,11 @@ export function EpicDetailsModal({
                   <span className="sm:hidden">Tasks</span>
                   <span className="hidden sm:inline">Epic Tasks</span>
                 </h2>
-                <span className="rounded-full bg-[#dbe4ff] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.2px] text-[#4f5f7b] sm:hidden">
-                  0 Tasks
-                </span>
+                {!tasksLoading && !tasksError ? (
+                  <span className="rounded-full bg-[#dbe4ff] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.2px] text-[#4f5f7b] sm:hidden">
+                    {tasks.length} Tasks
+                  </span>
+                ) : null}
                 <Link
                   href={`/project/${projectId}/tasks/new?epicId=${epic.id}`}
                   className="hidden rounded-[2px] text-[14px] font-semibold text-[#0052cc] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0052cc] sm:block"
@@ -649,27 +760,105 @@ export function EpicDetailsModal({
                 </Link>
               </div>
 
-              <div className="mt-6 flex min-h-[248px] flex-col items-center justify-center rounded-[8px] border border-dashed border-[#d9deeb] bg-[#f1f3ff] px-5 py-8 text-center">
-                <span className="flex h-12 w-12 items-center justify-center rounded-[12px] bg-[#d7e2ff] text-[#7f91b6]">
-                  <ListTodo size={23} strokeWidth={1.8} aria-hidden="true" />
-                </span>
-                <p className="mt-4 text-[16px] font-medium leading-6 text-[#041b3c]">
-                  No tasks have been added to this epic yet
-                </p>
-                <Link
-                  href={`/project/${projectId}/tasks/new?epicId=${epic.id}`}
-                  className="mt-4 flex h-11 items-center gap-2 rounded-[2px] bg-[#0052cc] px-6 text-[16px] font-semibold text-white shadow-[0_3px_8px_rgba(0,82,204,0.18)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0052cc] focus-visible:ring-offset-2"
-                >
-                  <Image
-                    src="/assets/svg/icons/icon-plus.svg"
-                    alt=""
-                    width={16}
-                    height={16}
-                    aria-hidden="true"
-                  />
-                  Add Task
-                </Link>
-              </div>
+              {tasksLoading ? <TasksLoading /> : null}
+
+              {!tasksLoading && tasksError ? <TasksError /> : null}
+
+              {!tasksLoading && !tasksError && tasks.length === 0 ? (
+                <div className="mt-6 flex min-h-[248px] flex-col items-center justify-center rounded-[8px] border border-dashed border-[#d9deeb] bg-[#f1f3ff] px-5 py-8 text-center">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-[12px] bg-[#d7e2ff] text-[#7f91b6]">
+                    <ListTodo size={23} strokeWidth={1.8} aria-hidden="true" />
+                  </span>
+                  <p className="mt-4 text-[16px] font-medium leading-6 text-[#041b3c]">
+                    No tasks found for this epic
+                  </p>
+                  <Link
+                    href={`/project/${projectId}/tasks/new?epicId=${epic.id}`}
+                    className="mt-4 flex h-11 items-center gap-2 rounded-[2px] bg-[#0052cc] px-6 text-[16px] font-semibold text-white shadow-[0_3px_8px_rgba(0,82,204,0.18)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0052cc] focus-visible:ring-offset-2"
+                  >
+                    <Image
+                      src="/assets/svg/icons/icon-plus.svg"
+                      alt=""
+                      width={16}
+                      height={16}
+                      aria-hidden="true"
+                    />
+                    Add Task
+                  </Link>
+                </div>
+              ) : null}
+
+              {!tasksLoading && !tasksError && tasks.length > 0 ? (
+                <>
+                  <div className="mt-6 hidden overflow-hidden rounded-[8px] border border-[#e5e8f0] sm:block">
+                    {tasks.map((task, index) => (
+                      <div
+                        key={task.id}
+                        className={`flex min-h-[81px] items-center justify-between gap-6 px-4 py-3.5 ${
+                          index < tasks.length - 1
+                            ? "border-b border-[#eef0f5]"
+                            : ""
+                        }`}
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-[16px] font-medium leading-6 text-[#041b3c]">
+                            {task.title}
+                          </p>
+                          <div className="mt-1">
+                            <TaskAssignee task={task} />
+                          </div>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className="text-[9px] font-bold uppercase tracking-[0.3px] text-[#929bad]">
+                            Due date
+                          </p>
+                          <p className="mt-0.5 text-[12px] font-medium text-[#53627b]">
+                            {formatTaskDueDate(task.due_date)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-4 space-y-3 sm:hidden">
+                    {tasks.map((task) => (
+                      <div
+                        key={task.id}
+                        className="flex min-h-[84px] flex-col justify-between rounded-[8px] border border-[#d9e1f2] bg-white px-4 py-3.5 shadow-[0_1px_2px_rgba(4,27,60,0.03)]"
+                      >
+                        <p className="truncate text-[14px] font-semibold leading-5 text-[#041b3c]">
+                          {task.title}
+                        </p>
+                        <div className="mt-2 flex min-w-0 items-center justify-between gap-3">
+                          <TaskAssignee task={task} />
+                          <div className="flex shrink-0 items-center gap-1.5 text-[11px] font-medium text-[#68758c]">
+                            <Image
+                              src="/assets/svg/icons/icon-calendar.svg"
+                              alt=""
+                              width={13}
+                              height={13}
+                              aria-hidden="true"
+                            />
+                            <span>{formatTaskDueDate(task.due_date)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+
+                    <Link
+                      href={`/project/${projectId}/tasks/new?epicId=${epic.id}`}
+                      className="flex h-[52px] w-full items-center justify-center gap-3 rounded-[8px] border border-dashed border-[#d3d9e6] text-[13px] font-semibold uppercase tracking-[1.2px] text-[#7b8291] transition-colors hover:border-[#9fb8f3] hover:text-[#0052cc] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0052cc]"
+                    >
+                      <CirclePlus
+                        size={17}
+                        strokeWidth={1.8}
+                        aria-hidden="true"
+                      />
+                      Add New Task
+                    </Link>
+                  </div>
+                </>
+              ) : null}
             </>
           ) : null}
         </div>

@@ -33,6 +33,20 @@ export interface CreatedTask {
   created_at: string;
 }
 
+export interface ProjectTaskAssignee {
+  id: string | null;
+  name: string | null;
+  email: string | null;
+  department: string | null;
+}
+
+export interface ProjectTask {
+  id: string;
+  title: string;
+  due_date: string | null;
+  assignee: ProjectTaskAssignee;
+}
+
 export const TasksService = {
   getByProject: async (token: string, projectId: string) => {
     return fetch(
@@ -43,11 +57,19 @@ export const TasksService = {
       }
     );
   },
-  getByEpic: async (token: string, epicId: string) => {
-    return fetch(`${SUPABASE_URL}/rest/v1/project_tasks?epic_id=eq.${epicId}`, {
-      method: "GET",
-      headers: getHeaders(token),
-    });
+  getByEpic: async (
+    epicId: string
+  ): Promise<{
+    data: ProjectTask[] | null;
+    error: PostgrestError | null;
+  }> => {
+    const { data, error } = await supabase
+      .from("project_tasks")
+      .select("id, title, due_date, assignee")
+      .eq("epic_id", epicId);
+
+    if (error) return { data: null, error };
+    return { data: (data as ProjectTask[]) ?? [], error: null };
   },
   create: async (
     projectId: string,
