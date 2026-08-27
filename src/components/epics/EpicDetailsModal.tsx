@@ -3,16 +3,28 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ChevronDown, Link2, ListTodo, X } from "lucide-react";
-import { EpicsService, ProjectEpic } from "@/services/api/epics.service";
+import {
+  EpicsService,
+  ProjectEpic,
+  UpdateEpicInput,
+} from "@/services/api/epics.service";
+import {
+  ProjectMember,
+  ProjectsService,
+} from "@/services/api/projects.service";
 import { getInitials } from "@/lib/utils/avatar";
 
 interface EpicDetailsModalProps {
   projectId: string;
   epicId: string;
   onClose: () => void;
+  onEpicUpdated: (updatedEpic: ProjectEpic) => void;
 }
 
 type DetailsStatus = "loading" | "ready" | "error";
+type EditableField = "title" | "description" | "assignee" | "deadline";
+type MembersStatus = "idle" | "loading" | "ready" | "error";
+type UpdateResult = "success" | "failure" | "ignored";
 
 const createdDateFormat = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -21,7 +33,9 @@ const createdDateFormat = new Intl.DateTimeFormat("en-US", {
 });
 
 function formatDate(value: string): string | null {
-  const date = new Date(value);
+  const date = new Date(
+    /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T00:00:00` : value
+  );
   return Number.isNaN(date.getTime()) ? null : createdDateFormat.format(date);
 }
 
@@ -50,23 +64,17 @@ function Person({
   label,
   name,
   fallback,
-  withChevron = false,
 }: {
   label: string;
   name?: string | null;
   fallback: string;
-  withChevron?: boolean;
 }) {
   return (
     <div className="min-w-0">
       <p className="text-[10px] font-bold uppercase tracking-[0.25px] text-[#929bad]">
         {label}
       </p>
-      <div
-        className={`mt-2.5 flex min-h-7 items-center gap-2.5 ${
-          withChevron ? "h-10 rounded-[8px] border border-[#cad8ff] px-2" : ""
-        }`}
-      >
+      <div className="mt-2.5 flex min-h-7 items-center gap-2.5">
         {name ? (
           <span
             aria-hidden="true"
@@ -78,14 +86,6 @@ function Person({
         <span className="min-w-0 flex-1 truncate text-[14px] font-medium text-[#041b3c]">
           {name || fallback}
         </span>
-        {withChevron ? (
-          <ChevronDown
-            size={17}
-            strokeWidth={1.8}
-            aria-hidden="true"
-            className="ml-auto shrink-0 text-[#67758d]"
-          />
-        ) : null}
       </div>
     </div>
   );
@@ -95,15 +95,53 @@ export function EpicDetailsModal({
   projectId,
   epicId,
   onClose,
+  onEpicUpdated,
 }: EpicDetailsModalProps) {
   const [status, setStatus] = useState<DetailsStatus>("loading");
   const [epic, setEpic] = useState<ProjectEpic | null>(null);
+  const [titleDraft, setTitleDraft] = useState("");
+  const [descriptionDraft, setDescriptionDraft] = useState("");
+  const [titleError, setTitleError] = useState<string | null>(null);
+  const [saving, setSaving] = useState<Record<EditableField, boolean>>({
+    title: false,
+    description: false,
+    assignee: false,
+    deadline: false,
+  });
+  const [assigneeOpen, setAssigneeOpen] = useState(false);
+  const [membersStatus, setMembersStatus] = useState<MembersStatus>("idle");
+  const [members, setMembers] = useState<ProjectMember[]>([]);
+  const [toastVisible, setToastVisible] = useState(false);
   const requestSequence = useRef(0);
+  const membersRequestSequence = useRef(0);
+  const fieldRequestSequence = useRef<Record<EditableField, number>>({
+    title: 0,
+    description: 0,
+    assignee: 0,
+    deadline: 0,
+  });
+  const savingRef = useRef<Record<EditableField, boolean>>({
+    title: false,
+    description: false,
+    assignee: false,
+    deadline: false,
+  });
+  const epicRef = useRef<ProjectEpic | null>(null);
+  const assigneeRef = useRef<HTMLDivElement | null>(null);
+  const deadlineInputRef = useRef<HTMLInputElement | null>(null);
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showUpdateError = useCallback(() => {
+    setToastVisible(true);
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    toastTimeoutRef.current = setTimeout(() => setToastVisible(false), 4000);
+  }, []);
 
   const loadDetails = useCallback(async () => {
     const requestId = ++requestSequence.current;
     setStatus("loading");
     setEpic(null);
+    epicRef.current = null;
 
     const result = await EpicsService.getDetails(projectId, epicId);
     if (requestId !== requestSequence.current) return;
@@ -113,7 +151,11 @@ export function EpicDetailsModal({
       return;
     }
 
+    epicRef.current = result.data;
     setEpic(result.data);
+    setTitleDraft(result.data.title);
+    setDescriptionDraft(result.data.description ?? "");
+    setTitleError(null);
     setStatus("ready");
   }, [epicId, projectId]);
 
@@ -127,12 +169,183 @@ export function EpicDetailsModal({
     return () => {
       isMounted = false;
       requestSequence.current += 1;
+      membersRequestSequence.current += 1;
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
     };
   }, [loadDetails]);
 
+  useEffect(() => {
+    if (!assigneeOpen) return;
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      if (!assigneeRef.current?.contains(event.target as Node)) {
+        setAssigneeOpen(false);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setAssigneeOpen(false);
+    };
+    document.addEventListener("pointerdown", closeOnOutsidePointer);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsidePointer);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [assigneeOpen]);
+
+  const updateField = async (
+    field: EditableField,
+    data: UpdateEpicInput,
+    patch: Partial<ProjectEpic>
+  ): Promise<UpdateResult> => {
+    const currentEpic = epicRef.current;
+    if (!currentEpic || savingRef.current[field]) return "ignored";
+
+    const requestId = ++fieldRequestSequence.current[field];
+    savingRef.current[field] = true;
+    setSaving((current) => ({ ...current, [field]: true }));
+    let error: unknown = null;
+    try {
+      ({ error } = await EpicsService.update(currentEpic.id, data));
+    } catch (caughtError) {
+      error = caughtError;
+    }
+
+    if (requestId !== fieldRequestSequence.current[field]) return "ignored";
+    savingRef.current[field] = false;
+    setSaving((current) => ({ ...current, [field]: false }));
+
+    if (error) {
+      showUpdateError();
+      return "failure";
+    }
+
+    const latestEpic = epicRef.current;
+    if (!latestEpic) return "ignored";
+    const updatedEpic = { ...latestEpic, ...patch };
+    epicRef.current = updatedEpic;
+    setEpic(updatedEpic);
+    onEpicUpdated(updatedEpic);
+    return "success";
+  };
+
+  const handleTitleBlur = async () => {
+    const currentEpic = epicRef.current;
+    if (!currentEpic || saving.title) return;
+    if (titleDraft.trim().length === 0) {
+      setTitleError("Title is required.");
+      return;
+    }
+    if (titleDraft === currentEpic.title) {
+      setTitleError(null);
+      return;
+    }
+
+    setTitleError(null);
+    const previousTitle = currentEpic.title;
+    const result = await updateField(
+      "title",
+      { title: titleDraft },
+      { title: titleDraft }
+    );
+    if (result === "failure") setTitleDraft(previousTitle);
+  };
+
+  const handleDescriptionBlur = async () => {
+    const currentEpic = epicRef.current;
+    if (!currentEpic || saving.description) return;
+    const previousDescription = currentEpic.description ?? "";
+    if (descriptionDraft === previousDescription) return;
+
+    const result = await updateField(
+      "description",
+      { description: descriptionDraft },
+      { description: descriptionDraft }
+    );
+    if (result === "failure") setDescriptionDraft(previousDescription);
+  };
+
+  const loadMembers = async () => {
+    if (membersStatus === "loading" || membersStatus === "ready") return;
+    const requestId = ++membersRequestSequence.current;
+    setMembersStatus("loading");
+    const { data, error } = await ProjectsService.getMembers(projectId);
+    if (requestId !== membersRequestSequence.current) return;
+    if (error) {
+      setMembersStatus("error");
+      return;
+    }
+    setMembers(data ?? []);
+    setMembersStatus("ready");
+  };
+
+  const handleAssigneeTrigger = () => {
+    if (saving.assignee) return;
+    setAssigneeOpen((open) => !open);
+    if (!assigneeOpen) void loadMembers();
+  };
+
+  const handleAssigneeSelect = async (member: ProjectMember | null) => {
+    const currentEpic = epicRef.current;
+    if (!currentEpic || saving.assignee) return;
+
+    const nextAssignee = member
+      ? {
+          sub: member.user_id,
+          name: member.metadata?.name || member.email,
+          email: member.email,
+          department: member.metadata?.job_title || "",
+        }
+      : null;
+    if (currentEpic.assignee?.sub === nextAssignee?.sub) {
+      setAssigneeOpen(false);
+      return;
+    }
+
+    setAssigneeOpen(false);
+    await updateField(
+      "assignee",
+      { assignee_id: nextAssignee?.sub ?? null },
+      { assignee: nextAssignee }
+    );
+  };
+
+  const handleDeadlineChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const currentEpic = epicRef.current;
+    if (!currentEpic || saving.deadline) return;
+    const nextDeadline = event.target.value || null;
+    const previousDeadline = currentEpic.deadline;
+    if (nextDeadline === previousDeadline) return;
+
+    const result = await updateField(
+      "deadline",
+      { deadline: nextDeadline },
+      { deadline: nextDeadline }
+    );
+    if (result === "failure" && deadlineInputRef.current) {
+      deadlineInputRef.current.value = previousDeadline ?? "";
+    }
+  };
+
+  const openDeadlinePicker = () => {
+    if (saving.deadline) return;
+    const input = deadlineInputRef.current;
+    if (!input) return;
+    if (typeof input.showPicker === "function") {
+      try {
+        input.showPicker();
+      } catch {
+        input.focus();
+      }
+    } else {
+      input.focus();
+      input.click();
+    }
+  };
+
   const createdDate = epic ? formatDate(epic.created_at) : null;
   const deadlineDate = epic?.deadline ? formatDate(epic.deadline) : null;
-  const description = epic?.description?.trim() || "No description provided";
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
@@ -144,7 +357,7 @@ export function EpicDetailsModal({
       <section
         role="dialog"
         aria-modal="true"
-        aria-labelledby="epic-details-title"
+        aria-label="Epic details"
         className="relative z-10 flex max-h-[calc(100dvh-32px)] w-full max-w-[672px] flex-col overflow-hidden rounded-[8px] bg-white shadow-[0_24px_65px_rgba(4,27,60,0.28)] lg:h-[calc(100dvh-146px)] lg:max-h-[878px]"
       >
         <header className="shrink-0 border-b border-[#f0f1f6] bg-white px-6 pb-8 pt-7 sm:px-8 sm:pb-8 sm:pt-9">
@@ -187,18 +400,37 @@ export function EpicDetailsModal({
           </div>
 
           {epic ? (
-            <h2
-              id="epic-details-title"
-              className="mt-5 flex min-h-[57px] items-center rounded-[10px] border border-[#cad8ff] px-3 text-[20px] font-bold leading-7 text-[#041b3c] sm:text-[21px]"
-            >
-              {epic.title}
-            </h2>
+            <div className="relative mt-5">
+              <input
+                id="epic-details-title"
+                value={titleDraft}
+                onChange={(event) => {
+                  setTitleDraft(event.target.value);
+                  if (titleError) setTitleError(null);
+                }}
+                onBlur={handleTitleBlur}
+                disabled={saving.title}
+                aria-label="Epic title"
+                aria-invalid={!!titleError}
+                aria-busy={saving.title}
+                className={`flex h-[57px] w-full rounded-[10px] border bg-white px-3 text-[20px] font-bold leading-7 text-[#041b3c] outline-none transition-colors sm:text-[21px] ${
+                  titleError
+                    ? "border-[#d92d20] focus:ring-2 focus:ring-[#fda29b]"
+                    : "border-[#cad8ff] focus:ring-2 focus:ring-[#0052cc]"
+                } disabled:cursor-wait disabled:bg-[#f8f9fc]`}
+              />
+              {titleError ? (
+                <p
+                  className="absolute left-3 top-full mt-1 text-[11px] font-medium text-[#d92d20]"
+                  role="alert"
+                >
+                  {titleError}
+                </p>
+              ) : null}
+            </div>
           ) : (
             <div className="mt-5 flex h-[57px] items-center rounded-[10px] border border-[#e3e7f1] px-3">
               <span className="h-5 w-2/3 animate-pulse rounded bg-[#e8ebf3]" />
-              <h2 id="epic-details-title" className="sr-only">
-                Epic details
-              </h2>
             </div>
           )}
         </header>
@@ -208,9 +440,9 @@ export function EpicDetailsModal({
 
           {status === "error" ? (
             <div className="flex min-h-[460px] flex-col items-center justify-center px-4 text-center">
-              <h3 className="text-[18px] font-semibold text-[#041b3c]">
+              <h2 className="text-[18px] font-semibold text-[#041b3c]">
                 Unable to load epic details
-              </h3>
+              </h2>
               <p className="mt-2 max-w-[300px] text-[14px] leading-6 text-[#687287]">
                 Please try the request again.
               </p>
@@ -226,9 +458,16 @@ export function EpicDetailsModal({
 
           {status === "ready" && epic ? (
             <>
-              <div className="min-h-[149px] rounded-[10px] border border-[#cad8ff] px-3 py-3 text-[16px] leading-6 text-[#0c284c]">
-                {description}
-              </div>
+              <textarea
+                value={descriptionDraft}
+                onChange={(event) => setDescriptionDraft(event.target.value)}
+                onBlur={handleDescriptionBlur}
+                disabled={saving.description}
+                aria-label="Epic description"
+                aria-busy={saving.description}
+                placeholder="No description provided"
+                className="min-h-[149px] w-full resize-none rounded-[10px] border border-[#cad8ff] bg-white px-3 py-3 text-[16px] leading-6 text-[#0c284c] outline-none transition-colors placeholder:text-[#0c284c] focus:ring-2 focus:ring-[#0052cc] disabled:cursor-wait disabled:bg-[#f8f9fc]"
+              />
 
               <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-6 border-b border-[#eef0f5] pb-7 sm:grid-cols-3 sm:gap-6 sm:border-b-0 sm:pb-0">
                 <Person
@@ -236,17 +475,125 @@ export function EpicDetailsModal({
                   name={epic.created_by?.name}
                   fallback="Unavailable"
                 />
-                <Person
-                  label="Assignee"
-                  name={epic.assignee?.name}
-                  fallback="Unassigned"
-                  withChevron
-                />
-                <div className="min-w-0">
+
+                <div ref={assigneeRef} className="relative min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.25px] text-[#929bad]">
+                    Assignee
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleAssigneeTrigger}
+                    disabled={saving.assignee}
+                    aria-label="Change epic assignee"
+                    aria-haspopup="listbox"
+                    aria-expanded={assigneeOpen}
+                    aria-busy={saving.assignee}
+                    className="mt-2.5 flex h-10 w-full items-center gap-2.5 rounded-[8px] border border-[#cad8ff] px-2 text-left outline-none transition-colors hover:border-[#9fb8f3] focus-visible:ring-2 focus-visible:ring-[#0052cc] disabled:cursor-wait disabled:bg-[#f8f9fc]"
+                  >
+                    {epic.assignee ? (
+                      <span
+                        aria-hidden="true"
+                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#0052cc] text-[10px] font-semibold text-white"
+                      >
+                        {getInitials(epic.assignee.name)}
+                      </span>
+                    ) : null}
+                    <span className="min-w-0 flex-1 truncate text-[14px] font-medium text-[#041b3c]">
+                      {epic.assignee?.name || "Unassigned"}
+                    </span>
+                    <ChevronDown
+                      size={17}
+                      strokeWidth={1.8}
+                      aria-hidden="true"
+                      className="ml-auto shrink-0 text-[#67758d]"
+                    />
+                  </button>
+
+                  {assigneeOpen ? (
+                    <div
+                      role="listbox"
+                      aria-label="Project members"
+                      className="absolute z-20 mt-2 max-h-52 w-full overflow-y-auto rounded-[8px] border border-[#cad8ff] bg-white p-1 shadow-[0_10px_28px_rgba(4,27,60,0.16)]"
+                    >
+                      {membersStatus === "loading" ? (
+                        <p className="px-2 py-2 text-[12px] text-[#67758d]">
+                          Loading members...
+                        </p>
+                      ) : null}
+                      {membersStatus === "error" ? (
+                        <button
+                          type="button"
+                          onClick={() => void loadMembers()}
+                          className="w-full rounded-[5px] px-2 py-2 text-left text-[12px] font-medium text-[#0052cc] hover:bg-[#f1f3ff]"
+                        >
+                          Unable to load members. Retry
+                        </button>
+                      ) : null}
+                      {membersStatus === "ready" ? (
+                        <>
+                          <button
+                            type="button"
+                            role="option"
+                            aria-selected={!epic.assignee}
+                            onClick={() => void handleAssigneeSelect(null)}
+                            className="flex w-full items-center gap-2 rounded-[5px] px-2 py-2 text-left text-[13px] text-[#041b3c] hover:bg-[#f1f3ff]"
+                          >
+                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#e8ebf3] text-[10px] font-semibold text-[#67758d]">
+                              --
+                            </span>
+                            <span className="truncate">Unassigned</span>
+                          </button>
+                          {members.map((member) => {
+                            const name = member.metadata?.name || member.email;
+                            const selected =
+                              epic.assignee?.sub === member.user_id;
+                            return (
+                              <button
+                                key={member.member_id}
+                                type="button"
+                                role="option"
+                                aria-selected={selected}
+                                onClick={() =>
+                                  void handleAssigneeSelect(member)
+                                }
+                                className={`flex w-full items-center gap-2 rounded-[5px] px-2 py-2 text-left text-[13px] text-[#041b3c] hover:bg-[#f1f3ff] ${
+                                  selected ? "bg-[#eef3ff]" : ""
+                                }`}
+                              >
+                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#0052cc] text-[10px] font-semibold text-white">
+                                  {getInitials(name)}
+                                </span>
+                                <span className="min-w-0 truncate">{name}</span>
+                              </button>
+                            );
+                          })}
+                        </>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="relative min-w-0">
                   <p className="text-[10px] font-bold uppercase tracking-[0.25px] text-[#929bad]">
                     Deadline
                   </p>
-                  <div className="mt-2.5 flex h-10 items-center gap-2 rounded-[8px] border border-[#cad8ff] px-2 text-[#041b3c]">
+                  <input
+                    ref={deadlineInputRef}
+                    type="date"
+                    value={epic.deadline ?? ""}
+                    onChange={handleDeadlineChange}
+                    aria-label="Epic deadline"
+                    className="pointer-events-none absolute h-px w-px opacity-0"
+                    tabIndex={-1}
+                  />
+                  <button
+                    type="button"
+                    onClick={openDeadlinePicker}
+                    disabled={saving.deadline}
+                    aria-label="Change epic deadline"
+                    aria-busy={saving.deadline}
+                    className="mt-2.5 flex h-10 w-full items-center gap-2 rounded-[8px] border border-[#cad8ff] px-2 text-left text-[#041b3c] outline-none transition-colors hover:border-[#9fb8f3] focus-visible:ring-2 focus-visible:ring-[#0052cc] disabled:cursor-wait disabled:bg-[#f8f9fc]"
+                  >
                     <Image
                       src="/assets/svg/icons/icon-calendar.svg"
                       alt=""
@@ -254,7 +601,7 @@ export function EpicDetailsModal({
                       height={15}
                       aria-hidden="true"
                     />
-                    <span className="truncate text-[12px] font-medium tracking-[-0.1px] sm:text-[14px] sm:tracking-normal">
+                    <span className="min-w-0 flex-1 truncate text-[12px] font-medium tracking-[-0.1px] sm:text-[14px] sm:tracking-normal">
                       {deadlineDate || "—"}
                     </span>
                     <ChevronDown
@@ -263,8 +610,9 @@ export function EpicDetailsModal({
                       aria-hidden="true"
                       className="ml-auto shrink-0 text-[#67758d]"
                     />
-                  </div>
+                  </button>
                 </div>
+
                 <div className="min-w-0 sm:col-start-1">
                   <p className="text-[10px] font-bold uppercase tracking-[0.25px] text-[#929bad]">
                     Created at
@@ -285,10 +633,10 @@ export function EpicDetailsModal({
               </div>
 
               <div className="mt-10 flex items-center justify-between gap-4">
-                <h3 className="text-[19px] font-semibold text-[#041b3c]">
+                <h2 className="text-[19px] font-semibold text-[#041b3c]">
                   <span className="sm:hidden">Tasks</span>
                   <span className="hidden sm:inline">Epic Tasks</span>
-                </h3>
+                </h2>
                 <span className="rounded-full bg-[#dbe4ff] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.2px] text-[#4f5f7b] sm:hidden">
                   0 Tasks
                 </span>
@@ -326,6 +674,15 @@ export function EpicDetailsModal({
             </>
           ) : null}
         </div>
+
+        {toastVisible ? (
+          <div
+            role="alert"
+            className="absolute bottom-6 left-6 right-6 z-30 rounded-[8px] border border-[#fda29b] bg-[#fff4f2] px-4 py-3 text-[13px] font-medium text-[#b42318] shadow-[0_8px_20px_rgba(4,27,60,0.14)] sm:left-auto sm:w-[310px]"
+          >
+            Failed to update epic. Please try again.
+          </div>
+        ) : null}
       </section>
     </div>
   );

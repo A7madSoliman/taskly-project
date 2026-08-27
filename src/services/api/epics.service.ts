@@ -8,6 +8,13 @@ export interface NewEpicInput {
   deadline: string | null;
 }
 
+export interface UpdateEpicInput {
+  title?: string;
+  description?: string;
+  assignee_id?: string | null;
+  deadline?: string | null;
+}
+
 export interface EpicUser {
   sub: string;
   name: string;
@@ -79,12 +86,8 @@ export const EpicsService = {
       return { data: null, error };
     }
   },
-  update: async (token: string, epicId: string, data: unknown) => {
-    return fetch(`${SUPABASE_URL}/rest/v1/epics?id=eq.${epicId}`, {
-      method: "PATCH",
-      headers: getHeaders(token),
-      body: JSON.stringify(data),
-    });
+  update: async (epicId: string, data: UpdateEpicInput) => {
+    return supabase.from("epics").update(data).eq("id", epicId);
   },
   delete: async (token: string, epicId: string) => {
     return fetch(`${SUPABASE_URL}/rest/v1/epics?id=eq.${epicId}`, {

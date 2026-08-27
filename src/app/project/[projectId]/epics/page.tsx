@@ -50,6 +50,14 @@ export default function ProjectEpicsPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [selectedEpicId, setSelectedEpicId] = useState<string | null>(null);
 
+  const handleEpicUpdated = useCallback((updatedEpic: ProjectEpic) => {
+    setEpics((current) =>
+      current.map((epic) =>
+        epic.id === updatedEpic.id ? { ...epic, ...updatedEpic } : epic
+      )
+    );
+  }, []);
+
   // Stale-response guards: a monotonic sequence invalidates superseded
   // async results (project change, rapid navigation). Refs harden against
   // double-trigger races that async setState cannot catch in time.
@@ -677,6 +685,7 @@ export default function ProjectEpicsPage() {
             projectId={projectId}
             epicId={selectedEpicId}
             onClose={() => setSelectedEpicId(null)}
+            onEpicUpdated={handleEpicUpdated}
           />
         ) : null}
       </div>
