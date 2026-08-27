@@ -83,14 +83,14 @@ export function Navbar({
           <span className="font-bold text-[14px] text-[#041b3c] leading-tight">
             {userName || "User"}
           </span>
-          <span className="mt-0.5 text-[11px] font-semibold uppercase leading-none tracking-[0.7px] text-[#0052cc]">
+          <span className=" mt-0.5 text-[11px] font-bold uppercase leading-none tracking-[0.7px] text-[#0052cc]">
             {jobTitle || "WORKSPACE MEMBER"}
           </span>
         </div>
 
         <button
           type="button"
-          className="w-10 h-10 rounded-full bg-[#0052cc] text-white font-bold text-[14px] flex items-center justify-center select-none shrink-0 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0052cc] focus:ring-offset-2"
+          className="cursor-pointer w-10 h-10 rounded-full bg-[#0052cc] text-white font-bold text-[14px] flex items-center justify-center select-none shrink-0 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0052cc] focus:ring-offset-2"
           title={userName || "User"}
           aria-label={isDropdownOpen ? "Close user menu" : "Open user menu"}
           aria-expanded={isDropdownOpen}

@@ -273,7 +273,7 @@ export default function ProjectPage() {
               Projects
             </h1>
             <p className="text-[14px] text-[#4f5f7b] mt-1">
-              Manage and curate your projects
+              Manage and create your projects
             </p>
           </div>
 
@@ -284,7 +284,7 @@ export default function ProjectPage() {
                 <Button
                   variant="primary"
                   fullWidth={false}
-                  className="gap-2 h-10 px-4 text-sm font-medium"
+                  className="gap-2 h-10 px-4 text-sm font-medium cursor-pointer"
                 >
                   <Image
                     src="/assets/svg/icons/icon-plus.svg"
@@ -421,7 +421,7 @@ export default function ProjectPage() {
             <Link href="/project/add">
               <Button
                 variant="primary"
-                className="gap-2 h-12 px-6 text-[16px] font-semibold"
+                className="gap-2 h-12 px-6 text-[16px] font-semibold cursor-pointer"
               >
                 <Image
                   src="/assets/svg/icons/icon-plus.svg"

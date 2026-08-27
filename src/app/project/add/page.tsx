@@ -203,7 +203,7 @@ export default function AddProjectPage() {
                 type="submit"
                 fullWidth={false}
                 isLoading={isSubmitting}
-                className="px-6 py-3 shrink-0"
+                className="px-6 py-3 shrink-0 cursor-pointer"
               >
                 Create Project
               </Button>
@@ -277,7 +277,7 @@ export default function AddProjectPage() {
               <Button
                 type="submit"
                 isLoading={isSubmitting}
-                className="w-full py-3.5"
+                className="w-full py-3.5 cursor-pointer"
               >
                 Create Project
               </Button>

@@ -259,7 +259,7 @@ export function Sidebar({
         <button
           type="button"
           onClick={onToggleCollapse}
-          className={`flex items-center gap-3 px-3 py-3 rounded-[8px] text-[14px] font-semibold text-[#041b3c] hover:bg-white/60 transition-all text-left w-full ${
+          className={`cursor-pointer flex items-center gap-3 px-3 py-3 rounded-[8px] text-[14px] font-semibold text-[#041b3c] hover:bg-white/60 transition-all text-left w-full ${
             isCollapsed ? "justify-center px-0" : ""
           }`}
           title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -283,7 +283,7 @@ export function Sidebar({
           type="button"
           onClick={onLogout}
           disabled={isLoggingOut}
-          className={`flex items-center gap-3 px-3 py-3 rounded-[8px] text-[14px] font-semibold text-[#d92d20] hover:bg-red-50/50 transition-all text-left w-full disabled:opacity-50 disabled:cursor-not-allowed ${
+          className={`cursor-pointer flex items-center gap-3 px-3 py-3 rounded-[8px] text-[14px] font-semibold text-[#d92d20] hover:bg-red-50/50 transition-all text-left w-full disabled:opacity-50 disabled:cursor-not-allowed ${
             isCollapsed ? "justify-center px-0" : ""
           }`}
           title="Logout"

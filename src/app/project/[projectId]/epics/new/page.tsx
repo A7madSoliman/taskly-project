@@ -373,7 +373,7 @@ export default function NewEpicPage() {
                 type="submit"
                 fullWidth={false}
                 isLoading={isSubmitting}
-                className="px-6 py-3 shrink-0"
+                className="px-6 py-3 shrink-0 cursor-pointer"
               >
                 Create Epic
               </Button>
