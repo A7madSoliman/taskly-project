@@ -30,6 +30,8 @@ import { TaskCard } from "@/components/tasks/TaskCard";
 import { TaskRow } from "@/components/tasks/TaskRow";
 import { TaskDetailsModal } from "@/components/tasks/TaskDetailsModal";
 
+const PAGE_SIZE = 10;
+
 const BOARD_COLUMNS: { status: TaskStatus; label: string }[] = [
   { status: "TO_DO", label: "TO DO" },
   { status: "IN_PROGRESS", label: "IN PROGRESS" },
@@ -52,21 +54,52 @@ export default function ProjectTasksPage() {
   const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
-  // Board View State
-  const [tasksByStatus, setTasksByStatus] = useState<
-    Record<TaskStatus, BoardTask[]>
-  >({
-    TO_DO: [],
-    IN_PROGRESS: [],
-    BLOCKED: [],
-    IN_REVIEW: [],
-    READY_FOR_QA: [],
-    REOPENED: [],
-    READY_FOR_PRODUCTION: [],
-    DONE: [],
-  });
+  // --- Desktop List State ---
+  const [listTasks, setListTasks] = useState<BoardTask[]>([]);
+  const [listTotalCount, setListTotalCount] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [requestedPage, setRequestedPage] = useState<number>(1);
+  const [listLoading, setListLoading] = useState<boolean>(true);
+  const [listError, setListError] = useState<boolean>(false);
 
-  const [columnLoading, setColumnLoading] = useState<
+  // --- Desktop Board State ---
+  const [boardTasks, setBoardTasks] = useState<Record<TaskStatus, BoardTask[]>>(
+    {
+      TO_DO: [],
+      IN_PROGRESS: [],
+      BLOCKED: [],
+      IN_REVIEW: [],
+      READY_FOR_QA: [],
+      REOPENED: [],
+      READY_FOR_PRODUCTION: [],
+      DONE: [],
+    }
+  );
+  const [boardTotalCounts, setBoardTotalCounts] = useState<
+    Record<TaskStatus, number>
+  >({
+    TO_DO: 0,
+    IN_PROGRESS: 0,
+    BLOCKED: 0,
+    IN_REVIEW: 0,
+    READY_FOR_QA: 0,
+    REOPENED: 0,
+    READY_FOR_PRODUCTION: 0,
+    DONE: 0,
+  });
+  const [boardPageIndex, setBoardPageIndex] = useState<
+    Record<TaskStatus, number>
+  >({
+    TO_DO: 0,
+    IN_PROGRESS: 0,
+    BLOCKED: 0,
+    IN_REVIEW: 0,
+    READY_FOR_QA: 0,
+    REOPENED: 0,
+    READY_FOR_PRODUCTION: 0,
+    DONE: 0,
+  });
+  const [boardLoadingInitial, setBoardLoadingInitial] = useState<
     Record<TaskStatus, boolean>
   >({
     TO_DO: true,
@@ -78,8 +111,33 @@ export default function ProjectTasksPage() {
     READY_FOR_PRODUCTION: true,
     DONE: true,
   });
-
-  const [columnError, setColumnError] = useState<Record<TaskStatus, boolean>>({
+  const [boardErrorInitial, setBoardErrorInitial] = useState<
+    Record<TaskStatus, boolean>
+  >({
+    TO_DO: false,
+    IN_PROGRESS: false,
+    BLOCKED: false,
+    IN_REVIEW: false,
+    READY_FOR_QA: false,
+    REOPENED: false,
+    READY_FOR_PRODUCTION: false,
+    DONE: false,
+  });
+  const [boardLoadingMore, setBoardLoadingMore] = useState<
+    Record<TaskStatus, boolean>
+  >({
+    TO_DO: false,
+    IN_PROGRESS: false,
+    BLOCKED: false,
+    IN_REVIEW: false,
+    READY_FOR_QA: false,
+    REOPENED: false,
+    READY_FOR_PRODUCTION: false,
+    DONE: false,
+  });
+  const [boardErrorMore, setBoardErrorMore] = useState<
+    Record<TaskStatus, boolean>
+  >({
     TO_DO: false,
     IN_PROGRESS: false,
     BLOCKED: false,
@@ -90,13 +148,22 @@ export default function ProjectTasksPage() {
     DONE: false,
   });
 
-  // List View State
-  const [listTasks, setListTasks] = useState<BoardTask[]>([]);
-  const [listLoading, setListLoading] = useState<boolean>(true);
-  const [listError, setListError] = useState<boolean>(false);
+  // --- Mobile State ---
+  const [mobileTasks, setMobileTasks] = useState<BoardTask[]>([]);
+  const [mobileLoadingInitial, setMobileLoadingInitial] =
+    useState<boolean>(true);
+  const [mobileLoadingMore, setMobileLoadingMore] = useState<boolean>(false);
+  const [mobileError, setMobileError] = useState<boolean>(false);
+  const [mobileAllExhausted, setMobileAllExhausted] = useState<boolean>(false);
 
-  // Request sequence guards
-  const boardRequestSeqRef = useRef<Record<TaskStatus, number>>({
+  // --- Mobile Mutable State Refs (Breaks callback/effect dependency cycle) ---
+  const activeMobileStatusIndexRef = useRef<number>(0);
+  const mobileStatusPageIndexRef = useRef<number>(0);
+  const mobileStatusLoadedCountRef = useRef<number>(0);
+
+  // --- Sequence Refs & In-Flight Guarding ---
+  const listSeqRef = useRef<number>(0);
+  const boardSeqRef = useRef<Record<TaskStatus, number>>({
     TO_DO: 0,
     IN_PROGRESS: 0,
     BLOCKED: 0,
@@ -106,7 +173,18 @@ export default function ProjectTasksPage() {
     READY_FOR_PRODUCTION: 0,
     DONE: 0,
   });
-  const listRequestSeqRef = useRef<number>(0);
+  const boardInFlightRef = useRef<Record<TaskStatus, boolean>>({
+    TO_DO: false,
+    IN_PROGRESS: false,
+    BLOCKED: false,
+    IN_REVIEW: false,
+    READY_FOR_QA: false,
+    REOPENED: false,
+    READY_FOR_PRODUCTION: false,
+    DONE: false,
+  });
+  const mobileSeqRef = useRef<number>(0);
+  const mobileInFlightRef = useRef<boolean>(false);
 
   // Evaluate media query
   useEffect(() => {
@@ -127,17 +205,13 @@ export default function ProjectTasksPage() {
     };
   }, []);
 
-  // Derived mode:
-  // Desktop + board -> "board"
-  // Desktop + list -> "list"
-  // Mobile + any -> "board"
-  const mode: "board" | "list" | null = useMemo(() => {
+  const mode: "board" | "list" | "mobile" | null = useMemo(() => {
     if (isDesktop === null) return null;
-    if (!isDesktop) return "board";
+    if (!isDesktop) return "mobile";
     return viewParam === "list" ? "list" : "board";
   }, [isDesktop, viewParam]);
 
-  // Load project name for breadcrumbs
+  // Load project name
   useEffect(() => {
     let isMounted = true;
     ProjectsService.getById(projectId).then(({ data }) => {
@@ -150,68 +224,340 @@ export default function ProjectTasksPage() {
     };
   }, [projectId]);
 
-  // Fetch tasks for a single column independently (Board mode)
-  const loadColumnTasks = useCallback(
-    async (status: TaskStatus) => {
-      const seq = ++boardRequestSeqRef.current[status];
-      await Promise.resolve();
-      setColumnLoading((prev) => ({ ...prev, [status]: true }));
-      setColumnError((prev) => ({ ...prev, [status]: false }));
+  // ----------------------------------------------------
+  // DESKTOP LIST FETCH & PAGINATION
+  // ----------------------------------------------------
+  const fetchListPage = useCallback(
+    async (pageToFetch: number) => {
+      if (pageToFetch === currentPage && !listError && listTasks.length > 0) {
+        return; // Current-page click does nothing
+      }
+
+      const seq = ++listSeqRef.current;
+      setRequestedPage(pageToFetch);
+      setListLoading(true);
+      setListError(false);
+
+      const from = (pageToFetch - 1) * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
 
       try {
-        const { data, error } = await TasksService.getByProjectStatus(
+        const { data, count, error } = await TasksService.getByProjectPaginated(
           projectId,
-          status
+          from,
+          to
         );
-        if (seq !== boardRequestSeqRef.current[status]) return;
+        if (seq !== listSeqRef.current) return;
 
         if (error) {
-          setColumnError((prev) => ({ ...prev, [status]: true }));
+          setListError(true);
         } else {
-          setTasksByStatus((prev) => ({
-            ...prev,
-            [status]: data ?? [],
-          }));
+          const fetchedRows = data ?? [];
+          const total = count ?? 0;
+          const calculatedTotalPages =
+            total === 0 ? 0 : Math.ceil(total / PAGE_SIZE);
+
+          if (total === 0) {
+            setCurrentPage(1);
+            setRequestedPage(1);
+            setListTotalCount(0);
+            setListTasks([]);
+          } else if (pageToFetch > calculatedTotalPages) {
+            // Corrective read
+            const clampedPage = calculatedTotalPages;
+            setRequestedPage(clampedPage);
+            const clampedFrom = (clampedPage - 1) * PAGE_SIZE;
+            const clampedTo = clampedFrom + PAGE_SIZE - 1;
+
+            const corrResult = await TasksService.getByProjectPaginated(
+              projectId,
+              clampedFrom,
+              clampedTo
+            );
+            if (seq !== listSeqRef.current) return;
+
+            if (corrResult.error) {
+              setListError(true);
+            } else {
+              const finalRows = corrResult.data ?? [];
+              const finalCount = corrResult.count ?? total;
+              const finalTotalPages =
+                finalCount === 0 ? 0 : Math.ceil(finalCount / PAGE_SIZE);
+              const settledPage =
+                finalTotalPages === 0
+                  ? 1
+                  : Math.min(clampedPage, finalTotalPages);
+
+              setCurrentPage(settledPage);
+              setRequestedPage(settledPage);
+              setListTotalCount(finalCount);
+              setListTasks(finalRows);
+            }
+          } else {
+            setCurrentPage(pageToFetch);
+            setRequestedPage(pageToFetch);
+            setListTotalCount(total);
+            setListTasks(fetchedRows);
+          }
         }
       } catch {
-        if (seq !== boardRequestSeqRef.current[status]) return;
-        setColumnError((prev) => ({ ...prev, [status]: true }));
+        if (seq !== listSeqRef.current) return;
+        setListError(true);
       } finally {
-        if (seq === boardRequestSeqRef.current[status]) {
-          setColumnLoading((prev) => ({ ...prev, [status]: false }));
+        if (seq === listSeqRef.current) {
+          setListLoading(false);
+        }
+      }
+    },
+    [projectId, currentPage, listError, listTasks.length]
+  );
+
+  // ----------------------------------------------------
+  // DESKTOP BOARD FETCH & INFINITE SCROLL
+  // ----------------------------------------------------
+  const fetchBoardColumnInitial = useCallback(
+    async (status: TaskStatus) => {
+      const seq = ++boardSeqRef.current[status];
+      boardInFlightRef.current[status] = true;
+
+      setBoardLoadingInitial((prev) => ({ ...prev, [status]: true }));
+      setBoardErrorInitial((prev) => ({ ...prev, [status]: false }));
+      setBoardErrorMore((prev) => ({ ...prev, [status]: false }));
+
+      try {
+        const { data, count, error } =
+          await TasksService.getByProjectStatusPaginated(
+            projectId,
+            status,
+            0,
+            PAGE_SIZE - 1
+          );
+        if (seq !== boardSeqRef.current[status]) return;
+
+        if (error) {
+          setBoardErrorInitial((prev) => ({ ...prev, [status]: true }));
+        } else {
+          setBoardTasks((prev) => ({ ...prev, [status]: data ?? [] }));
+          setBoardTotalCounts((prev) => ({ ...prev, [status]: count ?? 0 }));
+          setBoardPageIndex((prev) => ({ ...prev, [status]: 0 }));
+        }
+      } catch {
+        if (seq !== boardSeqRef.current[status]) return;
+        setBoardErrorInitial((prev) => ({ ...prev, [status]: true }));
+      } finally {
+        if (seq === boardSeqRef.current[status]) {
+          boardInFlightRef.current[status] = false;
+          setBoardLoadingInitial((prev) => ({ ...prev, [status]: false }));
         }
       }
     },
     [projectId]
   );
 
-  // Fetch project-wide tasks (List mode)
-  const loadListTasks = useCallback(async () => {
-    const seq = ++listRequestSeqRef.current;
-    await Promise.resolve();
-    setListLoading(true);
-    setListError(false);
+  const fetchBoardColumnNext = useCallback(
+    async (status: TaskStatus, options?: { isRetry?: boolean }) => {
+      if (boardInFlightRef.current[status]) return;
 
-    try {
-      const { data, error } = await TasksService.getByProject(projectId);
-      if (seq !== listRequestSeqRef.current) return;
+      const currentLoaded = boardTasks[status].length;
+      const total = boardTotalCounts[status];
+      if (currentLoaded >= total) return;
+      if (boardErrorMore[status] && !options?.isRetry) return;
 
-      if (error) {
-        setListError(true);
+      const nextPageIndex = boardPageIndex[status] + 1;
+      const from = nextPageIndex * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+
+      const seq = ++boardSeqRef.current[status];
+      boardInFlightRef.current[status] = true;
+
+      setBoardLoadingMore((prev) => ({ ...prev, [status]: true }));
+      setBoardErrorMore((prev) => ({ ...prev, [status]: false }));
+
+      try {
+        const { data, count, error } =
+          await TasksService.getByProjectStatusPaginated(
+            projectId,
+            status,
+            from,
+            to
+          );
+        if (seq !== boardSeqRef.current[status]) return;
+
+        if (error) {
+          setBoardErrorMore((prev) => ({ ...prev, [status]: true }));
+        } else {
+          const newRows = data ?? [];
+          setBoardTasks((prev) => {
+            const existing = prev[status];
+            const existingIds = new Set(existing.map((t) => t.id));
+            const uniqueIncoming = newRows.filter(
+              (t) => !existingIds.has(t.id)
+            );
+            return { ...prev, [status]: [...existing, ...uniqueIncoming] };
+          });
+          if (count !== null) {
+            setBoardTotalCounts((prev) => ({ ...prev, [status]: count }));
+          }
+          setBoardPageIndex((prev) => ({ ...prev, [status]: nextPageIndex }));
+        }
+      } catch {
+        if (seq !== boardSeqRef.current[status]) return;
+        setBoardErrorMore((prev) => ({ ...prev, [status]: true }));
+      } finally {
+        if (seq === boardSeqRef.current[status]) {
+          boardInFlightRef.current[status] = false;
+          setBoardLoadingMore((prev) => ({ ...prev, [status]: false }));
+        }
+      }
+    },
+    [projectId, boardTasks, boardTotalCounts, boardPageIndex, boardErrorMore]
+  );
+
+  const retryBoardColumnMore = useCallback(
+    (status: TaskStatus) => {
+      void fetchBoardColumnNext(status, { isRetry: true });
+    },
+    [fetchBoardColumnNext]
+  );
+
+  // ----------------------------------------------------
+  // MOBILE SEQUENTIAL CANONICAL-STATUS INFINITE SCROLL
+  // ----------------------------------------------------
+  const fetchMobileSequential = useCallback(
+    async (
+      statusIdx: number,
+      pageIdx: number,
+      isInitialMobileEntry: boolean = false
+    ) => {
+      if (mobileInFlightRef.current) return;
+      if (statusIdx >= BOARD_COLUMNS.length) {
+        setMobileAllExhausted(true);
+        setMobileLoadingInitial(false);
+        setMobileLoadingMore(false);
+        return;
+      }
+
+      const status = BOARD_COLUMNS[statusIdx].status;
+      const from = pageIdx * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+
+      const seq = ++mobileSeqRef.current;
+      mobileInFlightRef.current = true;
+
+      if (isInitialMobileEntry || (statusIdx === 0 && pageIdx === 0)) {
+        setMobileLoadingInitial(true);
       } else {
-        setListTasks(data ?? []);
+        setMobileLoadingMore(true);
       }
-    } catch {
-      if (seq !== listRequestSeqRef.current) return;
-      setListError(true);
-    } finally {
-      if (seq === listRequestSeqRef.current) {
-        setListLoading(false);
-      }
-    }
-  }, [projectId]);
+      setMobileError(false);
 
-  // Lifecycle triggered only after responsive mode resolves
+      try {
+        const { data, count, error } =
+          await TasksService.getByProjectStatusPaginated(
+            projectId,
+            status,
+            from,
+            to
+          );
+        if (seq !== mobileSeqRef.current) return;
+
+        if (error) {
+          setMobileError(true);
+        } else {
+          const fetchedRows = data ?? [];
+          const total = count ?? 0;
+
+          // Deduplicate rows per status
+          setMobileTasks((prev) => {
+            const existingIds = new Set(prev.map((t) => t.id));
+            const uniqueNew = fetchedRows.filter((t) => !existingIds.has(t.id));
+            return [...prev, ...uniqueNew];
+          });
+
+          const newLoadedForStatus =
+            (pageIdx === 0 ? 0 : mobileStatusLoadedCountRef.current) +
+            fetchedRows.length;
+
+          if (newLoadedForStatus >= total || fetchedRows.length === 0) {
+            // Active status exhausted! Advance to next status
+            const nextStatusIdx = statusIdx + 1;
+            activeMobileStatusIndexRef.current = nextStatusIdx;
+            mobileStatusPageIndexRef.current = 0;
+            mobileStatusLoadedCountRef.current = 0;
+
+            if (nextStatusIdx >= BOARD_COLUMNS.length) {
+              setMobileAllExhausted(true);
+            }
+          } else {
+            // More remain in active status
+            activeMobileStatusIndexRef.current = statusIdx;
+            mobileStatusPageIndexRef.current = pageIdx + 1;
+            mobileStatusLoadedCountRef.current = newLoadedForStatus;
+          }
+        }
+      } catch {
+        if (seq !== mobileSeqRef.current) return;
+        setMobileError(true);
+      } finally {
+        if (seq === mobileSeqRef.current) {
+          mobileInFlightRef.current = false;
+          setMobileLoadingInitial(false);
+          setMobileLoadingMore(false);
+        }
+      }
+    },
+    [projectId]
+  );
+
+  // Observer callback for Mobile Sentinel
+  const handleMobileLoadMore = useCallback(() => {
+    if (mobileInFlightRef.current) return;
+    if (mobileError) return;
+    if (mobileAllExhausted) return;
+
+    void fetchMobileSequential(
+      activeMobileStatusIndexRef.current,
+      mobileStatusPageIndexRef.current
+    );
+  }, [mobileError, mobileAllExhausted, fetchMobileSequential]);
+
+  const handleMobileRetry = useCallback(() => {
+    setMobileError(false);
+    void fetchMobileSequential(
+      activeMobileStatusIndexRef.current,
+      mobileStatusPageIndexRef.current
+    );
+  }, [fetchMobileSequential]);
+
+  // Mobile Sentinel Attachment (Callback Ref)
+  const mobileSentinelRef = useRef<HTMLDivElement | null>(null);
+  const setMobileSentinelRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      const prev = mobileSentinelRef.current as unknown as {
+        __io?: IntersectionObserver;
+      } | null;
+      if (prev && prev.__io) prev.__io.disconnect();
+      mobileSentinelRef.current = node;
+
+      if (!node || mode !== "mobile" || mobileAllExhausted) return;
+
+      const io = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting) {
+            handleMobileLoadMore();
+          }
+        },
+        { root: null, rootMargin: "200px 0px", threshold: 0 }
+      );
+      (node as unknown as { __io?: IntersectionObserver }).__io = io;
+      io.observe(node);
+    },
+    [mode, mobileAllExhausted, handleMobileLoadMore]
+  );
+
+  // ----------------------------------------------------
+  // MODE & PROJECT RESPONSIVE LIFECYCLE INITIALIZATION
+  // ----------------------------------------------------
   useEffect(() => {
     if (mode === null) return;
 
@@ -220,16 +566,56 @@ export default function ProjectTasksPage() {
       await Promise.resolve();
       if (!isMounted) return;
 
-      if (mode === "board") {
-        listRequestSeqRef.current++;
+      if (mode === "list") {
+        // Reset Board & Mobile sequences and in-flight flags
+        Object.keys(boardSeqRef.current).forEach((k) => {
+          const statusKey = k as TaskStatus;
+          boardSeqRef.current[statusKey]++;
+          boardInFlightRef.current[statusKey] = false;
+        });
+        mobileSeqRef.current++;
+        mobileInFlightRef.current = false;
+
+        setCurrentPage(1);
+        setRequestedPage(1);
+        setListTasks([]);
+        setListTotalCount(0);
+        void fetchListPage(1);
+      } else if (mode === "board") {
+        // Reset List & Mobile sequences and in-flight flags
+        listSeqRef.current++;
+        mobileSeqRef.current++;
+        mobileInFlightRef.current = false;
+
+        Object.keys(boardSeqRef.current).forEach((k) => {
+          const statusKey = k as TaskStatus;
+          boardSeqRef.current[statusKey]++;
+          boardInFlightRef.current[statusKey] = false;
+        });
+
         BOARD_COLUMNS.forEach((col) => {
-          void loadColumnTasks(col.status);
+          void fetchBoardColumnInitial(col.status);
         });
-      } else if (mode === "list") {
-        Object.keys(boardRequestSeqRef.current).forEach((k) => {
-          boardRequestSeqRef.current[k as TaskStatus]++;
+      } else if (mode === "mobile") {
+        // Reset List & Board sequences and in-flight flags
+        listSeqRef.current++;
+        Object.keys(boardSeqRef.current).forEach((k) => {
+          const statusKey = k as TaskStatus;
+          boardSeqRef.current[statusKey]++;
+          boardInFlightRef.current[statusKey] = false;
         });
-        void loadListTasks();
+
+        mobileSeqRef.current++;
+        mobileInFlightRef.current = false;
+
+        setMobileTasks([]);
+        activeMobileStatusIndexRef.current = 0;
+        mobileStatusPageIndexRef.current = 0;
+        mobileStatusLoadedCountRef.current = 0;
+        setMobileAllExhausted(false);
+        setMobileError(false);
+
+        void fetchMobileSequential(0, 0, true);
       }
     };
 
@@ -238,16 +624,13 @@ export default function ProjectTasksPage() {
     return () => {
       isMounted = false;
     };
-  }, [mode, loadColumnTasks, loadListTasks]);
-
-  // Combined flat tasks for Mobile Vertical View
-  const allMobileTasks = useMemo(() => {
-    return BOARD_COLUMNS.flatMap((col) => tasksByStatus[col.status]);
-  }, [tasksByStatus]);
-
-  const isAnyColumnLoading = useMemo(() => {
-    return Object.values(columnLoading).some(Boolean);
-  }, [columnLoading]);
+  }, [
+    projectId,
+    mode,
+    fetchListPage,
+    fetchBoardColumnInitial,
+    fetchMobileSequential,
+  ]);
 
   const handleViewChange = (newView: string) => {
     if (newView === "list") {
@@ -256,6 +639,25 @@ export default function ProjectTasksPage() {
       router.push(`/project/${projectId}/tasks?view=board`);
     }
   };
+
+  // --- List Pagination Calculations & Presentation ---
+  const totalPages =
+    listTotalCount === 0 ? 0 : Math.ceil(listTotalCount / PAGE_SIZE);
+
+  const pageNumbers = useMemo<(number | "...")[]>(() => {
+    if (totalPages <= 0) return [];
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    const pages: (number | "...")[] = [1];
+    const left = Math.max(2, currentPage - 1);
+    const right = Math.min(totalPages - 1, currentPage + 1);
+    if (left > 2) pages.push("...");
+    for (let p = left; p <= right; p++) pages.push(p);
+    if (right < totalPages - 1) pages.push("...");
+    pages.push(totalPages);
+    return pages;
+  }, [totalPages, currentPage]);
 
   return (
     <AppShell>
@@ -294,9 +696,8 @@ export default function ProjectTasksPage() {
             </p>
           </div>
 
-          {/* Desktop Upper-Right Controls (Search + View Switcher ONLY) */}
+          {/* Desktop Upper-Right Controls */}
           <div className="hidden lg:flex items-center gap-3">
-            {/* Inert Search Box */}
             <div className="relative w-[260px]">
               <Search
                 size={16}
@@ -314,7 +715,6 @@ export default function ProjectTasksPage() {
               />
             </div>
 
-            {/* View Switcher Select */}
             <div className="relative">
               <select
                 aria-label="View switcher"
@@ -334,7 +734,7 @@ export default function ProjectTasksPage() {
             </div>
           </div>
 
-          {/* Mobile Header Controls (Full-width Search + Full-width + Create Task) */}
+          {/* Mobile Header Controls */}
           <div className="flex flex-col gap-3 lg:hidden">
             <div className="relative w-full">
               <Search
@@ -362,7 +762,7 @@ export default function ProjectTasksPage() {
           </div>
         </div>
 
-        {/* Desktop Kanban Board View (Horizontal Scrolling across all 8 columns with 24px gap) */}
+        {/* Desktop Kanban Board View */}
         {isDesktop && mode === "board" ? (
           <div className="hidden lg:block flex-1 overflow-x-auto pb-4">
             <div className="flex gap-6 items-start min-w-max">
@@ -371,18 +771,26 @@ export default function ProjectTasksPage() {
                   key={col.status}
                   projectId={projectId}
                   status={col.status}
-                  tasks={tasksByStatus[col.status]}
-                  loading={columnLoading[col.status]}
-                  error={columnError[col.status]}
-                  onRetry={() => void loadColumnTasks(col.status)}
+                  tasks={boardTasks[col.status]}
+                  totalCount={boardTotalCounts[col.status]}
+                  loading={boardLoadingInitial[col.status]}
+                  error={boardErrorInitial[col.status]}
+                  onRetry={() => void fetchBoardColumnInitial(col.status)}
                   onSelectTask={(id) => setSelectedTaskId(id)}
+                  hasMore={
+                    boardTasks[col.status].length < boardTotalCounts[col.status]
+                  }
+                  loadMoreLoading={boardLoadingMore[col.status]}
+                  loadMoreError={boardErrorMore[col.status]}
+                  onLoadMore={() => void fetchBoardColumnNext(col.status)}
+                  onLoadMoreRetry={() => retryBoardColumnMore(col.status)}
                 />
               ))}
             </div>
           </div>
         ) : null}
 
-        {/* Desktop List View (when isDesktop && mode === "list") */}
+        {/* Desktop List View */}
         {isDesktop && mode === "list" ? (
           <div className="hidden lg:flex flex-1 flex-col pb-4">
             <div className="rounded-[8px] border border-[#e2e6f0] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.03)] overflow-hidden">
@@ -449,8 +857,8 @@ export default function ProjectTasksPage() {
                             </p>
                             <button
                               type="button"
-                              onClick={() => void loadListTasks()}
-                              className="inline-flex items-center gap-1.5 rounded-[4px] bg-[#0052cc] px-4 py-2 text-[13px] font-semibold text-white transition-opacity hover:opacity-90"
+                              onClick={() => void fetchListPage(requestedPage)}
+                              className="inline-flex cursor-pointer items-center gap-1.5 rounded-[4px] bg-[#0052cc] px-4 py-2 text-[13px] font-semibold text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0052cc]"
                             >
                               <RotateCw size={14} aria-hidden="true" />
                               <span>Retry</span>
@@ -495,23 +903,66 @@ export default function ProjectTasksPage() {
                 </table>
               </div>
 
-              {/* Display-only Pagination Footer */}
+              {/* Functional Pagination Controls */}
               <div className="flex items-center justify-end gap-1.5 border-t border-[#f0f2f7] px-6 py-3">
                 <button
                   type="button"
-                  disabled
-                  aria-disabled="true"
+                  onClick={() => void fetchListPage(currentPage - 1)}
+                  disabled={listLoading || currentPage === 1}
+                  aria-disabled={listLoading || currentPage === 1}
                   aria-label="Previous page"
-                  className="flex h-8 w-8 items-center justify-center rounded-[4px] text-[#98a2b3] cursor-not-allowed transition-colors"
+                  className="flex h-8 w-8 items-center justify-center rounded-[4px] border border-[#e9eaf3] bg-[#f9f9ff] text-[#041b3c] transition-colors hover:bg-[#eef2f6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0052cc] disabled:cursor-not-allowed disabled:opacity-40 enabled:cursor-pointer"
                 >
                   <ChevronLeft size={16} aria-hidden="true" />
                 </button>
+
+                {pageNumbers.map((p, i) =>
+                  typeof p === "string" ? (
+                    <span
+                      key={`ellipsis-${i}`}
+                      aria-hidden="true"
+                      className="flex h-8 min-w-8 items-center justify-center text-[13px] text-[#737685]"
+                    >
+                      …
+                    </span>
+                  ) : (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => {
+                        if (p !== currentPage && !listLoading) {
+                          void fetchListPage(p);
+                        }
+                      }}
+                      disabled={listLoading}
+                      aria-disabled={listLoading}
+                      aria-current={p === currentPage ? "page" : undefined}
+                      className={`flex h-8 min-w-8 items-center justify-center rounded-[4px] px-2.5 text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0052cc] disabled:cursor-not-allowed disabled:opacity-40 ${
+                        p === currentPage
+                          ? "bg-[#0052cc] text-white cursor-default"
+                          : "border border-[#e9eaf3] bg-[#f9f9ff] text-[#041b3c] hover:bg-[#eef2f6] enabled:cursor-pointer"
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  )
+                )}
+
                 <button
                   type="button"
-                  disabled
-                  aria-disabled="true"
+                  onClick={() => void fetchListPage(currentPage + 1)}
+                  disabled={
+                    listLoading ||
+                    totalPages === 0 ||
+                    currentPage === totalPages
+                  }
+                  aria-disabled={
+                    listLoading ||
+                    totalPages === 0 ||
+                    currentPage === totalPages
+                  }
                   aria-label="Next page"
-                  className="flex h-8 w-8 items-center justify-center rounded-[4px] text-[#98a2b3] cursor-not-allowed transition-colors"
+                  className="flex h-8 w-8 items-center justify-center rounded-[4px] border border-[#e9eaf3] bg-[#f9f9ff] text-[#041b3c] transition-colors hover:bg-[#eef2f6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0052cc] disabled:cursor-not-allowed disabled:opacity-40 enabled:cursor-pointer"
                 >
                   <ChevronRight size={16} aria-hidden="true" />
                 </button>
@@ -529,10 +980,10 @@ export default function ProjectTasksPage() {
           </div>
         ) : null}
 
-        {/* Mobile Vertical Task List Layout (rendered when !isDesktop) */}
+        {/* Mobile Vertical Task List Layout */}
         {!isDesktop && isDesktop !== null ? (
           <div className="block lg:hidden flex-1">
-            {isAnyColumnLoading && allMobileTasks.length === 0 ? (
+            {mobileLoadingInitial && mobileTasks.length === 0 ? (
               <div className="space-y-3 animate-pulse">
                 <div className="h-28 rounded-[8px] border border-[#d9deeb] bg-[#f0f2f7]" />
                 <div className="h-28 rounded-[8px] border border-[#d9deeb] bg-[#f0f2f7]" />
@@ -540,7 +991,9 @@ export default function ProjectTasksPage() {
               </div>
             ) : null}
 
-            {!isAnyColumnLoading && allMobileTasks.length === 0 ? (
+            {!mobileLoadingInitial &&
+            mobileTasks.length === 0 &&
+            mobileAllExhausted ? (
               <div className="flex flex-col items-center justify-center rounded-[10px] border border-dashed border-[#d9deeb] bg-[#f8f9ff] px-5 py-12 text-center">
                 <p className="text-[16px] font-semibold text-[#041b3c]">
                   No tasks found
@@ -558,9 +1011,9 @@ export default function ProjectTasksPage() {
               </div>
             ) : null}
 
-            {allMobileTasks.length > 0 ? (
-              <div className="space-y-3">
-                {allMobileTasks.map((task) => (
+            {mobileTasks.length > 0 ? (
+              <div className="space-y-3 pb-6">
+                {mobileTasks.map((task) => (
                   <TaskCard
                     key={task.id}
                     task={task}
@@ -568,6 +1021,37 @@ export default function ProjectTasksPage() {
                     onSelect={(id) => setSelectedTaskId(id)}
                   />
                 ))}
+              </div>
+            ) : null}
+
+            {/* Mobile Sentinel & Load-More / Retry controls */}
+            {!mobileAllExhausted && !mobileError ? (
+              <div
+                ref={setMobileSentinelRef}
+                aria-hidden="true"
+                className="h-1 w-full"
+              />
+            ) : null}
+
+            {mobileLoadingMore ? (
+              <div className="py-4 text-center">
+                <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-[#0052cc] border-t-transparent" />
+              </div>
+            ) : null}
+
+            {mobileError ? (
+              <div className="my-4 flex flex-col items-center justify-center rounded-[8px] border border-dashed border-[#fda29b] bg-[#fff4f2] p-4 text-center">
+                <p className="text-[13px] font-medium text-[#b42318]">
+                  Failed to load tasks
+                </p>
+                <button
+                  type="button"
+                  onClick={handleMobileRetry}
+                  className="mt-2 inline-flex cursor-pointer items-center gap-1.5 rounded-[4px] bg-[#0052cc] px-4 py-1.5 text-[12px] font-semibold text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0052cc]"
+                >
+                  <RotateCw size={13} aria-hidden="true" />
+                  <span>Retry</span>
+                </button>
               </div>
             ) : null}
           </div>
@@ -582,7 +1066,7 @@ export default function ProjectTasksPage() {
           />
         ) : null}
 
-        {/* Mobile Fixed Bottom Navigation Bar (lg:hidden) */}
+        {/* Mobile Fixed Bottom Navigation Bar */}
         <nav
           aria-label="Mobile Bottom Navigation"
           className="fixed bottom-0 left-0 right-0 z-30 flex h-16 items-center justify-around border-t border-[#e5e8f0] bg-white px-2 shadow-[0_-2px_10px_rgba(4,27,60,0.05)] lg:hidden"

@@ -116,35 +116,47 @@ export const TasksService = {
     if (error) return { data: null, error };
     return { data: (data as TaskDetails) ?? null, error: null };
   },
-  getByProject: async (
-    projectId: string
-  ): Promise<{
-    data: BoardTask[] | null;
-    error: PostgrestError | null;
-  }> => {
-    const { data, error } = await supabase
-      .from("project_tasks")
-      .select("id, task_id, title, due_date, status, assignee")
-      .eq("project_id", projectId);
-
-    if (error) return { data: null, error };
-    return { data: (data as BoardTask[]) ?? [], error: null };
-  },
-  getByProjectStatus: async (
+  getByProjectPaginated: async (
     projectId: string,
-    status: TaskStatus
+    from: number,
+    to: number
   ): Promise<{
     data: BoardTask[] | null;
+    count: number | null;
     error: PostgrestError | null;
   }> => {
-    const { data, error } = await supabase
+    const { data, error, count } = await supabase
       .from("project_tasks")
-      .select("id, task_id, title, due_date, status, assignee")
+      .select("id, task_id, title, due_date, status, assignee", {
+        count: "exact",
+      })
       .eq("project_id", projectId)
-      .eq("status", status);
+      .range(from, to);
 
-    if (error) return { data: null, error };
-    return { data: (data as BoardTask[]) ?? [], error: null };
+    if (error) return { data: null, count: null, error };
+    return { data: (data as BoardTask[]) ?? [], count, error: null };
+  },
+  getByProjectStatusPaginated: async (
+    projectId: string,
+    status: TaskStatus,
+    from: number,
+    to: number
+  ): Promise<{
+    data: BoardTask[] | null;
+    count: number | null;
+    error: PostgrestError | null;
+  }> => {
+    const { data, error, count } = await supabase
+      .from("project_tasks")
+      .select("id, task_id, title, due_date, status, assignee", {
+        count: "exact",
+      })
+      .eq("project_id", projectId)
+      .eq("status", status)
+      .range(from, to);
+
+    if (error) return { data: null, count: null, error };
+    return { data: (data as BoardTask[]) ?? [], count, error: null };
   },
   getByEpic: async (
     epicId: string

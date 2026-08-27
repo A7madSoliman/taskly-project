@@ -10,22 +10,62 @@ interface TaskColumnProps {
   projectId: string;
   status: TaskStatus;
   tasks: BoardTask[];
+  totalCount: number | null;
   loading: boolean;
   error: boolean;
   onRetry?: () => void;
   onSelectTask?: (taskId: string) => void;
+  hasMore: boolean;
+  loadMoreLoading: boolean;
+  loadMoreError: boolean;
+  onLoadMore: () => void;
+  onLoadMoreRetry: () => void;
 }
 
 export function TaskColumn({
   projectId,
   status,
   tasks,
+  totalCount,
   loading,
   error,
   onRetry,
   onSelectTask,
+  hasMore,
+  loadMoreLoading,
+  loadMoreError,
+  onLoadMore,
+  onLoadMoreRetry,
 }: TaskColumnProps) {
   const statusCfg = STATUS_CONFIG[status] || STATUS_CONFIG.TO_DO;
+
+  const sentinelRef = React.useRef<HTMLDivElement | null>(null);
+
+  const setSentinelRef = React.useCallback(
+    (node: HTMLDivElement | null) => {
+      const prev = sentinelRef.current as unknown as {
+        __io?: IntersectionObserver;
+      } | null;
+      if (prev && prev.__io) prev.__io.disconnect();
+      sentinelRef.current = node;
+      if (!node) return;
+      const io = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting) {
+            onLoadMore();
+          }
+        },
+        {
+          root: node.parentElement || undefined,
+          rootMargin: "200px 0px",
+          threshold: 0,
+        }
+      );
+      (node as unknown as { __io?: IntersectionObserver }).__io = io;
+      io.observe(node);
+    },
+    [onLoadMore]
+  );
 
   return (
     <div className="flex w-[284px] min-w-[284px] shrink-0 flex-col rounded-[10px] border border-[#e2e6f0] bg-[#f8f9fc] p-3 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
@@ -39,7 +79,7 @@ export function TaskColumn({
             <span className="truncate">{statusCfg.label}</span>
           </span>
           <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1.5 text-[11px] font-bold text-[#4f5f7b] shadow-[0_1px_2px_rgba(0,0,0,0.05)] border border-[#e2e6f0]">
-            {loading ? "..." : tasks.length}
+            {loading || totalCount === null ? "..." : totalCount}
           </span>
         </div>
 
@@ -81,7 +121,7 @@ export function TaskColumn({
               <button
                 type="button"
                 onClick={onRetry}
-                className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-[#0052cc] hover:underline"
+                className="mt-2 inline-flex cursor-pointer items-center gap-1 text-[11px] font-semibold text-[#0052cc] hover:underline"
               >
                 <RotateCw size={11} aria-hidden="true" />
                 Retry
@@ -100,6 +140,33 @@ export function TaskColumn({
               />
             ))
           : null}
+
+        {/* Sentinel and Load More states */}
+        {!loading && !error && hasMore && !loadMoreError ? (
+          <div ref={setSentinelRef} aria-hidden="true" className="h-1 w-full" />
+        ) : null}
+
+        {!loading && !error && loadMoreLoading ? (
+          <div className="space-y-3 animate-pulse">
+            <div className="h-[96px] rounded-[4px] border border-[#e5e8f0] bg-[#edf0f7]" />
+          </div>
+        ) : null}
+
+        {!loading && !error && loadMoreError ? (
+          <div className="flex flex-col items-center justify-center rounded-[4px] border border-dashed border-[#fda29b] bg-[#fff4f2] p-3 text-center">
+            <p className="text-[11px] font-medium text-[#b42318]">
+              Failed to load more
+            </p>
+            <button
+              type="button"
+              onClick={onLoadMoreRetry}
+              className="mt-1.5 inline-flex cursor-pointer items-center gap-1 text-[11px] font-semibold text-[#0052cc] hover:underline"
+            >
+              <RotateCw size={11} aria-hidden="true" />
+              Retry
+            </button>
+          </div>
+        ) : null}
       </div>
     </div>
   );
