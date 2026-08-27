@@ -10,7 +10,14 @@ import React, {
 import Link from "next/link";
 import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { ChevronDown, Plus, Search } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  RotateCw,
+  Search,
+} from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { ProjectsService } from "@/services/api/projects.service";
 import {
@@ -20,6 +27,7 @@ import {
 } from "@/services/api/tasks.service";
 import { TaskColumn } from "@/components/tasks/TaskColumn";
 import { TaskCard } from "@/components/tasks/TaskCard";
+import { TaskRow } from "@/components/tasks/TaskRow";
 
 const BOARD_COLUMNS: { status: TaskStatus; label: string }[] = [
   { status: "TO_DO", label: "TO DO" },
@@ -40,6 +48,9 @@ export default function ProjectTasksPage() {
   const viewParam = searchParams.get("view") || "board";
 
   const [projectName, setProjectName] = useState("Project");
+  const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
+
+  // Board View State
   const [tasksByStatus, setTasksByStatus] = useState<
     Record<TaskStatus, BoardTask[]>
   >({
@@ -77,7 +88,13 @@ export default function ProjectTasksPage() {
     DONE: false,
   });
 
-  const requestSeqRef = useRef<Record<TaskStatus, number>>({
+  // List View State
+  const [listTasks, setListTasks] = useState<BoardTask[]>([]);
+  const [listLoading, setListLoading] = useState<boolean>(true);
+  const [listError, setListError] = useState<boolean>(false);
+
+  // Request sequence guards
+  const boardRequestSeqRef = useRef<Record<TaskStatus, number>>({
     TO_DO: 0,
     IN_PROGRESS: 0,
     BLOCKED: 0,
@@ -87,6 +104,36 @@ export default function ProjectTasksPage() {
     READY_FOR_PRODUCTION: 0,
     DONE: 0,
   });
+  const listRequestSeqRef = useRef<number>(0);
+
+  // Evaluate media query
+  useEffect(() => {
+    let isMounted = true;
+    const update = () => {
+      if (isMounted) {
+        setIsDesktop(window.matchMedia("(min-width: 1024px)").matches);
+      }
+    };
+
+    const media = window.matchMedia("(min-width: 1024px)");
+    void Promise.resolve().then(update);
+
+    media.addEventListener("change", update);
+    return () => {
+      isMounted = false;
+      media.removeEventListener("change", update);
+    };
+  }, []);
+
+  // Derived mode:
+  // Desktop + board -> "board"
+  // Desktop + list -> "list"
+  // Mobile + any -> "board"
+  const mode: "board" | "list" | null = useMemo(() => {
+    if (isDesktop === null) return null;
+    if (!isDesktop) return "board";
+    return viewParam === "list" ? "list" : "board";
+  }, [isDesktop, viewParam]);
 
   // Load project name for breadcrumbs
   useEffect(() => {
@@ -101,10 +148,11 @@ export default function ProjectTasksPage() {
     };
   }, [projectId]);
 
-  // Fetch tasks for a single column independently
+  // Fetch tasks for a single column independently (Board mode)
   const loadColumnTasks = useCallback(
     async (status: TaskStatus) => {
-      const seq = ++requestSeqRef.current[status];
+      const seq = ++boardRequestSeqRef.current[status];
+      await Promise.resolve();
       setColumnLoading((prev) => ({ ...prev, [status]: true }));
       setColumnError((prev) => ({ ...prev, [status]: false }));
 
@@ -113,7 +161,7 @@ export default function ProjectTasksPage() {
           projectId,
           status
         );
-        if (seq !== requestSeqRef.current[status]) return;
+        if (seq !== boardRequestSeqRef.current[status]) return;
 
         if (error) {
           setColumnError((prev) => ({ ...prev, [status]: true }));
@@ -124,10 +172,10 @@ export default function ProjectTasksPage() {
           }));
         }
       } catch {
-        if (seq !== requestSeqRef.current[status]) return;
+        if (seq !== boardRequestSeqRef.current[status]) return;
         setColumnError((prev) => ({ ...prev, [status]: true }));
       } finally {
-        if (seq === requestSeqRef.current[status]) {
+        if (seq === boardRequestSeqRef.current[status]) {
           setColumnLoading((prev) => ({ ...prev, [status]: false }));
         }
       }
@@ -135,12 +183,60 @@ export default function ProjectTasksPage() {
     [projectId]
   );
 
-  // Initial load for all 8 columns
+  // Fetch project-wide tasks (List mode)
+  const loadListTasks = useCallback(async () => {
+    const seq = ++listRequestSeqRef.current;
+    await Promise.resolve();
+    setListLoading(true);
+    setListError(false);
+
+    try {
+      const { data, error } = await TasksService.getByProject(projectId);
+      if (seq !== listRequestSeqRef.current) return;
+
+      if (error) {
+        setListError(true);
+      } else {
+        setListTasks(data ?? []);
+      }
+    } catch {
+      if (seq !== listRequestSeqRef.current) return;
+      setListError(true);
+    } finally {
+      if (seq === listRequestSeqRef.current) {
+        setListLoading(false);
+      }
+    }
+  }, [projectId]);
+
+  // Lifecycle triggered only after responsive mode resolves
   useEffect(() => {
-    BOARD_COLUMNS.forEach((col) => {
-      void loadColumnTasks(col.status);
-    });
-  }, [loadColumnTasks]);
+    if (mode === null) return;
+
+    let isMounted = true;
+    const run = async () => {
+      await Promise.resolve();
+      if (!isMounted) return;
+
+      if (mode === "board") {
+        listRequestSeqRef.current++;
+        BOARD_COLUMNS.forEach((col) => {
+          void loadColumnTasks(col.status);
+        });
+      } else if (mode === "list") {
+        Object.keys(boardRequestSeqRef.current).forEach((k) => {
+          boardRequestSeqRef.current[k as TaskStatus]++;
+        });
+        void loadListTasks();
+      }
+    };
+
+    void run();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [mode, loadColumnTasks, loadListTasks]);
 
   // Combined flat tasks for Mobile Vertical View
   const allMobileTasks = useMemo(() => {
@@ -265,58 +361,205 @@ export default function ProjectTasksPage() {
         </div>
 
         {/* Desktop Kanban Board View (Horizontal Scrolling across all 8 columns with 24px gap) */}
-        <div className="hidden lg:block flex-1 overflow-x-auto pb-4">
-          <div className="flex gap-6 items-start min-w-max">
-            {BOARD_COLUMNS.map((col) => (
-              <TaskColumn
-                key={col.status}
-                projectId={projectId}
-                status={col.status}
-                tasks={tasksByStatus[col.status]}
-                loading={columnLoading[col.status]}
-                error={columnError[col.status]}
-                onRetry={() => void loadColumnTasks(col.status)}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Mobile Vertical Task List Layout */}
-        <div className="block lg:hidden flex-1">
-          {isAnyColumnLoading && allMobileTasks.length === 0 ? (
-            <div className="space-y-3 animate-pulse">
-              <div className="h-28 rounded-[8px] border border-[#d9deeb] bg-[#f0f2f7]" />
-              <div className="h-28 rounded-[8px] border border-[#d9deeb] bg-[#f0f2f7]" />
-              <div className="h-28 rounded-[8px] border border-[#d9deeb] bg-[#f0f2f7]" />
-            </div>
-          ) : null}
-
-          {!isAnyColumnLoading && allMobileTasks.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-[10px] border border-dashed border-[#d9deeb] bg-[#f8f9ff] px-5 py-12 text-center">
-              <p className="text-[16px] font-semibold text-[#041b3c]">
-                No tasks found
-              </p>
-              <p className="mt-1 text-[13px] text-[#68758c]">
-                Get started by creating your first task in this project.
-              </p>
-              <Link
-                href={`/project/${projectId}/tasks/new`}
-                className="mt-5 inline-flex h-11 items-center gap-2 rounded-[6px] bg-[#0052cc] px-6 text-[14px] font-semibold text-white shadow-[0_2px_4px_rgba(0,82,204,0.18)]"
-              >
-                <Plus size={16} strokeWidth={2.2} aria-hidden="true" />
-                Create Task
-              </Link>
-            </div>
-          ) : null}
-
-          {allMobileTasks.length > 0 ? (
-            <div className="space-y-3">
-              {allMobileTasks.map((task) => (
-                <TaskCard key={task.id} task={task} variant="mobile" />
+        {isDesktop && mode === "board" ? (
+          <div className="hidden lg:block flex-1 overflow-x-auto pb-4">
+            <div className="flex gap-6 items-start min-w-max">
+              {BOARD_COLUMNS.map((col) => (
+                <TaskColumn
+                  key={col.status}
+                  projectId={projectId}
+                  status={col.status}
+                  tasks={tasksByStatus[col.status]}
+                  loading={columnLoading[col.status]}
+                  error={columnError[col.status]}
+                  onRetry={() => void loadColumnTasks(col.status)}
+                />
               ))}
             </div>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
+
+        {/* Desktop List View (when isDesktop && mode === "list") */}
+        {isDesktop && mode === "list" ? (
+          <div className="hidden lg:flex flex-1 flex-col pb-4">
+            <div className="rounded-[8px] border border-[#e2e6f0] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.03)] overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-[#eef2f6] bg-[#f8f9fc] text-[11px] font-bold uppercase tracking-[0.6px] text-[#737685]">
+                      <th scope="col" className="px-6 py-3.5">
+                        TASK ID
+                      </th>
+                      <th scope="col" className="px-6 py-3.5">
+                        TITLE
+                      </th>
+                      <th scope="col" className="px-6 py-3.5">
+                        STATUS
+                      </th>
+                      <th scope="col" className="px-6 py-3.5">
+                        DUE DATE
+                      </th>
+                      <th scope="col" className="px-6 py-3.5">
+                        ASSIGNEE
+                      </th>
+                      <th scope="col" className="px-6 py-3.5 text-right">
+                        SETTINGS
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {listLoading ? (
+                      Array.from({ length: 5 }).map((_, idx) => (
+                        <tr
+                          key={idx}
+                          className="border-b border-[#f0f2f7] animate-pulse"
+                        >
+                          <td className="px-6 py-4">
+                            <div className="h-4 w-16 rounded bg-[#edf0f7]" />
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="h-4 w-48 rounded bg-[#edf0f7]" />
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="h-6 w-24 rounded bg-[#edf0f7]" />
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="h-4 w-20 rounded bg-[#edf0f7]" />
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
+                              <div className="h-7 w-7 rounded-full bg-[#edf0f7]" />
+                              <div className="h-4 w-24 rounded bg-[#edf0f7]" />
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="inline-block h-6 w-6 rounded bg-[#edf0f7]" />
+                          </td>
+                        </tr>
+                      ))
+                    ) : listError ? (
+                      <tr>
+                        <td colSpan={6} className="px-6 py-12 text-center">
+                          <div className="flex flex-col items-center justify-center gap-2">
+                            <p className="text-[14px] font-medium text-[#b42318]">
+                              Failed to load tasks
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => void loadListTasks()}
+                              className="inline-flex items-center gap-1.5 rounded-[4px] bg-[#0052cc] px-4 py-2 text-[13px] font-semibold text-white transition-opacity hover:opacity-90"
+                            >
+                              <RotateCw size={14} aria-hidden="true" />
+                              <span>Retry</span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : listTasks.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="px-6 py-16 text-center">
+                          <div className="flex flex-col items-center justify-center gap-3">
+                            <p className="text-[15px] font-semibold text-[#041b3c]">
+                              No tasks found
+                            </p>
+                            <p className="text-[13px] text-[#737685]">
+                              There are no tasks in this project yet.
+                            </p>
+                            <Link
+                              href={`/project/${projectId}/tasks/new`}
+                              className="inline-flex items-center gap-1.5 rounded-[4px] bg-[#0052cc] px-4 py-2 text-[13px] font-semibold text-white shadow-[0_1px_2px_rgba(0,82,204,0.2)] transition-opacity hover:opacity-90"
+                            >
+                              <Plus
+                                size={15}
+                                strokeWidth={2.2}
+                                aria-hidden="true"
+                              />
+                              <span>Add Task</span>
+                            </Link>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      listTasks.map((task) => (
+                        <TaskRow key={task.id} task={task} />
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Display-only Pagination Footer */}
+              <div className="flex items-center justify-end gap-1.5 border-t border-[#f0f2f7] px-6 py-3">
+                <button
+                  type="button"
+                  disabled
+                  aria-disabled="true"
+                  aria-label="Previous page"
+                  className="flex h-8 w-8 items-center justify-center rounded-[4px] text-[#98a2b3] cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft size={16} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  disabled
+                  aria-disabled="true"
+                  aria-label="Next page"
+                  className="flex h-8 w-8 items-center justify-center rounded-[4px] text-[#98a2b3] cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight size={16} aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+
+            {/* Desktop List View Floating Add Button */}
+            <Link
+              href={`/project/${projectId}/tasks/new`}
+              aria-label="Add Task"
+              className="fixed bottom-8 right-8 z-20 flex h-12 w-12 items-center justify-center rounded-[8px] bg-[#0052cc] text-white shadow-[0_4px_12px_rgba(0,82,204,0.3)] transition-transform hover:scale-105"
+            >
+              <Plus size={22} strokeWidth={2.4} aria-hidden="true" />
+            </Link>
+          </div>
+        ) : null}
+
+        {/* Mobile Vertical Task List Layout (rendered when !isDesktop) */}
+        {!isDesktop && isDesktop !== null ? (
+          <div className="block lg:hidden flex-1">
+            {isAnyColumnLoading && allMobileTasks.length === 0 ? (
+              <div className="space-y-3 animate-pulse">
+                <div className="h-28 rounded-[8px] border border-[#d9deeb] bg-[#f0f2f7]" />
+                <div className="h-28 rounded-[8px] border border-[#d9deeb] bg-[#f0f2f7]" />
+                <div className="h-28 rounded-[8px] border border-[#d9deeb] bg-[#f0f2f7]" />
+              </div>
+            ) : null}
+
+            {!isAnyColumnLoading && allMobileTasks.length === 0 ? (
+              <div className="flex flex-col items-center justify-center rounded-[10px] border border-dashed border-[#d9deeb] bg-[#f8f9ff] px-5 py-12 text-center">
+                <p className="text-[16px] font-semibold text-[#041b3c]">
+                  No tasks found
+                </p>
+                <p className="mt-1 text-[13px] text-[#68758c]">
+                  Get started by creating your first task in this project.
+                </p>
+                <Link
+                  href={`/project/${projectId}/tasks/new`}
+                  className="mt-5 inline-flex h-11 items-center gap-2 rounded-[6px] bg-[#0052cc] px-6 text-[14px] font-semibold text-white shadow-[0_2px_4px_rgba(0,82,204,0.18)]"
+                >
+                  <Plus size={16} strokeWidth={2.2} aria-hidden="true" />
+                  Create Task
+                </Link>
+              </div>
+            ) : null}
+
+            {allMobileTasks.length > 0 ? (
+              <div className="space-y-3">
+                {allMobileTasks.map((task) => (
+                  <TaskCard key={task.id} task={task} variant="mobile" />
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
 
         {/* Mobile Fixed Bottom Navigation Bar (lg:hidden) */}
         <nav

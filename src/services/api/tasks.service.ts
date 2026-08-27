@@ -57,14 +57,19 @@ export interface BoardTask {
 }
 
 export const TasksService = {
-  getByProject: async (token: string, projectId: string) => {
-    return fetch(
-      `${SUPABASE_URL}/rest/v1/project_tasks?project_id=eq.${projectId}`,
-      {
-        method: "GET",
-        headers: { ...getHeaders(token), Prefer: "count=exact" },
-      }
-    );
+  getByProject: async (
+    projectId: string
+  ): Promise<{
+    data: BoardTask[] | null;
+    error: PostgrestError | null;
+  }> => {
+    const { data, error } = await supabase
+      .from("project_tasks")
+      .select("id, task_id, title, due_date, status, assignee")
+      .eq("project_id", projectId);
+
+    if (error) return { data: null, error };
+    return { data: (data as BoardTask[]) ?? [], error: null };
   },
   getByProjectStatus: async (
     projectId: string,
