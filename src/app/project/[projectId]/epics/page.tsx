@@ -21,6 +21,8 @@ import {
   DraftingCompass,
   Grid3X3,
   Rocket,
+  RotateCw,
+  Search,
   Sparkles,
   Workflow,
   Zap,
@@ -29,12 +31,12 @@ import {
 type EpicsStatus = "loading" | "error" | "empty" | "ready";
 
 /**
- * TM-17 — pagination contract.
- * Page size 6 (canonical Desktop design: 2 columns × 3 rows = 6;
- * "Showing 6 of 24 epics"). Task's "10" is only an example.
+ * TM-17 & TM-26 pagination & search contract.
+ * Page size 6 (canonical Desktop design: 2 columns × 3 rows = 6).
  * Same chunk size used for Mobile infinite scroll.
  */
 const PAGE_SIZE = 6;
+const SEARCH_DEBOUNCE_MS = 300;
 
 export default function ProjectEpicsPage() {
   const params = useParams();
@@ -52,6 +54,10 @@ export default function ProjectEpicsPage() {
   const [selectedEpicId, setSelectedEpicId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
+  // Search state
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
+
   const handleEpicUpdated = useCallback((updatedEpic: ProjectEpic) => {
     setEpics((current) =>
       current.map((epic) =>
@@ -60,30 +66,42 @@ export default function ProjectEpicsPage() {
     );
   }, []);
 
-  // Stale-response guards: a monotonic sequence invalidates superseded
-  // async results (project change, rapid navigation). Refs harden against
-  // double-trigger races that async setState cannot catch in time.
+  // Request guards & live-state mirrors
   const requestSeq = useRef(0);
   const pageLoadingRef = useRef(false);
   const loadingMoreRef = useRef(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  // Live-state mirrors for the Mobile infinite-scroll observer. loadMore and
-  // the IntersectionObserver callback read these refs instead of closure-
-  // captured state, so a stale epics.length / totalCount / currentPage can
-  // never short-circuit loadMore (the original page-2 blocker).
   const currentPageRef = useRef(1);
   const totalCountRef = useRef(0);
   const loadedCountRef = useRef(0);
   const loadMoreErrorRef = useRef(false);
   const projectIdRef = useRef(projectId);
-  // Highest page index whose fetch has STARTED. Hardens against a second
-  // loadMore (e.g. a sticky IntersectionObserver burst or a re-render before
-  // state settles) kicking off a duplicate next-page request. Only the
-  // monotonic requestSeq guard can advance it back on project change.
   const startedPageRef = useRef(1);
+  const debouncedSearchTermRef = useRef(debouncedSearchTerm);
 
-  // Breadcrumb metadata only — failure must not corrupt the epics data (§33).
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchTerm]);
+
+  // Keep live-state mirrors in sync
+  useEffect(() => {
+    currentPageRef.current = currentPage;
+    totalCountRef.current = totalCount;
+    loadedCountRef.current = epics.length;
+    loadMoreErrorRef.current = loadMoreError;
+    projectIdRef.current = projectId;
+    debouncedSearchTermRef.current = debouncedSearchTerm;
+  });
+
+  // Breadcrumb metadata
   useEffect(() => {
     let isMounted = true;
     ProjectsService.getById(projectId).then(({ data }) => {
@@ -94,8 +112,7 @@ export default function ProjectEpicsPage() {
     };
   }, [projectId]);
 
-  // Mobile detection — functional (not CSS-only). Drives append vs replace
-  // and whether the Desktop footer renders.
+  // Mobile detection
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 1023px)");
     const update = () => setIsMobile(mq.matches);
@@ -104,74 +121,70 @@ export default function ProjectEpicsPage() {
     return () => mq.removeEventListener("change", update);
   }, []);
 
-  // Keep live-state mirrors in sync with React state after every render, so
-  // loadMore and the observer always read current pagination values.
-  useEffect(() => {
-    currentPageRef.current = currentPage;
-    totalCountRef.current = totalCount;
-    loadedCountRef.current = epics.length;
-    loadMoreErrorRef.current = loadMoreError;
-    projectIdRef.current = projectId;
-  });
+  // Initial fetch / Search query change
+  const loadInitial = useCallback(
+    async (queryToFetch?: string) => {
+      const activeQuery = queryToFetch ?? debouncedSearchTermRef.current;
+      const reqId = ++requestSeq.current;
+      pageLoadingRef.current = false;
+      loadingMoreRef.current = false;
+      startedPageRef.current = 1;
+      setStatus("loading");
+      setEpics([]);
+      setCurrentPage(1);
+      setTotalCount(0);
+      setPageTransitionLoading(false);
+      setLoadingMore(false);
+      setLoadMoreError(false);
 
-  // Initial fetch + projectId reset. Resets ALL pagination state and
-  // invalidates any in-flight request for the previous project.
-  const loadInitial = useCallback(async () => {
-    const reqId = ++requestSeq.current;
-    pageLoadingRef.current = false;
-    loadingMoreRef.current = false;
-    startedPageRef.current = 1;
-    setStatus("loading");
-    setEpics([]);
-    setCurrentPage(1);
-    setTotalCount(0);
-    setPageTransitionLoading(false);
-    setLoadingMore(false);
-    setLoadMoreError(false);
-    try {
-      const { data, error, count } = await EpicsService.getByProject(
-        projectId,
-        { page: 1, limit: PAGE_SIZE }
-      );
-      if (reqId !== requestSeq.current) return;
-      if (error) {
-        setStatus("error");
-        return;
+      try {
+        const { data, error, count } = await EpicsService.getByProject(
+          projectId,
+          { page: 1, limit: PAGE_SIZE, search: activeQuery }
+        );
+        if (reqId !== requestSeq.current) return;
+        if (error) {
+          setStatus("error");
+          return;
+        }
+        const rows = data ?? [];
+        const total = count ?? 0;
+        setTotalCount(total);
+        if (rows.length === 0 && total === 0) {
+          setEpics([]);
+          setStatus("empty");
+        } else {
+          setEpics(rows);
+          setCurrentPage(1);
+          setStatus("ready");
+        }
+      } catch {
+        if (reqId === requestSeq.current) setStatus("error");
       }
-      const rows = data ?? [];
-      const total = count ?? 0;
-      setTotalCount(total);
-      if (rows.length === 0 && total === 0) {
-        setEpics([]);
-        setStatus("empty");
-      } else {
-        setEpics(rows);
-        setCurrentPage(1);
-        setStatus("ready");
-      }
-    } catch {
-      if (reqId === requestSeq.current) setStatus("error");
-    }
-  }, [projectId]);
+    },
+    [projectId]
+  );
 
-  // Re-run on projectId change (resets via loadInitial).
-  // Defer the async call past a microtask so the synchronous setStates
-  // inside loadInitial are not flagged as cascade-risk in the effect body
-  // (matches the members/epics loading pattern).
+  // Re-run on projectId or debouncedSearchTerm change.
+  // Synchronously invalidate prior collection requests BEFORE deferred microtask
+  // so stale in-flight responses from previous queries can never commit.
   useEffect(() => {
     let isMounted = true;
+    const currentGen = ++requestSeq.current;
+    debouncedSearchTermRef.current = debouncedSearchTerm;
+
     const run = async () => {
       await Promise.resolve();
-      if (!isMounted) return;
-      await loadInitial();
+      if (!isMounted || currentGen !== requestSeq.current) return;
+      await loadInitial(debouncedSearchTerm);
     };
     run();
     return () => {
       isMounted = false;
     };
-  }, [loadInitial]);
+  }, [projectId, debouncedSearchTerm, loadInitial]);
 
-  // Desktop page change — replace grid, keep header/footer geometry.
+  // Desktop page change
   const goToPage = useCallback(
     (page: number) => {
       if (pageLoadingRef.current) return;
@@ -184,7 +197,11 @@ export default function ProjectEpicsPage() {
         try {
           const { data, error, count } = await EpicsService.getByProject(
             projectId,
-            { page, limit: PAGE_SIZE }
+            {
+              page,
+              limit: PAGE_SIZE,
+              search: debouncedSearchTermRef.current,
+            }
           );
           if (reqId !== requestSeq.current) return;
           if (error) {
@@ -207,17 +224,8 @@ export default function ProjectEpicsPage() {
     [projectId, totalCount, currentPage]
   );
 
-  // Mobile infinite scroll — append next page, never replace. Eligibility is
-  // read from live refs (not closure state) so the IntersectionObserver can
-  // never fire a loadMore whose closure captured a stale epics.length /
-  // totalCount / currentPage — the original TM-17 Mobile page-2 blocker.
-  // Stable identity (empty deps) keeps the observer from needless churn.
+  // Mobile infinite scroll load-more
   const loadMore = useCallback(() => {
-    // Single authoritative guard — no duplicated/divergent semantics:
-    //  • not already loading more        (loadingMoreRef)
-    //  • no prior failed page to clear    (loadMoreErrorRef)
-    //  • more rows remain to load         (loadedCountRef < totalCountRef)
-    //  • this exact next page not already started (startedPageRef dedup)
     if (loadingMoreRef.current) return;
     if (loadMoreErrorRef.current) return;
     if (loadedCountRef.current >= totalCountRef.current) return;
@@ -232,17 +240,18 @@ export default function ProjectEpicsPage() {
       try {
         const { data, error, count } = await EpicsService.getByProject(
           projectIdRef.current,
-          { page: next, limit: PAGE_SIZE }
+          {
+            page: next,
+            limit: PAGE_SIZE,
+            search: debouncedSearchTermRef.current,
+          }
         );
         if (reqId !== requestSeq.current) return;
         if (error) {
-          // Roll back the dedup marker so the SAME failed page is retryable
-          // (Retry must never skip a page or become permanently blocked).
           startedPageRef.current = currentPageRef.current;
           setLoadMoreError(true);
           return;
         }
-        // Append ONLY the successful page for the current project/request.
         setEpics((prev) => [...prev, ...(data ?? [])]);
         setTotalCount(count ?? 0);
         setCurrentPage(next);
@@ -260,22 +269,7 @@ export default function ProjectEpicsPage() {
     })();
   }, []);
 
-  // Mobile infinite-scroll observer.
-  //
-  // ROOT CAUSE OF THE TM-17 BLOCKER (confirmed via runtime QA):
-  // the previous effect observed `sentinelRef.current` only when the
-  // `[isMobile, status, loadMore]` deps changed. The sentinel node mounts
-  // AFTER `status` flips to "ready", so at the single render where the
-  // effect runs, `sentinelRef.current` is still `null` and the observer is
-  // never attached — infinite scroll silently dies. An independent observer
-  // attached to the live node fires correctly, proving the IO environment
-  // works; the bug was the attach timing.
-  //
-  // FIX: attach the observer from a callback ref, the instant the sentinel
-  // node actually mounts. The callback ref runs after the DOM node exists,
-  // so the observer always binds to the real element. The IntersectionObserver
-  // fires once per real intersection change, so a burst of sentinel callbacks
-  // cannot spawn parallel requests — reinforced by the guards inside loadMore.
+  // Mobile observer callback ref
   const setSentinelRef = useCallback(
     (node: HTMLDivElement | null) => {
       const prev = sentinelRef.current as unknown as {
@@ -298,7 +292,6 @@ export default function ProjectEpicsPage() {
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
-  // Compact, production-quality page sequence with ellipsis (non-interactive).
   const pageNumbers = useMemo<(number | "...")[]>(() => {
     if (totalPages <= 7) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -312,6 +305,10 @@ export default function ProjectEpicsPage() {
     pages.push(totalPages);
     return pages;
   }, [totalPages, currentPage]);
+
+  const isSearchPending =
+    searchTerm !== debouncedSearchTerm ||
+    (status === "loading" && debouncedSearchTerm.trim().length > 0);
 
   const headerSection = (
     <>
@@ -327,48 +324,42 @@ export default function ProjectEpicsPage() {
           Project Epics
         </h1>
         <div className="flex w-full items-center gap-3 lg:w-auto lg:gap-8">
-          {/* Inert search — visible per preserved design; TM-16 owns no
-              search behavior: readOnly, no state, no handlers. */}
+          {/* Mobile Search input */}
           <div className="relative w-full lg:hidden">
-            <Image
-              src="/assets/svg/icons/icon-search-magnifier.svg"
-              alt=""
-              width={18}
-              height={18}
+            <Search
+              size={18}
+              strokeWidth={2}
               aria-hidden="true"
-              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2"
-            />
-            <input
-              type="text"
-              placeholder="Search Epics..."
-              value=""
-              readOnly
-              aria-readonly="true"
-              aria-label="Search epics (not available yet)"
-              tabIndex={-1}
-              className="h-12 w-full cursor-default rounded-[8px] bg-[#d7e2ff] pl-[58px] pr-4 text-[14px] text-[#041b3c] outline-none placeholder:text-[#7b8398]"
-            />
-          </div>
-          <div className="relative hidden w-[303px] lg:block">
-            <Image
-              src="/assets/svg/icons/icon-search-magnifier.svg"
-              alt=""
-              width={16}
-              height={16}
-              aria-hidden="true"
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#7b8398]"
             />
             <input
               type="text"
               placeholder="Search epics..."
-              value=""
-              readOnly
-              aria-readonly="true"
-              aria-label="Search epics (not available yet)"
-              tabIndex={-1}
-              className="h-12 w-full cursor-default rounded-[4px] bg-[#d7e2ff] pl-9 pr-3 text-[14px] text-[#041b3c] outline-none placeholder:text-[#5b6b8c]"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              aria-label="Search epics"
+              className="h-12 w-full rounded-[8px] bg-[#d7e2ff] pl-[46px] pr-4 text-[14px] text-[#041b3c] outline-none placeholder:text-[#7b8398] focus-visible:ring-2 focus-visible:ring-[#0052cc]"
             />
           </div>
+
+          {/* Desktop Search input */}
+          <div className="relative hidden w-[303px] lg:block">
+            <Search
+              size={16}
+              strokeWidth={2}
+              aria-hidden="true"
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#5b6b8c]"
+            />
+            <input
+              type="text"
+              placeholder="Search epics..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              aria-label="Search epics"
+              className="h-12 w-full rounded-[4px] bg-[#d7e2ff] pl-9 pr-3 text-[14px] text-[#041b3c] outline-none placeholder:text-[#5b6b8c] focus-visible:ring-2 focus-visible:ring-[#0052cc]"
+            />
+          </div>
+
           <Link
             href={`/project/${projectId}/epics/new`}
             className="hidden h-12 shrink-0 items-center gap-2 rounded-[4px] bg-[#0052cc] px-[22px] text-[16px] font-semibold text-white transition-opacity hover:opacity-90 lg:flex"
@@ -388,151 +379,168 @@ export default function ProjectEpicsPage() {
   );
 
   const pageBtnBase =
-    "flex h-[30px] w-[30px] items-center justify-center rounded-[3px] border border-[#e9eaf3] bg-[#f9f9ff] transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d9b] focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40";
+    "flex h-[30px] w-[30px] items-center justify-center rounded-[3px] border border-[#e9eaf3] bg-[#f9f9ff] transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d9b] focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40 enabled:cursor-pointer";
 
   return (
     <AppShell>
       <div className="mx-auto w-full max-w-[1216px] px-2 pb-40 pt-4 lg:p-0">
-        {status === "ready" && headerSection}
+        {/* Render header whenever not initial project-wide loading, so search input is always accessible */}
+        {headerSection}
 
-        {/* Loading — PRESERVED DESIGN (epics-loading-desktop): 6 skeleton
-            cards in the same grid; mobile stacks via responsive grid. */}
-        {status === "loading" && (
+        {/* Loading skeleton state */}
+        {(status === "loading" || isSearchPending) && (
           <>
-            <div className="hidden lg:block">
-              <div className="h-4 w-44 animate-pulse rounded bg-[#eceef5]" />
-              <div className="mt-4 flex items-center justify-between">
-                <div className="h-10 w-64 animate-pulse rounded bg-[#e8ebf8]" />
-                <div className="flex gap-4">
-                  <div className="h-12 w-[128px] animate-pulse rounded bg-[#e8ebf8]" />
-                  <div className="h-12 w-40 animate-pulse rounded bg-[#e8ebf8]" />
-                </div>
-              </div>
-            </div>
-            <div className="h-12 w-full animate-pulse rounded-[8px] bg-[#e8ebf8] lg:hidden" />
-            <div className="mt-6 lg:mt-14">
+            <div className="mt-6 lg:mt-10">
               <EpicCardSkeletonGrid count={6} />
             </div>
           </>
         )}
 
-        {/* Error — approved copy + Retry Connection; no reload/redirect.
-            Retry now re-runs the paginated initial fetch (page 1). */}
-        {status === "error" && (
-          <div className="flex min-h-[calc(100vh-128px)] flex-col items-center justify-center gap-3 text-center lg:translate-y-8">
+        {/* Error state */}
+        {!isSearchPending && status === "error" && (
+          <div className="flex min-h-[calc(100vh-280px)] flex-col items-center justify-center gap-3 text-center lg:translate-y-8">
             <h2 className="text-[20px] font-bold text-[#041b3c]">
-              Something went wrong
+              {debouncedSearchTerm.trim().length > 0
+                ? "Failed to search epics"
+                : "Something went wrong"}
             </h2>
             <p className="max-w-[320px] text-[16px] leading-6 text-[#4f5262]">
-              We&apos;re having trouble retrieving your project epics right now.
-              Please try again in a moment.
+              {debouncedSearchTerm.trim().length > 0
+                ? "We encountered an error while searching project epics. Please try again."
+                : "We're having trouble retrieving your project epics right now. Please try again in a moment."}
             </p>
             <button
               type="button"
-              onClick={loadInitial}
-              className="mt-2 flex h-11 items-center rounded-[4px] bg-[#0052cc] px-6 text-[16px] font-semibold text-white transition-opacity hover:opacity-90"
+              onClick={() => void loadInitial()}
+              className="mt-2 flex h-11 cursor-pointer items-center gap-2 rounded-[4px] bg-[#0052cc] px-6 text-[16px] font-semibold text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0052cc]"
             >
-              Retry Connection
+              <RotateCw size={16} aria-hidden="true" />
+              <span>
+                {debouncedSearchTerm.trim().length > 0
+                  ? "Retry Search"
+                  : "Retry Connection"}
+              </span>
             </button>
           </div>
         )}
 
-        {/* Empty — canonical four-tile composition, CTA, and benefit cards.
-            PRESERVED (TM-16 / Final Workspace UI Polish). */}
-        {status === "empty" && (
-          <div className="flex flex-col items-center pb-16 pt-8 text-center lg:pb-8 lg:pt-12">
-            <div
-              className="grid grid-cols-2 gap-2 rounded-[20px] border border-[#e1e6f3] bg-white p-3 shadow-[0_12px_32px_rgba(4,27,60,0.08)]"
-              aria-hidden="true"
-            >
-              <span className="flex h-16 w-16 items-center justify-center rounded-[8px] bg-[#e8edff]">
-                <Rocket
-                  size={30}
-                  strokeWidth={1.8}
-                  className="text-[#0052cc]"
-                />
-              </span>
-              <span className="flex h-16 w-16 items-center justify-center rounded-[8px] bg-[#f1f3ff]">
-                <DraftingCompass
-                  size={31}
-                  strokeWidth={1.8}
-                  className="text-[#003d9b]"
-                />
-              </span>
-              <span className="flex h-16 w-16 items-center justify-center rounded-[8px] bg-[#f1f3ff]">
-                <Grid3X3
-                  size={29}
-                  strokeWidth={1.7}
-                  className="text-[#5b6b8c]"
-                />
-              </span>
-              <Image
-                src="/assets/svg/illustrations/illustration-empty-epics.svg"
-                alt=""
-                width={64}
-                height={64}
-              />
-            </div>
-
-            <h2 className="mt-8 text-[26px] font-bold leading-[34px] text-[#041b3c] lg:text-[30px] lg:leading-[38px]">
-              No epics in this project yet.
-            </h2>
-            <p className="mt-3 max-w-md text-[16px] leading-6 text-[#4f5262] lg:text-[18px] lg:leading-[29px]">
-              Break down your large project into manageable epics to track
-              progress better and maintain architectural clarity.
-            </p>
-            <Link
-              href={`/project/${projectId}/epics/new`}
-              className="mt-7 flex h-12 items-center gap-2.5 rounded-[4px] bg-[#0052cc] px-7 text-[16px] font-semibold text-white shadow-[0_5px_12px_rgba(0,82,204,0.22)] transition-opacity hover:opacity-90 lg:h-[52px] lg:px-8"
-            >
-              <Zap
-                size={18}
-                strokeWidth={2}
-                fill="currentColor"
-                aria-hidden="true"
-              />
-              Create First Epic
-            </Link>
-
-            <div className="mt-12 grid w-full max-w-[936px] grid-cols-1 gap-4 text-left md:grid-cols-3 lg:mt-16 lg:gap-6">
-              {[
-                {
-                  title: "High-Level Goals",
-                  copy: "Define the broad objectives that span across multiple cycles.",
-                  Icon: Sparkles,
-                },
-                {
-                  title: "Hierarchy Design",
-                  copy: "Link individual tasks to parent epics for a consolidated view.",
-                  Icon: Workflow,
-                },
-                {
-                  title: "Track Velocity",
-                  copy: "Visualize percentage completion at a macro project level.",
-                  Icon: ChartNoAxesCombined,
-                },
-              ].map(({ title, copy, Icon }) => (
-                <article
-                  key={title}
-                  className="min-h-[184px] rounded-[8px] border border-[#e8ebf4] bg-[#f7f8ff] p-6"
-                >
-                  <span className="flex h-10 w-10 items-center justify-center rounded-[8px] bg-[#e3e9ff] text-[#0052cc]">
-                    <Icon size={21} strokeWidth={1.9} aria-hidden="true" />
+        {/* Empty state — Search Empty vs Project Empty */}
+        {!isSearchPending && status === "empty" && (
+          <>
+            {debouncedSearchTerm.trim().length > 0 ? (
+              // B. Non-empty debounced query + zero filtered results
+              <div className="flex min-h-[calc(100vh-280px)] flex-col items-center justify-center pb-16 pt-8 text-center lg:pb-8 lg:pt-12">
+                <div className="flex h-16 w-16 items-center justify-center rounded-[12px] bg-[#f0f4fd] text-[#0052cc]">
+                  <Search size={32} strokeWidth={1.8} aria-hidden="true" />
+                </div>
+                <h2 className="mt-6 text-[24px] font-bold text-[#041b3c]">
+                  No epics found matching your search
+                </h2>
+                <p className="mt-2 max-w-md text-[15px] leading-6 text-[#5d6578]">
+                  We couldn&apos;t find any epics matching &ldquo;
+                  <span className="font-semibold text-[#041b3c]">
+                    {debouncedSearchTerm}
                   </span>
-                  <h3 className="mt-5 text-[16px] font-semibold text-[#041b3c]">
-                    {title}
-                  </h3>
-                  <p className="mt-2 max-w-[210px] text-[14px] leading-[21px] text-[#5d6578]">
-                    {copy}
-                  </p>
-                </article>
-              ))}
-            </div>
-          </div>
+                  &rdquo;. Try searching with a different term or keyword.
+                </p>
+              </div>
+            ) : (
+              // A. Empty search query + zero project epics
+              <div className="flex flex-col items-center pb-16 pt-8 text-center lg:pb-8 lg:pt-12">
+                <div
+                  className="grid grid-cols-2 gap-2 rounded-[20px] border border-[#e1e6f3] bg-white p-3 shadow-[0_12px_32px_rgba(4,27,60,0.08)]"
+                  aria-hidden="true"
+                >
+                  <span className="flex h-16 w-16 items-center justify-center rounded-[8px] bg-[#e8edff]">
+                    <Rocket
+                      size={30}
+                      strokeWidth={1.8}
+                      className="text-[#0052cc]"
+                    />
+                  </span>
+                  <span className="flex h-16 w-16 items-center justify-center rounded-[8px] bg-[#f1f3ff]">
+                    <DraftingCompass
+                      size={31}
+                      strokeWidth={1.8}
+                      className="text-[#003d9b]"
+                    />
+                  </span>
+                  <span className="flex h-16 w-16 items-center justify-center rounded-[8px] bg-[#f1f3ff]">
+                    <Grid3X3
+                      size={29}
+                      strokeWidth={1.7}
+                      className="text-[#5b6b8c]"
+                    />
+                  </span>
+                  <Image
+                    src="/assets/svg/illustrations/illustration-empty-epics.svg"
+                    alt=""
+                    width={64}
+                    height={64}
+                  />
+                </div>
+
+                <h2 className="mt-8 text-[26px] font-bold leading-[34px] text-[#041b3c] lg:text-[30px] lg:leading-[38px]">
+                  No epics found for this project
+                </h2>
+                <p className="mt-3 max-w-md text-[16px] leading-6 text-[#4f5262] lg:text-[18px] lg:leading-[29px]">
+                  Break down your large project into manageable epics to track
+                  progress better and maintain architectural clarity.
+                </p>
+                <Link
+                  href={`/project/${projectId}/epics/new`}
+                  className="mt-7 flex h-12 items-center gap-2.5 rounded-[4px] bg-[#0052cc] px-7 text-[16px] font-semibold text-white shadow-[0_5px_12px_rgba(0,82,204,0.22)] transition-opacity hover:opacity-90 lg:h-[52px] lg:px-8"
+                >
+                  <Zap
+                    size={18}
+                    strokeWidth={2}
+                    fill="currentColor"
+                    aria-hidden="true"
+                  />
+                  Create First Epic
+                </Link>
+
+                <div className="mt-12 grid w-full max-w-[936px] grid-cols-1 gap-4 text-left md:grid-cols-3 lg:mt-16 lg:gap-6">
+                  {[
+                    {
+                      title: "High-Level Goals",
+                      copy: "Define the broad objectives that span across multiple cycles.",
+                      Icon: Sparkles,
+                    },
+                    {
+                      title: "Hierarchy Design",
+                      copy: "Link individual tasks to parent epics for a consolidated view.",
+                      Icon: Workflow,
+                    },
+                    {
+                      title: "Track Velocity",
+                      copy: "Visualize percentage completion at a macro project level.",
+                      Icon: ChartNoAxesCombined,
+                    },
+                  ].map(({ title, copy, Icon }) => (
+                    <article
+                      key={title}
+                      className="min-h-[184px] rounded-[8px] border border-[#e8ebf4] bg-[#f7f8ff] p-6"
+                    >
+                      <span className="flex h-10 w-10 items-center justify-center rounded-[8px] bg-[#e3e9ff] text-[#0052cc]">
+                        <Icon size={21} strokeWidth={1.9} aria-hidden="true" />
+                      </span>
+                      <h3 className="mt-5 text-[16px] font-semibold text-[#041b3c]">
+                        {title}
+                      </h3>
+                      <p className="mt-2 max-w-[210px] text-[14px] leading-[21px] text-[#5d6578]">
+                        {copy}
+                      </p>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
 
-        {/* Ready — desktop 2-col grid / mobile single column (same grid) */}
-        {status === "ready" && (
+        {/* Ready — desktop 2-col grid / mobile single column */}
+        {!isSearchPending && status === "ready" && (
           <>
             <div className="mt-6 grid grid-cols-1 gap-6 lg:mt-10 lg:grid-cols-2">
               {pageTransitionLoading ? (
@@ -548,10 +556,7 @@ export default function ProjectEpicsPage() {
               )}
             </div>
 
-            {/* Desktop pagination — FUNCTIONAL (TM-17). Hidden on mobile;
-                mobile uses infinite scroll. Geometry preserved from reference:
-                30×30 controls, 3px radius, #e9eaf3 border, #f9f9ff bg, active
-                #003d9b, preserved chevron SVGs (5×7). */}
+            {/* Desktop pagination */}
             <div className="hidden lg:flex mt-6 items-center justify-between">
               <span className="text-[13px] text-[#737685]">
                 Showing {Math.min(currentPage * PAGE_SIZE, totalCount)} of{" "}
@@ -592,9 +597,9 @@ export default function ProjectEpicsPage() {
                       disabled={pageTransitionLoading}
                       aria-disabled={pageTransitionLoading}
                       aria-current={p === currentPage ? "page" : undefined}
-                      className={`flex h-[30px] min-w-[30px] items-center justify-center rounded-[3px] px-2 text-[13px] font-semibold transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d9b] focus-visible:ring-offset-1 ${
+                      className={`flex h-[30px] min-w-[30px] items-center justify-center rounded-[3px] px-2 text-[13px] font-semibold transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003d9b] focus-visible:ring-offset-1 enabled:cursor-pointer disabled:cursor-not-allowed ${
                         p === currentPage
-                          ? "bg-[#003d9b] text-white"
+                          ? "bg-[#003d9b] text-white cursor-default"
                           : "border border-[#e9eaf3] bg-[#f9f9ff] text-[#041b3c]"
                       }`}
                     >
@@ -626,9 +631,7 @@ export default function ProjectEpicsPage() {
               </nav>
             </div>
 
-            {/* Mobile infinite-scroll sentinel + load-more treatment.
-                No Desktop paginator on mobile. Existing cards are preserved
-                on load; only a lightweight bottom indicator appears. */}
+            {/* Mobile infinite-scroll sentinel + load-more treatment */}
             {isMobile && (
               <>
                 <div
@@ -646,14 +649,10 @@ export default function ProjectEpicsPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        // Clear the error gate so the Retry (the SAME failed
-                        // next page) is eligible; the observer stays blocked
-                        // while loadMoreError is set, so only the explicit
-                        // Retry button can re-trigger a request.
                         loadMoreErrorRef.current = false;
                         loadMore();
                       }}
-                      className="flex h-11 items-center rounded-[4px] bg-[#0052cc] px-6 text-[16px] font-semibold text-white transition-opacity hover:opacity-90"
+                      className="flex h-11 cursor-pointer items-center rounded-[4px] bg-[#0052cc] px-6 text-[16px] font-semibold text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0052cc]"
                     >
                       Retry
                     </button>
@@ -664,8 +663,8 @@ export default function ProjectEpicsPage() {
           </>
         )}
 
-        {/* Mobile FAB — populated list navigation only. Empty state has its own CTA. */}
-        {status === "ready" && (
+        {/* Mobile FAB */}
+        {!isSearchPending && status === "ready" && (
           <Link
             href={`/project/${projectId}/epics/new`}
             aria-label="New Epic"
