@@ -1,4 +1,37 @@
+import { supabase } from "@/lib/supabase/client";
+import type { PostgrestError } from "@supabase/supabase-js";
 import { SUPABASE_URL, getHeaders } from "./config";
+
+export type TaskStatus =
+  | "TO_DO"
+  | "IN_PROGRESS"
+  | "BLOCKED"
+  | "IN_REVIEW"
+  | "READY_FOR_QA"
+  | "REOPENED"
+  | "READY_FOR_PRODUCTION"
+  | "DONE";
+
+export interface CreateTaskInput {
+  title: string;
+  epic_id?: string;
+  description?: string;
+  assignee_id?: string;
+  due_date?: string;
+  status: TaskStatus;
+}
+
+export interface CreatedTask {
+  id: string;
+  project_id: string;
+  epic_id: string | null;
+  title: string;
+  description: string | null;
+  assignee_id: string | null;
+  due_date: string | null;
+  status: TaskStatus;
+  created_at: string;
+}
 
 export const TasksService = {
   getByProject: async (token: string, projectId: string) => {
@@ -16,12 +49,23 @@ export const TasksService = {
       headers: getHeaders(token),
     });
   },
-  create: async (token: string, data: unknown) => {
-    return fetch(`${SUPABASE_URL}/rest/v1/tasks`, {
-      method: "POST",
-      headers: { ...getHeaders(token), Prefer: "return=representation" },
-      body: JSON.stringify(data),
-    });
+  create: async (
+    projectId: string,
+    input: CreateTaskInput
+  ): Promise<{ data: CreatedTask | null; error: PostgrestError | null }> => {
+    const { data, error } = await supabase
+      .from("tasks")
+      .insert({
+        project_id: projectId,
+        ...input,
+      })
+      .select(
+        "id, project_id, epic_id, title, description, assignee_id, due_date, status, created_at"
+      )
+      .single();
+
+    if (error) return { data: null, error };
+    return { data: data as CreatedTask, error: null };
   },
   updateStatus: async (token: string, taskId: string, status: string) => {
     return fetch(`${SUPABASE_URL}/rest/v1/tasks?id=eq.${taskId}`, {

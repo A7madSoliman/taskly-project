@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { ChevronDown, Link2, ListTodo, X } from "lucide-react";
 import {
   EpicsService,
@@ -640,13 +641,12 @@ export function EpicDetailsModal({
                 <span className="rounded-full bg-[#dbe4ff] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.2px] text-[#4f5f7b] sm:hidden">
                   0 Tasks
                 </span>
-                <button
-                  type="button"
-                  aria-disabled="true"
-                  className="hidden cursor-default text-[14px] font-semibold text-[#0052cc] sm:block"
+                <Link
+                  href={`/project/${projectId}/tasks/new?epicId=${epic.id}`}
+                  className="hidden rounded-[2px] text-[14px] font-semibold text-[#0052cc] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0052cc] sm:block"
                 >
                   + Add Task
-                </button>
+                </Link>
               </div>
 
               <div className="mt-6 flex min-h-[248px] flex-col items-center justify-center rounded-[8px] border border-dashed border-[#d9deeb] bg-[#f1f3ff] px-5 py-8 text-center">
@@ -656,10 +656,9 @@ export function EpicDetailsModal({
                 <p className="mt-4 text-[16px] font-medium leading-6 text-[#041b3c]">
                   No tasks have been added to this epic yet
                 </p>
-                <button
-                  type="button"
-                  aria-disabled="true"
-                  className="mt-4 flex h-11 cursor-default items-center gap-2 rounded-[2px] bg-[#0052cc] px-6 text-[16px] font-semibold text-white shadow-[0_3px_8px_rgba(0,82,204,0.18)]"
+                <Link
+                  href={`/project/${projectId}/tasks/new?epicId=${epic.id}`}
+                  className="mt-4 flex h-11 items-center gap-2 rounded-[2px] bg-[#0052cc] px-6 text-[16px] font-semibold text-white shadow-[0_3px_8px_rgba(0,82,204,0.18)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0052cc] focus-visible:ring-offset-2"
                 >
                   <Image
                     src="/assets/svg/icons/icon-plus.svg"
@@ -669,7 +668,7 @@ export function EpicDetailsModal({
                     aria-hidden="true"
                   />
                   Add Task
-                </button>
+                </Link>
               </div>
             </>
           ) : null}

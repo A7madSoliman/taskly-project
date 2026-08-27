@@ -63,6 +63,28 @@ export const EpicsService = {
       .eq("project_id", projectId)
       .range(from, to);
   },
+  getAllByProject: async (
+    projectId: string
+  ): Promise<{
+    data: { id: string; epic_id: string; title: string }[] | null;
+    error: unknown | null;
+  }> => {
+    try {
+      const { data, error } = await supabase
+        .from("project_epics")
+        .select("id, epic_id, title")
+        .eq("project_id", projectId);
+
+      if (error) return { data: null, error };
+
+      return {
+        data: (data as { id: string; epic_id: string; title: string }[]) ?? [],
+        error: null,
+      };
+    } catch (error) {
+      return { data: null, error };
+    }
+  },
   getDetails: async (
     projectId: string,
     epicId: string
