@@ -13,6 +13,7 @@ interface TaskColumnProps {
   loading: boolean;
   error: boolean;
   onRetry?: () => void;
+  onSelectTask?: (taskId: string) => void;
 }
 
 export function TaskColumn({
@@ -22,6 +23,7 @@ export function TaskColumn({
   loading,
   error,
   onRetry,
+  onSelectTask,
 }: TaskColumnProps) {
   const statusCfg = STATUS_CONFIG[status] || STATUS_CONFIG.TO_DO;
 
@@ -90,7 +92,12 @@ export function TaskColumn({
 
         {!loading && !error && tasks.length > 0
           ? tasks.map((task) => (
-              <TaskCard key={task.id} task={task} variant="desktop" />
+              <TaskCard
+                key={task.id}
+                task={task}
+                variant="desktop"
+                onSelect={onSelectTask}
+              />
             ))
           : null}
       </div>

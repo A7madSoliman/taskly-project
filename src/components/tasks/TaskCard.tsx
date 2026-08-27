@@ -83,16 +83,38 @@ export function formatTaskDueDate(value: string | null): string {
 interface TaskCardProps {
   task: BoardTask;
   variant?: "desktop" | "mobile";
+  onSelect?: (taskId: string) => void;
 }
 
-export function TaskCard({ task, variant = "desktop" }: TaskCardProps) {
+export function TaskCard({
+  task,
+  variant = "desktop",
+  onSelect,
+}: TaskCardProps) {
   const assigneeName = task.assignee?.name?.trim() || null;
   const dueDateFormatted = formatTaskDueDate(task.due_date);
   const statusCfg = STATUS_CONFIG[task.status] || STATUS_CONFIG.TO_DO;
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (onSelect && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+      onSelect(task.id);
+    }
+  };
+
   if (variant === "mobile") {
     return (
-      <div className="flex flex-col justify-between rounded-[8px] border border-[#d9e1f2] bg-white p-4 shadow-[0_1px_2px_rgba(4,27,60,0.03)]">
+      <div
+        role={onSelect ? "button" : undefined}
+        tabIndex={onSelect ? 0 : undefined}
+        onClick={() => onSelect?.(task.id)}
+        onKeyDown={handleKeyDown}
+        className={`flex flex-col justify-between rounded-[8px] border border-[#d9e1f2] bg-white p-4 shadow-[0_1px_2px_rgba(4,27,60,0.03)] transition-all ${
+          onSelect
+            ? "cursor-pointer hover:border-[#ccd4e5] focus:outline-none focus:ring-2 focus:ring-[#0052cc]"
+            : ""
+        }`}
+      >
         <div className="flex items-center justify-between gap-2">
           <span className="text-[11px] font-bold uppercase tracking-[0.3px] text-[#737685]">
             {task.task_id || "TASK"}
@@ -136,9 +158,19 @@ export function TaskCard({ task, variant = "desktop" }: TaskCardProps) {
     );
   }
 
-  // Desktop Board Card (Inert, non-draggable, canonical layout)
+  // Desktop Board Card (Inert, non-draggable, canonical layout with optional onSelect trigger)
   return (
-    <div className="group relative flex flex-col justify-between rounded-[4px] border border-[#e5e8f0] bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-all hover:border-[#ccd4e5] hover:shadow-[0_2px_6px_rgba(0,0,0,0.05)]">
+    <div
+      role={onSelect ? "button" : undefined}
+      tabIndex={onSelect ? 0 : undefined}
+      onClick={() => onSelect?.(task.id)}
+      onKeyDown={handleKeyDown}
+      className={`group relative flex flex-col justify-between rounded-[4px] border border-[#e5e8f0] bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-all ${
+        onSelect
+          ? "cursor-pointer hover:border-[#ccd4e5] hover:shadow-[0_2px_6px_rgba(0,0,0,0.05)] focus:outline-none focus:ring-2 focus:ring-[#0052cc]"
+          : "hover:border-[#ccd4e5] hover:shadow-[0_2px_6px_rgba(0,0,0,0.05)]"
+      }`}
+    >
       <h4 className="text-[14px] font-medium leading-snug text-[#041b3c] break-words">
         {task.title}
       </h4>

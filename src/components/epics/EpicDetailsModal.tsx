@@ -28,6 +28,7 @@ interface EpicDetailsModalProps {
   epicId: string;
   onClose: () => void;
   onEpicUpdated: (updatedEpic: ProjectEpic) => void;
+  onSelectTask?: (taskId: string) => void;
 }
 
 type DetailsStatus = "loading" | "ready" | "error";
@@ -165,6 +166,7 @@ export function EpicDetailsModal({
   epicId,
   onClose,
   onEpicUpdated,
+  onSelectTask,
 }: EpicDetailsModalProps) {
   const [status, setStatus] = useState<DetailsStatus>("loading");
   const [epic, setEpic] = useState<ProjectEpic | null>(null);
@@ -794,9 +796,25 @@ export function EpicDetailsModal({
                     {tasks.map((task, index) => (
                       <div
                         key={task.id}
-                        className={`flex min-h-[81px] items-center justify-between gap-6 px-4 py-3.5 ${
+                        role={onSelectTask ? "button" : undefined}
+                        tabIndex={onSelectTask ? 0 : undefined}
+                        onClick={() => onSelectTask?.(task.id)}
+                        onKeyDown={(e) => {
+                          if (
+                            onSelectTask &&
+                            (e.key === "Enter" || e.key === " ")
+                          ) {
+                            e.preventDefault();
+                            onSelectTask(task.id);
+                          }
+                        }}
+                        className={`flex min-h-[81px] items-center justify-between gap-6 px-4 py-3.5 transition-colors ${
                           index < tasks.length - 1
                             ? "border-b border-[#eef0f5]"
+                            : ""
+                        } ${
+                          onSelectTask
+                            ? "cursor-pointer hover:bg-[#f8faff] focus:bg-[#f0f4fc] focus:outline-none"
                             : ""
                         }`}
                       >
@@ -824,7 +842,23 @@ export function EpicDetailsModal({
                     {tasks.map((task) => (
                       <div
                         key={task.id}
-                        className="flex min-h-[84px] flex-col justify-between rounded-[8px] border border-[#d9e1f2] bg-white px-4 py-3.5 shadow-[0_1px_2px_rgba(4,27,60,0.03)]"
+                        role={onSelectTask ? "button" : undefined}
+                        tabIndex={onSelectTask ? 0 : undefined}
+                        onClick={() => onSelectTask?.(task.id)}
+                        onKeyDown={(e) => {
+                          if (
+                            onSelectTask &&
+                            (e.key === "Enter" || e.key === " ")
+                          ) {
+                            e.preventDefault();
+                            onSelectTask(task.id);
+                          }
+                        }}
+                        className={`flex min-h-[84px] flex-col justify-between rounded-[8px] border border-[#d9e1f2] bg-white px-4 py-3.5 shadow-[0_1px_2px_rgba(4,27,60,0.03)] transition-colors ${
+                          onSelectTask
+                            ? "cursor-pointer hover:border-[#ccd4e5] focus:outline-none focus:ring-2 focus:ring-[#0052cc]"
+                            : ""
+                        }`}
                       >
                         <p className="truncate text-[14px] font-semibold leading-5 text-[#041b3c]">
                           {task.title}

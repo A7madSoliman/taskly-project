@@ -15,6 +15,7 @@ import { EpicsService, ProjectEpic } from "@/services/api/epics.service";
 import { ProjectsService } from "@/services/api/projects.service";
 import { EpicCard, EpicCardSkeletonGrid } from "@/components/epics/EpicCard";
 import { EpicDetailsModal } from "@/components/epics/EpicDetailsModal";
+import { TaskDetailsModal } from "@/components/tasks/TaskDetailsModal";
 import {
   ChartNoAxesCombined,
   DraftingCompass,
@@ -49,6 +50,7 @@ export default function ProjectEpicsPage() {
   const [loadMoreError, setLoadMoreError] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [selectedEpicId, setSelectedEpicId] = useState<string | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   const handleEpicUpdated = useCallback((updatedEpic: ProjectEpic) => {
     setEpics((current) =>
@@ -686,6 +688,18 @@ export default function ProjectEpicsPage() {
             epicId={selectedEpicId}
             onClose={() => setSelectedEpicId(null)}
             onEpicUpdated={handleEpicUpdated}
+            onSelectTask={(taskId) => {
+              setSelectedEpicId(null);
+              setSelectedTaskId(taskId);
+            }}
+          />
+        ) : null}
+
+        {selectedTaskId ? (
+          <TaskDetailsModal
+            projectId={projectId}
+            taskId={selectedTaskId}
+            onClose={() => setSelectedTaskId(null)}
           />
         ) : null}
       </div>

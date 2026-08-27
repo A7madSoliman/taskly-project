@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React from "react";
 import { MoreHorizontal, UserRound } from "lucide-react";
@@ -8,15 +8,33 @@ import { getInitials } from "@/lib/utils/avatar";
 
 interface TaskRowProps {
   task: BoardTask;
+  onSelect?: (taskId: string) => void;
 }
 
-export function TaskRow({ task }: TaskRowProps) {
+export function TaskRow({ task, onSelect }: TaskRowProps) {
   const assigneeName = task.assignee?.name?.trim() || null;
   const dueDateFormatted = formatTaskDueDate(task.due_date);
   const statusCfg = STATUS_CONFIG[task.status] || STATUS_CONFIG.TO_DO;
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (onSelect && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+      onSelect(task.id);
+    }
+  };
+
   return (
-    <tr className="border-b border-[#f0f2f7] transition-colors hover:bg-[#f8faff]/80">
+    <tr
+      role={onSelect ? "button" : undefined}
+      tabIndex={onSelect ? 0 : undefined}
+      onClick={() => onSelect?.(task.id)}
+      onKeyDown={handleKeyDown}
+      className={`border-b border-[#f0f2f7] transition-colors ${
+        onSelect
+          ? "cursor-pointer hover:bg-[#f8faff] focus:bg-[#f0f4fc] focus:outline-none"
+          : "hover:bg-[#f8faff]/80"
+      }`}
+    >
       {/* 1. TASK ID */}
       <td className="whitespace-nowrap px-6 py-4 text-[13px] font-bold text-[#0052cc]">
         {task.task_id || "TASK"}
@@ -69,14 +87,18 @@ export function TaskRow({ task }: TaskRowProps) {
         </div>
       </td>
 
-      {/* 6. SETTINGS */}
-      <td className="whitespace-nowrap px-6 py-4 text-right">
+      {/* 6. SETTINGS (Inert, stops event propagation) */}
+      <td
+        className="whitespace-nowrap px-6 py-4 text-right"
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
           type="button"
           disabled
           aria-disabled="true"
           aria-label="Task settings"
           tabIndex={-1}
+          onClick={(e) => e.stopPropagation()}
           className="inline-flex h-8 w-8 items-center justify-center rounded-[4px] text-[#737685] transition-colors hover:bg-[#eef2f6] disabled:cursor-default"
         >
           <MoreHorizontal size={18} aria-hidden="true" />

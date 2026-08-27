@@ -28,6 +28,7 @@ import {
 import { TaskColumn } from "@/components/tasks/TaskColumn";
 import { TaskCard } from "@/components/tasks/TaskCard";
 import { TaskRow } from "@/components/tasks/TaskRow";
+import { TaskDetailsModal } from "@/components/tasks/TaskDetailsModal";
 
 const BOARD_COLUMNS: { status: TaskStatus; label: string }[] = [
   { status: "TO_DO", label: "TO DO" },
@@ -49,6 +50,7 @@ export default function ProjectTasksPage() {
 
   const [projectName, setProjectName] = useState("Project");
   const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   // Board View State
   const [tasksByStatus, setTasksByStatus] = useState<
@@ -373,6 +375,7 @@ export default function ProjectTasksPage() {
                   loading={columnLoading[col.status]}
                   error={columnError[col.status]}
                   onRetry={() => void loadColumnTasks(col.status)}
+                  onSelectTask={(id) => setSelectedTaskId(id)}
                 />
               ))}
             </div>
@@ -481,7 +484,11 @@ export default function ProjectTasksPage() {
                       </tr>
                     ) : (
                       listTasks.map((task) => (
-                        <TaskRow key={task.id} task={task} />
+                        <TaskRow
+                          key={task.id}
+                          task={task}
+                          onSelect={(id) => setSelectedTaskId(id)}
+                        />
                       ))
                     )}
                   </tbody>
@@ -554,11 +561,25 @@ export default function ProjectTasksPage() {
             {allMobileTasks.length > 0 ? (
               <div className="space-y-3">
                 {allMobileTasks.map((task) => (
-                  <TaskCard key={task.id} task={task} variant="mobile" />
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    variant="mobile"
+                    onSelect={(id) => setSelectedTaskId(id)}
+                  />
                 ))}
               </div>
             ) : null}
           </div>
+        ) : null}
+
+        {/* Task Details Modal */}
+        {selectedTaskId ? (
+          <TaskDetailsModal
+            projectId={projectId}
+            taskId={selectedTaskId}
+            onClose={() => setSelectedTaskId(null)}
+          />
         ) : null}
 
         {/* Mobile Fixed Bottom Navigation Bar (lg:hidden) */}

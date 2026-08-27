@@ -56,7 +56,66 @@ export interface BoardTask {
   assignee: ProjectTaskAssignee | null;
 }
 
+export interface TaskEpic {
+  id: string | null;
+  epic_id: string | null;
+  title: string | null;
+}
+
+export interface TaskCreator {
+  id: string | null;
+  name: string | null;
+  email: string | null;
+}
+
+export interface TaskDetails {
+  id: string;
+  project_id: string;
+  task_id: string;
+  title: string;
+  description: string | null;
+  status: TaskStatus;
+  due_date: string | null;
+  created_at: string;
+  epic_id: string | null;
+  epic: TaskEpic | null;
+  created_by: TaskCreator | null;
+  assignee: ProjectTaskAssignee | null;
+}
+
 export const TasksService = {
+  getDetails: async (
+    projectId: string,
+    taskId: string
+  ): Promise<{
+    data: TaskDetails | null;
+    error: PostgrestError | null;
+  }> => {
+    const { data, error } = await supabase
+      .from("project_tasks")
+      .select(
+        `
+        id,
+        project_id,
+        task_id,
+        title,
+        description,
+        status,
+        due_date,
+        created_at,
+        epic_id,
+        epic,
+        created_by,
+        assignee
+      `
+      )
+      .eq("project_id", projectId)
+      .eq("id", taskId)
+      .maybeSingle();
+
+    if (error) return { data: null, error };
+    return { data: (data as TaskDetails) ?? null, error: null };
+  },
   getByProject: async (
     projectId: string
   ): Promise<{
