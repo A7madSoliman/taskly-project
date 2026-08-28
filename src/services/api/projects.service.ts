@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase/client";
-import { SUPABASE_URL, getHeaders } from "./config";
+import { SUPABASE_URL } from "./config";
 
 export interface Project {
   id: string;
@@ -29,6 +29,16 @@ export interface ProjectMember {
   role: string;
   email: string;
   metadata: ProjectMemberMetadata;
+}
+
+export interface InviteMemberInput {
+  email: string;
+  projectId: string;
+  appUrl: string;
+}
+
+export interface AcceptInvitationInput {
+  token: string;
 }
 
 export const ProjectsService = {
@@ -65,18 +75,17 @@ export const ProjectsService = {
       .select("member_id, project_id, user_id, role, email, metadata")
       .eq("project_id", projectId);
   },
-  invite: async (token: string, data: unknown) => {
-    return fetch(`${SUPABASE_URL}/rest/v1/rpc/invite_member`, {
-      method: "POST",
-      headers: getHeaders(token),
-      body: JSON.stringify(data),
+  invite: async (input: InviteMemberInput) => {
+    return supabase.rpc("invite_member", {
+      p_email: input.email,
+      p_project_id: input.projectId,
+      p_app_url: input.appUrl,
+      p_base_url: SUPABASE_URL,
     });
   },
-  acceptInvitation: async (token: string, data: unknown) => {
-    return fetch(`${SUPABASE_URL}/rest/v1/rpc/accept_invitation`, {
-      method: "POST",
-      headers: getHeaders(token),
-      body: JSON.stringify(data),
+  acceptInvitation: async (input: AcceptInvitationInput) => {
+    return supabase.rpc("accept_invitation", {
+      p_token: input.token,
     });
   },
 };

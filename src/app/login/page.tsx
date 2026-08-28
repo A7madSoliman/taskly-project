@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { AuthService } from "@/services/api/auth.service";
@@ -19,8 +20,50 @@ const validatePassword = (password: string) => {
   return "";
 };
 
-export default function LoginPage() {
+const INTERNAL_BASE = new URL("https://taskly.internal");
+
+function getValidReturnTo(rawReturnTo: string | null): string | null {
+  if (!rawReturnTo || typeof rawReturnTo !== "string") return null;
+
+  // Reject leading/trailing whitespace or whitespace within
+  if (rawReturnTo.trim() !== rawReturnTo) return null;
+
+  try {
+    const parsed = new URL(rawReturnTo, INTERNAL_BASE);
+
+    // Reject external origins, protocol-relative, and backslash-normalized forms
+    if (parsed.origin !== INTERNAL_BASE.origin) {
+      return null;
+    }
+
+    // Require exact /invite pathname
+    if (parsed.pathname !== "/invite") {
+      return null;
+    }
+
+    // Require exactly one non-empty token query parameter
+    const tokens = parsed.searchParams.getAll("token");
+    if (tokens.length !== 1) {
+      return null;
+    }
+
+    const token = tokens[0].trim();
+    if (!token) {
+      return null;
+    }
+
+    // Reconstruct clean safe returnTo discarding any extra query parameters or hash
+    const safeParams = new URLSearchParams({ token });
+    return `/invite?${safeParams.toString()}`;
+  } catch {
+    return null;
+  }
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const rawReturnTo = searchParams.get("returnTo");
 
   const [formData, setFormData] = useState({
     email: "",
@@ -86,7 +129,12 @@ export default function LoginPage() {
       }
 
       if (data.session && data.user) {
-        router.push("/project");
+        const validReturnTo = getValidReturnTo(rawReturnTo);
+        if (validReturnTo) {
+          router.replace(validReturnTo);
+        } else {
+          router.replace("/project");
+        }
       } else {
         setApiError(
           "Authentication session could not be established. Please try again."
@@ -245,5 +293,19 @@ export default function LoginPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background flex flex-col items-center justify-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-[#0052cc] border-t-transparent" />
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

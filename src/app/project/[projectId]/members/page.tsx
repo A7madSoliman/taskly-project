@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/Button";
 import { MemberCard, MemberRow } from "@/components/members/MemberRow";
 import { MemberSkeletonList } from "@/components/members/MemberSkeleton";
+import { InviteMemberModal } from "@/components/members/InviteMemberModal";
 import {
   ProjectsService,
   ProjectMember,
@@ -21,6 +22,20 @@ export default function ProjectMembersPage() {
   const [status, setStatus] = useState<MembersStatus>("loading");
   const [members, setMembers] = useState<ProjectMember[]>([]);
   const [projectName, setProjectName] = useState<string>("Project");
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState<boolean>(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const focusTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Clear focus restoration timer on unmount / project change
+  useEffect(() => {
+    return () => {
+      if (focusTimerRef.current) {
+        clearTimeout(focusTimerRef.current);
+        focusTimerRef.current = null;
+      }
+    };
+  }, [projectId]);
 
   // Preload the project name for the breadcrumb (reuses TM-13 getById service).
   useEffect(() => {
@@ -67,6 +82,30 @@ export default function ProjectMembersPage() {
     };
   }, [loadMembers]);
 
+  const handleOpenInviteModal = () => {
+    if (focusTimerRef.current) {
+      clearTimeout(focusTimerRef.current);
+      focusTimerRef.current = null;
+    }
+    setSuccessMessage(null);
+    setIsInviteModalOpen(true);
+  };
+
+  const handleCloseInviteModal = () => {
+    setIsInviteModalOpen(false);
+    if (focusTimerRef.current) {
+      clearTimeout(focusTimerRef.current);
+    }
+    // Restore focus to Invite Member CTA
+    focusTimerRef.current = setTimeout(() => {
+      document.getElementById("invite-member-cta-btn")?.focus();
+    }, 50);
+  };
+
+  const handleInviteSuccess = () => {
+    setSuccessMessage("Invitation sent successfully.");
+  };
+
   const headerSection = (
     <>
       {/* Breadcrumb */}
@@ -81,11 +120,11 @@ export default function ProjectMembersPage() {
           Project Members
         </h1>
         <Button
+          id="invite-member-cta-btn"
           type="button"
           fullWidth={false}
-          tabIndex={-1}
-          aria-disabled="true"
-          className="h-12 px-6 pointer-events-none shrink-0 shadow-[0_5px_12px_rgba(0,82,204,0.20)]"
+          onClick={handleOpenInviteModal}
+          className="h-12 px-6 shrink-0 shadow-[0_5px_12px_rgba(0,82,204,0.20)] hover:opacity-95 cursor-pointer"
         >
           <span className="flex items-center gap-2">
             <Image
@@ -107,6 +146,31 @@ export default function ProjectMembersPage() {
     <AppShell>
       <div className="w-full max-w-[1216px] mx-auto py-2">
         {headerSection}
+
+        {/* Success Alert */}
+        {successMessage && (
+          <div
+            role="status"
+            className="mt-4 flex items-center justify-between rounded-[6px] border border-[#a6f4c5] bg-[#edfcf2] px-4 py-3 text-[13px] font-medium text-[#027a48]"
+          >
+            <span>{successMessage}</span>
+            <button
+              type="button"
+              onClick={() => setSuccessMessage(null)}
+              className="cursor-pointer text-[12px] font-semibold text-[#027a48] hover:underline"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
+        {/* Invite Member Modal */}
+        <InviteMemberModal
+          projectId={projectId}
+          isOpen={isInviteModalOpen}
+          onClose={handleCloseInviteModal}
+          onSuccess={handleInviteSuccess}
+        />
 
         {/* Content container */}
         <div className="mx-auto mt-6 w-full max-w-[790px] bg-white rounded-lg border border-[rgba(195,198,214,0.3)] shadow-[0px_1px_3px_0px_rgba(4,27,60,0.05)] overflow-hidden md:mt-20">
