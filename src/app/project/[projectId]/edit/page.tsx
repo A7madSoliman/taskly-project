@@ -7,6 +7,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
+import { ProjectMobileBottomNav } from "@/components/layout/ProjectMobileBottomNav";
 import { ProjectsService } from "@/services/api/projects.service";
 import { Lightbulb, SquarePen } from "lucide-react";
 
@@ -315,7 +316,7 @@ export default function ProjectEditPage() {
           </div>
 
           {/* Mobile Design Container (Flat Layout) — MINIMAL RESPONSIVE ENGINEERING ADAPTATION */}
-          <div className="block lg:hidden px-2">
+          <div className="block lg:hidden px-2 pb-24">
             {feedbackBanners}
             <form onSubmit={handleSubmit} className="flex flex-col gap-6">
               <h1 className="text-[24px] font-bold text-[#041b3c] tracking-[-0.5px]">
@@ -342,6 +343,9 @@ export default function ProjectEditPage() {
               </div>
             </form>
           </div>
+
+          {/* Mobile Fixed Bottom Navigation Bar */}
+          <ProjectMobileBottomNav projectId={projectId} />
         </div>
       )}
     </AppShell>

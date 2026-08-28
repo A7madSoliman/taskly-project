@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { MemberCard, MemberRow } from "@/components/members/MemberRow";
 import { MemberSkeletonList } from "@/components/members/MemberSkeleton";
 import { InviteMemberModal } from "@/components/members/InviteMemberModal";
+import { ProjectMobileBottomNav } from "@/components/layout/ProjectMobileBottomNav";
 import {
   ProjectsService,
   ProjectMember,
@@ -144,7 +145,7 @@ export default function ProjectMembersPage() {
 
   return (
     <AppShell>
-      <div className="w-full max-w-[1216px] mx-auto py-2">
+      <div className="w-full max-w-[1216px] mx-auto py-2 pb-24 lg:pb-2">
         {headerSection}
 
         {/* Success Alert */}
@@ -263,6 +264,9 @@ export default function ProjectMembersPage() {
             </>
           )}
         </div>
+
+        {/* Mobile Fixed Bottom Navigation Bar */}
+        <ProjectMobileBottomNav projectId={projectId} />
       </div>
     </AppShell>
   );

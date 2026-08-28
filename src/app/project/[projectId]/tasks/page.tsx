@@ -8,7 +8,6 @@ import React, {
   useState,
 } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   ChevronDown,
@@ -37,6 +36,7 @@ import { TaskColumn } from "@/components/tasks/TaskColumn";
 import { TaskCard } from "@/components/tasks/TaskCard";
 import { TaskRow } from "@/components/tasks/TaskRow";
 import { TaskDetailsModal } from "@/components/tasks/TaskDetailsModal";
+import { ProjectMobileBottomNav } from "@/components/layout/ProjectMobileBottomNav";
 
 const PAGE_SIZE = 10;
 
@@ -1419,84 +1419,7 @@ export default function ProjectTasksPage() {
         ) : null}
 
         {/* Mobile Fixed Bottom Navigation Bar */}
-        <nav
-          aria-label="Mobile Bottom Navigation"
-          className="fixed bottom-0 left-0 right-0 z-30 flex h-16 items-center justify-around border-t border-[#e5e8f0] bg-white px-2 shadow-[0_-2px_10px_rgba(4,27,60,0.05)] lg:hidden"
-        >
-          <Link
-            href="/project"
-            className="flex flex-1 flex-col items-center justify-center gap-1 py-1 text-[10px] font-semibold text-[#737685] transition-colors hover:text-[#0052cc]"
-          >
-            <Image
-              src="/assets/svg/icons/icon-projects.svg"
-              alt=""
-              width={20}
-              height={20}
-              aria-hidden="true"
-              className="opacity-70"
-            />
-            <span>Projects</span>
-          </Link>
-
-          <Link
-            href={`/project/${projectId}/epics`}
-            className="flex flex-1 flex-col items-center justify-center gap-1 py-1 text-[10px] font-semibold text-[#737685] transition-colors hover:text-[#0052cc]"
-          >
-            <Image
-              src="/assets/svg/icons/icon-epics.svg"
-              alt=""
-              width={20}
-              height={20}
-              aria-hidden="true"
-              className="opacity-70"
-            />
-            <span>Epics</span>
-          </Link>
-
-          <Link
-            href={`/project/${projectId}/tasks`}
-            className="flex flex-1 flex-col items-center justify-center gap-1 py-1 text-[10px] font-bold text-[#0052cc]"
-          >
-            <Image
-              src="/assets/svg/icons/icon-tasks.svg"
-              alt=""
-              width={20}
-              height={20}
-              aria-hidden="true"
-            />
-            <span>Tasks</span>
-          </Link>
-
-          <Link
-            href={`/project/${projectId}/members`}
-            className="flex flex-1 flex-col items-center justify-center gap-1 py-1 text-[10px] font-semibold text-[#737685] transition-colors hover:text-[#0052cc]"
-          >
-            <Image
-              src="/assets/svg/icons/icon-members.svg"
-              alt=""
-              width={22}
-              height={20}
-              aria-hidden="true"
-              className="opacity-70"
-            />
-            <span>Members</span>
-          </Link>
-
-          <Link
-            href={`/project/${projectId}/edit`}
-            className="flex flex-1 flex-col items-center justify-center gap-1 py-1 text-[10px] font-semibold text-[#737685] transition-colors hover:text-[#0052cc]"
-          >
-            <Image
-              src="/assets/svg/icons/icon-details.svg"
-              alt=""
-              width={20}
-              height={20}
-              aria-hidden="true"
-              className="opacity-70"
-            />
-            <span>Details</span>
-          </Link>
-        </nav>
+        <ProjectMobileBottomNav projectId={projectId} />
       </div>
     </AppShell>
   );

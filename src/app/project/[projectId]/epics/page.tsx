@@ -16,10 +16,12 @@ import { ProjectsService } from "@/services/api/projects.service";
 import { EpicCard, EpicCardSkeletonGrid } from "@/components/epics/EpicCard";
 import { EpicDetailsModal } from "@/components/epics/EpicDetailsModal";
 import { TaskDetailsModal } from "@/components/tasks/TaskDetailsModal";
+import { ProjectMobileBottomNav } from "@/components/layout/ProjectMobileBottomNav";
 import {
   ChartNoAxesCombined,
   DraftingCompass,
   Grid3X3,
+  Loader2,
   Rocket,
   RotateCw,
   Search,
@@ -57,6 +59,7 @@ export default function ProjectEpicsPage() {
   // Search state
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
+  const [isSearchPending, setIsSearchPending] = useState<boolean>(false);
 
   const handleEpicUpdated = useCallback((updatedEpic: ProjectEpic) => {
     setEpics((current) =>
@@ -79,6 +82,8 @@ export default function ProjectEpicsPage() {
   const projectIdRef = useRef(projectId);
   const startedPageRef = useRef(1);
   const debouncedSearchTermRef = useRef(debouncedSearchTerm);
+  const isSearchPendingRef = useRef(false);
+  const isInitialMountRef = useRef(true);
 
   // Debounce search input
   useEffect(() => {
@@ -99,6 +104,7 @@ export default function ProjectEpicsPage() {
     loadMoreErrorRef.current = loadMoreError;
     projectIdRef.current = projectId;
     debouncedSearchTermRef.current = debouncedSearchTerm;
+    isSearchPendingRef.current = isSearchPending;
   });
 
   // Breadcrumb metadata
@@ -123,16 +129,23 @@ export default function ProjectEpicsPage() {
 
   // Initial fetch / Search query change
   const loadInitial = useCallback(
-    async (queryToFetch?: string) => {
+    async (queryToFetch?: string, isSearchTransition = false) => {
       const activeQuery = queryToFetch ?? debouncedSearchTermRef.current;
       const reqId = ++requestSeq.current;
       pageLoadingRef.current = false;
       loadingMoreRef.current = false;
       startedPageRef.current = 1;
-      setStatus("loading");
-      setEpics([]);
+
+      if (isSearchTransition) {
+        setIsSearchPending(true);
+        isSearchPendingRef.current = true;
+      } else {
+        setStatus("loading");
+        setEpics([]);
+        setTotalCount(0);
+      }
+
       setCurrentPage(1);
-      setTotalCount(0);
       setPageTransitionLoading(false);
       setLoadingMore(false);
       setLoadMoreError(false);
@@ -145,6 +158,8 @@ export default function ProjectEpicsPage() {
         if (reqId !== requestSeq.current) return;
         if (error) {
           setStatus("error");
+          setIsSearchPending(false);
+          isSearchPendingRef.current = false;
           return;
         }
         const rows = data ?? [];
@@ -160,23 +175,31 @@ export default function ProjectEpicsPage() {
         }
       } catch {
         if (reqId === requestSeq.current) setStatus("error");
+      } finally {
+        if (reqId === requestSeq.current) {
+          setIsSearchPending(false);
+          isSearchPendingRef.current = false;
+        }
       }
     },
     [projectId]
   );
 
   // Re-run on projectId or debouncedSearchTerm change.
-  // Synchronously invalidate prior collection requests BEFORE deferred microtask
-  // so stale in-flight responses from previous queries can never commit.
   useEffect(() => {
     let isMounted = true;
     const currentGen = ++requestSeq.current;
     debouncedSearchTermRef.current = debouncedSearchTerm;
 
+    const isSearchTransition = !isInitialMountRef.current;
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false;
+    }
+
     const run = async () => {
       await Promise.resolve();
       if (!isMounted || currentGen !== requestSeq.current) return;
-      await loadInitial(debouncedSearchTerm);
+      await loadInitial(debouncedSearchTerm, isSearchTransition);
     };
     run();
     return () => {
@@ -228,6 +251,7 @@ export default function ProjectEpicsPage() {
   const loadMore = useCallback(() => {
     if (loadingMoreRef.current) return;
     if (loadMoreErrorRef.current) return;
+    if (isSearchPendingRef.current) return;
     if (loadedCountRef.current >= totalCountRef.current) return;
     const next = currentPageRef.current + 1;
     if (next <= startedPageRef.current) return;
@@ -252,8 +276,10 @@ export default function ProjectEpicsPage() {
           setLoadMoreError(true);
           return;
         }
-        setEpics((prev) => [...prev, ...(data ?? [])]);
-        setTotalCount(count ?? 0);
+        const rows = data ?? [];
+        const total = count ?? totalCountRef.current;
+        setTotalCount(total);
+        setEpics((current) => [...current, ...rows]);
         setCurrentPage(next);
       } catch {
         if (reqId === requestSeq.current) {
@@ -290,8 +316,8 @@ export default function ProjectEpicsPage() {
     [isMobile, loadMore]
   );
 
+  // Pagination range calculation (Restored TM-26 baseline algorithm)
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-
   const pageNumbers = useMemo<(number | "...")[]>(() => {
     if (totalPages <= 7) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -306,39 +332,47 @@ export default function ProjectEpicsPage() {
     return pages;
   }, [totalPages, currentPage]);
 
-  const isSearchPending =
-    searchTerm !== debouncedSearchTerm ||
-    (status === "loading" && debouncedSearchTerm.trim().length > 0);
+  const isSearchDebouncingOrLoading =
+    searchTerm !== debouncedSearchTerm || isSearchPending;
 
   const headerSection = (
     <>
       {/* Breadcrumb */}
-      <div className="mb-1 hidden text-[11px] font-bold uppercase tracking-[1px] text-slate-400 lg:block">
-        Projects <span className="text-slate-300 mx-1">›</span> {projectName}{" "}
-        <span className="text-slate-300 mx-1">›</span>{" "}
-        <span className="text-[#0052cc]">Epics</span>
+      <div className="mb-2 text-[11px] font-bold uppercase tracking-[1px] text-slate-400">
+        Projects <span className="mx-1 text-slate-300">›</span> {projectName}{" "}
+        <span className="mx-1 text-slate-300">›</span>{" "}
+        <span className="font-bold text-[#0052cc]">Epics</span>
       </div>
-      {/* Heading + search + CTA row */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="hidden text-[30px] font-bold leading-[45px] tracking-[-0.5px] text-[#041b3c] lg:block">
+
+      {/* Title + Action bar */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <h1 className="text-[30px] font-bold tracking-[-0.5px] text-[#041b3c]">
           Project Epics
         </h1>
-        <div className="flex w-full items-center gap-3 lg:w-auto lg:gap-8">
+
+        <div className="flex items-center gap-3">
           {/* Mobile Search input */}
           <div className="relative w-full lg:hidden">
             <Search
               size={18}
               strokeWidth={2}
               aria-hidden="true"
-              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#7b8398]"
+              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#7b8398]"
             />
+            {isSearchDebouncingOrLoading && (
+              <Loader2
+                size={16}
+                aria-hidden="true"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 animate-spin text-[#0052cc]"
+              />
+            )}
             <input
               type="text"
               placeholder="Search epics..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               aria-label="Search epics"
-              className="h-12 w-full rounded-[8px] bg-[#d7e2ff] pl-[46px] pr-4 text-[14px] text-[#041b3c] outline-none placeholder:text-[#7b8398] focus-visible:ring-2 focus-visible:ring-[#0052cc]"
+              className="h-12 w-full rounded-[8px] bg-[#d7e2ff] pl-[46px] pr-9 text-[14px] text-[#041b3c] outline-none placeholder:text-[#7b8398] focus-visible:ring-2 focus-visible:ring-[#0052cc]"
             />
           </div>
 
@@ -350,13 +384,20 @@ export default function ProjectEpicsPage() {
               aria-hidden="true"
               className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#5b6b8c]"
             />
+            {isSearchDebouncingOrLoading && (
+              <Loader2
+                size={16}
+                aria-hidden="true"
+                className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-[#0052cc]"
+              />
+            )}
             <input
               type="text"
               placeholder="Search epics..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               aria-label="Search epics"
-              className="h-12 w-full rounded-[4px] bg-[#d7e2ff] pl-9 pr-3 text-[14px] text-[#041b3c] outline-none placeholder:text-[#5b6b8c] focus-visible:ring-2 focus-visible:ring-[#0052cc]"
+              className="h-12 w-full rounded-[4px] bg-[#d7e2ff] pl-9 pr-9 text-[14px] text-[#041b3c] outline-none placeholder:text-[#5b6b8c] focus-visible:ring-2 focus-visible:ring-[#0052cc]"
             />
           </div>
 
@@ -387,17 +428,15 @@ export default function ProjectEpicsPage() {
         {/* Render header whenever not initial project-wide loading, so search input is always accessible */}
         {headerSection}
 
-        {/* Loading skeleton state */}
-        {(status === "loading" || isSearchPending) && (
-          <>
-            <div className="mt-6 lg:mt-10">
-              <EpicCardSkeletonGrid count={6} />
-            </div>
-          </>
+        {/* Initial Loading skeleton state only (not search transitions) */}
+        {status === "loading" && (
+          <div className="mt-6 lg:mt-10">
+            <EpicCardSkeletonGrid count={6} />
+          </div>
         )}
 
         {/* Error state */}
-        {!isSearchPending && status === "error" && (
+        {status === "error" && (
           <div className="flex min-h-[calc(100vh-280px)] flex-col items-center justify-center gap-3 text-center lg:translate-y-8">
             <h2 className="text-[20px] font-bold text-[#041b3c]">
               {debouncedSearchTerm.trim().length > 0
@@ -425,7 +464,7 @@ export default function ProjectEpicsPage() {
         )}
 
         {/* Empty state — Search Empty vs Project Empty */}
-        {!isSearchPending && status === "empty" && (
+        {status === "empty" && (
           <>
             {debouncedSearchTerm.trim().length > 0 ? (
               // B. Non-empty debounced query + zero filtered results
@@ -520,17 +559,19 @@ export default function ProjectEpicsPage() {
                   ].map(({ title, copy, Icon }) => (
                     <article
                       key={title}
-                      className="min-h-[184px] rounded-[8px] border border-[#e8ebf4] bg-[#f7f8ff] p-6"
+                      className="flex flex-row items-start gap-4 rounded-[8px] border border-[#e8ebf4] bg-[#f7f8ff] p-4 md:flex-col md:min-h-[184px] md:p-6 md:gap-0"
                     >
-                      <span className="flex h-10 w-10 items-center justify-center rounded-[8px] bg-[#e3e9ff] text-[#0052cc]">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[8px] bg-[#e3e9ff] text-[#0052cc]">
                         <Icon size={21} strokeWidth={1.9} aria-hidden="true" />
                       </span>
-                      <h3 className="mt-5 text-[16px] font-semibold text-[#041b3c]">
-                        {title}
-                      </h3>
-                      <p className="mt-2 max-w-[210px] text-[14px] leading-[21px] text-[#5d6578]">
-                        {copy}
-                      </p>
+                      <div className="flex flex-col min-w-0 flex-1 md:mt-5">
+                        <h3 className="text-[16px] font-semibold text-[#041b3c]">
+                          {title}
+                        </h3>
+                        <p className="mt-1 md:mt-2 text-[14px] leading-[21px] text-[#5d6578]">
+                          {copy}
+                        </p>
+                      </div>
                     </article>
                   ))}
                 </div>
@@ -540,7 +581,7 @@ export default function ProjectEpicsPage() {
         )}
 
         {/* Ready — desktop 2-col grid / mobile single column */}
-        {!isSearchPending && status === "ready" && (
+        {status === "ready" && (
           <>
             <div className="mt-6 grid grid-cols-1 gap-6 lg:mt-10 lg:grid-cols-2">
               {pageTransitionLoading ? (
@@ -701,6 +742,9 @@ export default function ProjectEpicsPage() {
             onClose={() => setSelectedTaskId(null)}
           />
         ) : null}
+
+        {/* Mobile Fixed Bottom Navigation Bar */}
+        <ProjectMobileBottomNav projectId={projectId} />
       </div>
     </AppShell>
   );
