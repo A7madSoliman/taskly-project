@@ -36,6 +36,7 @@ import { TaskColumn } from "@/components/tasks/TaskColumn";
 import { TaskCard } from "@/components/tasks/TaskCard";
 import { TaskRow } from "@/components/tasks/TaskRow";
 import { TaskDetailsModal } from "@/components/tasks/TaskDetailsModal";
+import { DeleteConfirmationModal } from "@/components/ui/DeleteConfirmationModal";
 import { ProjectMobileBottomNav } from "@/components/layout/ProjectMobileBottomNav";
 
 const PAGE_SIZE = 10;
@@ -201,6 +202,26 @@ export default function ProjectTasksPage() {
   const pendingMoveStatusesRef = useRef<Set<TaskStatus>>(new Set());
   const boardMutationSeqRef = useRef<number>(0);
 
+  // --- Task Delete State (Shared by Desktop List TaskRow and Mobile TaskCard) ---
+  const [taskToDelete, setTaskToDelete] = useState<BoardTask | null>(null);
+  const [isDeletePending, setIsDeletePending] = useState<boolean>(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const deletePendingRef = useRef<boolean>(false);
+  const taskDeleteSeqRef = useRef<number>(0);
+
+  const projectIdRef = useRef(projectId);
+  const modeRef = useRef<"board" | "list" | "mobile" | null>(null);
+  const prevOwnerRef = useRef<{
+    projectId: string;
+    mode: "board" | "list" | "mobile" | null;
+  }>({ projectId, mode: null });
+  const currentPageRef = useRef(currentPage);
+
+  useEffect(() => {
+    projectIdRef.current = projectId;
+    currentPageRef.current = currentPage;
+  });
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -217,7 +238,18 @@ export default function ProjectTasksPage() {
   );
 
   const fetchBoardColumnInitial = useCallback(
-    async (status: TaskStatus) => {
+    async (
+      status: TaskStatus,
+      deleteOwner?: {
+        deleteGen: number;
+        projectId: string;
+        mode: "board" | "list" | "mobile" | null;
+        status: TaskStatus;
+      }
+    ): Promise<{
+      outcome: "success" | "controlled-error" | "stale";
+      total: number;
+    }> => {
       const seq = ++boardSeqRef.current[status];
       boardInFlightRef.current[status] = true;
 
@@ -233,18 +265,44 @@ export default function ProjectTasksPage() {
             0,
             PAGE_SIZE - 1
           );
-        if (seq !== boardSeqRef.current[status]) return;
+        if (seq !== boardSeqRef.current[status]) {
+          return { outcome: "stale", total: 0 };
+        }
+        if (
+          deleteOwner &&
+          (taskDeleteSeqRef.current !== deleteOwner.deleteGen ||
+            projectIdRef.current !== deleteOwner.projectId ||
+            modeRef.current !== deleteOwner.mode ||
+            deleteOwner.status !== status)
+        ) {
+          return { outcome: "stale", total: 0 };
+        }
 
         if (error) {
           setBoardErrorInitial((prev) => ({ ...prev, [status]: true }));
+          return { outcome: "controlled-error", total: 0 };
         } else {
+          const total = count ?? 0;
           setBoardTasks((prev) => ({ ...prev, [status]: data ?? [] }));
-          setBoardTotalCounts((prev) => ({ ...prev, [status]: count ?? 0 }));
+          setBoardTotalCounts((prev) => ({ ...prev, [status]: total }));
           setBoardPageIndex((prev) => ({ ...prev, [status]: 0 }));
+          return { outcome: "success", total };
         }
       } catch {
-        if (seq !== boardSeqRef.current[status]) return;
-        setBoardErrorInitial((prev) => ({ ...prev, [status]: true }));
+        if (seq !== boardSeqRef.current[status]) {
+          return { outcome: "stale", total: 0 };
+        }
+        if (
+          !deleteOwner ||
+          (taskDeleteSeqRef.current === deleteOwner.deleteGen &&
+            projectIdRef.current === deleteOwner.projectId &&
+            modeRef.current === deleteOwner.mode &&
+            deleteOwner.status === status)
+        ) {
+          setBoardErrorInitial((prev) => ({ ...prev, [status]: true }));
+          return { outcome: "controlled-error", total: 0 };
+        }
+        return { outcome: "stale", total: 0 };
       } finally {
         if (seq === boardSeqRef.current[status]) {
           boardInFlightRef.current[status] = false;
@@ -571,6 +629,32 @@ export default function ProjectTasksPage() {
     return viewParam === "list" ? "list" : "board";
   }, [isDesktop, viewParam]);
 
+  // Surviving project or mode ownership transition
+  useEffect(() => {
+    const prev = prevOwnerRef.current;
+    if (prev.projectId !== projectId || prev.mode !== mode) {
+      prevOwnerRef.current = { projectId, mode };
+      taskDeleteSeqRef.current++;
+      deletePendingRef.current = false;
+      setIsDeletePending(false);
+      setTaskToDelete(null);
+      setDeleteError(null);
+    }
+  }, [projectId, mode]);
+
+  // True unmount-only invalidation
+  useEffect(() => {
+    const seqRef = taskDeleteSeqRef;
+    return () => {
+      seqRef.current++;
+    };
+  }, []);
+
+  // Keep live modeRef in sync
+  useEffect(() => {
+    modeRef.current = mode;
+  });
+
   // Load project name
   useEffect(() => {
     let isMounted = true;
@@ -588,7 +672,17 @@ export default function ProjectTasksPage() {
   // DESKTOP LIST FETCH & PAGINATION
   // ----------------------------------------------------
   const fetchListPage = useCallback(
-    async (pageToFetch: number) => {
+    async (
+      pageToFetch: number,
+      deleteOwner?: {
+        deleteGen: number;
+        projectId: string;
+        mode: "board" | "list" | "mobile" | null;
+      }
+    ): Promise<{
+      outcome: "success" | "controlled-error" | "stale";
+      total: number;
+    }> => {
       const seq = ++listSeqRef.current;
       setRequestedPage(pageToFetch);
       setListLoading(true);
@@ -603,10 +697,19 @@ export default function ProjectTasksPage() {
           from,
           to
         );
-        if (seq !== listSeqRef.current) return;
+        if (seq !== listSeqRef.current) return { outcome: "stale", total: 0 };
+        if (
+          deleteOwner &&
+          (taskDeleteSeqRef.current !== deleteOwner.deleteGen ||
+            projectIdRef.current !== deleteOwner.projectId ||
+            modeRef.current !== deleteOwner.mode)
+        ) {
+          return { outcome: "stale", total: 0 };
+        }
 
         if (error) {
           setListError(true);
+          return { outcome: "controlled-error", total: 0 };
         } else {
           const fetchedRows = data ?? [];
           const total = count ?? 0;
@@ -618,6 +721,7 @@ export default function ProjectTasksPage() {
             setRequestedPage(1);
             setListTotalCount(0);
             setListTasks([]);
+            return { outcome: "success", total: 0 };
           } else if (pageToFetch > calculatedTotalPages) {
             // Corrective read
             const clampedPage = calculatedTotalPages;
@@ -630,10 +734,20 @@ export default function ProjectTasksPage() {
               clampedFrom,
               clampedTo
             );
-            if (seq !== listSeqRef.current) return;
+            if (seq !== listSeqRef.current)
+              return { outcome: "stale", total: 0 };
+            if (
+              deleteOwner &&
+              (taskDeleteSeqRef.current !== deleteOwner.deleteGen ||
+                projectIdRef.current !== deleteOwner.projectId ||
+                modeRef.current !== deleteOwner.mode)
+            ) {
+              return { outcome: "stale", total: 0 };
+            }
 
             if (corrResult.error) {
               setListError(true);
+              return { outcome: "controlled-error", total: 0 };
             } else {
               const finalRows = corrResult.data ?? [];
               const finalCount = corrResult.count ?? total;
@@ -648,17 +762,28 @@ export default function ProjectTasksPage() {
               setRequestedPage(settledPage);
               setListTotalCount(finalCount);
               setListTasks(finalRows);
+              return { outcome: "success", total: finalCount };
             }
           } else {
             setCurrentPage(pageToFetch);
             setRequestedPage(pageToFetch);
             setListTotalCount(total);
             setListTasks(fetchedRows);
+            return { outcome: "success", total };
           }
         }
       } catch {
-        if (seq !== listSeqRef.current) return;
-        setListError(true);
+        if (seq !== listSeqRef.current) return { outcome: "stale", total: 0 };
+        if (
+          !deleteOwner ||
+          (taskDeleteSeqRef.current === deleteOwner.deleteGen &&
+            projectIdRef.current === deleteOwner.projectId &&
+            modeRef.current === deleteOwner.mode)
+        ) {
+          setListError(true);
+          return { outcome: "controlled-error", total: 0 };
+        }
+        return { outcome: "stale", total: 0 };
       } finally {
         if (seq === listSeqRef.current) {
           setListLoading(false);
@@ -743,26 +868,33 @@ export default function ProjectTasksPage() {
   // ----------------------------------------------------
   const fetchMobileSequential = useCallback(
     async (
-      statusIdx: number,
-      pageIdx: number,
-      isInitialMobileEntry: boolean = false
-    ) => {
-      if (mobileInFlightRef.current) return;
-      if (statusIdx >= BOARD_COLUMNS.length) {
+      initialStatusIdx: number,
+      initialPageIdx: number,
+      isInitialMobileEntry: boolean = false,
+      deleteOwner?: {
+        deleteGen: number;
+        projectId: string;
+        mode: "board" | "list" | "mobile" | null;
+      }
+    ): Promise<{ outcome: "success" | "controlled-error" | "stale" }> => {
+      if (mobileInFlightRef.current && !deleteOwner) {
+        return { outcome: "stale" };
+      }
+
+      let curStatusIdx = initialStatusIdx;
+      let curPageIdx = initialPageIdx;
+
+      if (curStatusIdx >= BOARD_COLUMNS.length) {
         setMobileAllExhausted(true);
         setMobileLoadingInitial(false);
         setMobileLoadingMore(false);
-        return;
+        return { outcome: "success" };
       }
-
-      const status = BOARD_COLUMNS[statusIdx].status;
-      const from = pageIdx * PAGE_SIZE;
-      const to = from + PAGE_SIZE - 1;
 
       const seq = ++mobileSeqRef.current;
       mobileInFlightRef.current = true;
 
-      if (isInitialMobileEntry || (statusIdx === 0 && pageIdx === 0)) {
+      if (isInitialMobileEntry || (curStatusIdx === 0 && curPageIdx === 0)) {
         setMobileLoadingInitial(true);
       } else {
         setMobileLoadingMore(true);
@@ -770,52 +902,92 @@ export default function ProjectTasksPage() {
       setMobileError(false);
 
       try {
-        const { data, count, error } =
-          await TasksService.getByProjectStatusPaginated(
-            projectId,
-            status,
-            from,
-            to
-          );
-        if (seq !== mobileSeqRef.current) return;
+        // Stream through statuses. For each status, fetch until exhausted, then advance.
+        // On initial mobile entry or when continuing, loop until we either load tasks or exhaust all statuses.
+        while (curStatusIdx < BOARD_COLUMNS.length) {
+          const status = BOARD_COLUMNS[curStatusIdx].status;
+          const from = curPageIdx * PAGE_SIZE;
+          const to = from + PAGE_SIZE - 1;
 
-        if (error) {
-          setMobileError(true);
-        } else {
+          const { data, count, error } =
+            await TasksService.getByProjectStatusPaginated(
+              projectId,
+              status,
+              from,
+              to
+            );
+
+          if (seq !== mobileSeqRef.current) return { outcome: "stale" };
+          if (
+            deleteOwner &&
+            (taskDeleteSeqRef.current !== deleteOwner.deleteGen ||
+              projectIdRef.current !== deleteOwner.projectId ||
+              modeRef.current !== deleteOwner.mode)
+          ) {
+            return { outcome: "stale" };
+          }
+
+          if (error) {
+            setMobileError(true);
+            return { outcome: "controlled-error" };
+          }
+
           const fetchedRows = data ?? [];
           const total = count ?? 0;
 
-          // Deduplicate rows per status
-          setMobileTasks((prev) => {
-            const existingIds = new Set(prev.map((t) => t.id));
-            const uniqueNew = fetchedRows.filter((t) => !existingIds.has(t.id));
-            return [...prev, ...uniqueNew];
-          });
+          if (fetchedRows.length > 0) {
+            // Deduplicate rows per status by backend UUID
+            setMobileTasks((prev) => {
+              const existingIds = new Set(prev.map((t) => t.id));
+              const uniqueNew = fetchedRows.filter(
+                (t) => !existingIds.has(t.id)
+              );
+              return [...prev, ...uniqueNew];
+            });
+          }
 
-          const newLoadedForStatus =
-            (pageIdx === 0 ? 0 : mobileStatusLoadedCountRef.current) +
+          const loadedSoFar =
+            (curPageIdx === 0 ? 0 : mobileStatusLoadedCountRef.current) +
             fetchedRows.length;
+          mobileStatusLoadedCountRef.current = loadedSoFar;
 
-          if (newLoadedForStatus >= total || fetchedRows.length === 0) {
-            // Active status exhausted! Advance to next status
-            const nextStatusIdx = statusIdx + 1;
-            activeMobileStatusIndexRef.current = nextStatusIdx;
+          if (loadedSoFar >= total || fetchedRows.length === 0) {
+            // Status is completely exhausted! Advance to next status
+            curStatusIdx += 1;
+            curPageIdx = 0;
+            activeMobileStatusIndexRef.current = curStatusIdx;
             mobileStatusPageIndexRef.current = 0;
             mobileStatusLoadedCountRef.current = 0;
 
-            if (nextStatusIdx >= BOARD_COLUMNS.length) {
+            if (curStatusIdx >= BOARD_COLUMNS.length) {
               setMobileAllExhausted(true);
+              break;
             }
+
+            // Continue loop to start next canonical status
+            continue;
           } else {
-            // More remain in active status
-            activeMobileStatusIndexRef.current = statusIdx;
-            mobileStatusPageIndexRef.current = pageIdx + 1;
-            mobileStatusLoadedCountRef.current = newLoadedForStatus;
+            // More remain in active status (multi-page status)
+            curPageIdx += 1;
+            activeMobileStatusIndexRef.current = curStatusIdx;
+            mobileStatusPageIndexRef.current = curPageIdx;
+            // Break so next page can be fetched incrementally or continued
+            break;
           }
         }
+        return { outcome: "success" };
       } catch {
-        if (seq !== mobileSeqRef.current) return;
-        setMobileError(true);
+        if (seq !== mobileSeqRef.current) return { outcome: "stale" };
+        if (
+          !deleteOwner ||
+          (taskDeleteSeqRef.current === deleteOwner.deleteGen &&
+            projectIdRef.current === deleteOwner.projectId &&
+            modeRef.current === deleteOwner.mode)
+        ) {
+          setMobileError(true);
+          return { outcome: "controlled-error" };
+        }
+        return { outcome: "stale" };
       } finally {
         if (seq === mobileSeqRef.current) {
           mobileInFlightRef.current = false;
@@ -826,6 +998,182 @@ export default function ProjectTasksPage() {
     },
     [projectId]
   );
+
+  // ----------------------------------------------------
+  // SHARED TASK DELETE HANDLERS (Desktop List, Mobile & Board)
+  // ----------------------------------------------------
+  const handleDeleteRequested = useCallback((task: BoardTask) => {
+    taskDeleteSeqRef.current++;
+    deletePendingRef.current = false;
+    setIsDeletePending(false);
+    setTaskToDelete(task);
+    setDeleteError(null);
+  }, []);
+
+  const handleBoardDeleteRequested = useCallback(
+    (target: { id: string; status: TaskStatus }) => {
+      taskDeleteSeqRef.current++;
+      deletePendingRef.current = false;
+      setIsDeletePending(false);
+
+      const deleteTarget: BoardTask = {
+        id: target.id,
+        task_id: "TASK",
+        title: "Task",
+        status: target.status,
+        due_date: null,
+        assignee: null,
+      };
+
+      // Close TaskDetailsModal to prevent overlapping modal focus traps
+      setSelectedTaskId(null);
+      setTaskToDelete(deleteTarget);
+      setDeleteError(null);
+    },
+    []
+  );
+
+  const handleDeleteCancel = useCallback(() => {
+    if (deletePendingRef.current) return;
+    taskDeleteSeqRef.current++;
+    setTaskToDelete(null);
+    setDeleteError(null);
+  }, []);
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!taskToDelete || deletePendingRef.current) return;
+
+    const currentDeleteGen = ++taskDeleteSeqRef.current;
+    deletePendingRef.current = true;
+    setIsDeletePending(true);
+    setDeleteError(null);
+
+    const capturedOwner = {
+      deleteGen: currentDeleteGen,
+      targetUuid: taskToDelete.id,
+      targetStatus: taskToDelete.status,
+      projectId: projectIdRef.current,
+      mode: modeRef.current,
+      page: currentPageRef.current,
+    };
+
+    try {
+      const { error: deleteErr } = await TasksService.delete(
+        capturedOwner.targetUuid
+      );
+      if (currentDeleteGen !== taskDeleteSeqRef.current) return;
+
+      if (deleteErr) {
+        setDeleteError("Failed to delete task. Please try again.");
+        deletePendingRef.current = false;
+        setIsDeletePending(false);
+        return;
+      }
+
+      // Authoritative read-back verification: ensure record is absent
+      const { data: readBackData, error: readBackErr } =
+        await TasksService.getDetails(
+          capturedOwner.projectId,
+          capturedOwner.targetUuid
+        );
+      if (currentDeleteGen !== taskDeleteSeqRef.current) return;
+
+      if (readBackErr) {
+        setDeleteError("Failed to delete task. Please try again.");
+        deletePendingRef.current = false;
+        setIsDeletePending(false);
+        return;
+      }
+
+      if (readBackData !== null) {
+        // Record still exists - treat as delete failure / no-op
+        setDeleteError("Failed to delete task. Please try again.");
+        deletePendingRef.current = false;
+        setIsDeletePending(false);
+        return;
+      }
+
+      if (selectedTaskId === capturedOwner.targetUuid) {
+        setSelectedTaskId(null);
+      }
+
+      // Reconcile according to captured active mode under joint ownership
+      let reconOutcome: "success" | "controlled-error" | "stale" = "stale";
+
+      if (capturedOwner.mode === "mobile") {
+        // Mobile: invalidate prior sequence and reload canonical stream from start
+        mobileSeqRef.current++;
+        activeMobileStatusIndexRef.current = 0;
+        mobileStatusPageIndexRef.current = 0;
+        mobileStatusLoadedCountRef.current = 0;
+        setMobileTasks([]);
+        setMobileAllExhausted(false);
+        setMobileError(false);
+
+        const res = await fetchMobileSequential(0, 0, true, {
+          deleteGen: capturedOwner.deleteGen,
+          projectId: capturedOwner.projectId,
+          mode: capturedOwner.mode,
+        });
+        reconOutcome = res.outcome;
+      } else if (capturedOwner.mode === "list") {
+        // Desktop List: invalidate prior list sequence and re-fetch list page
+        listSeqRef.current++;
+        const res = await fetchListPage(capturedOwner.page, {
+          deleteGen: capturedOwner.deleteGen,
+          projectId: capturedOwner.projectId,
+          mode: capturedOwner.mode,
+        });
+        reconOutcome = res.outcome;
+      } else if (capturedOwner.mode === "board") {
+        // Desktop Board: invalidate affected Board-status GET generation and refetch
+        if (capturedOwner.targetStatus) {
+          boardSeqRef.current[capturedOwner.targetStatus]++;
+          const res = await fetchBoardColumnInitial(
+            capturedOwner.targetStatus,
+            {
+              deleteGen: capturedOwner.deleteGen,
+              projectId: capturedOwner.projectId,
+              mode: capturedOwner.mode,
+              status: capturedOwner.targetStatus,
+            }
+          );
+          reconOutcome = res.outcome;
+        }
+      }
+
+      if (reconOutcome === "stale") {
+        // Stale generation: commit ZERO state writes
+        return;
+      }
+
+      // For both "success" and "controlled-error":
+      // Since deletion was already verified absent via read-back,
+      // close confirmation and release pending if delete owner is still current.
+      if (
+        taskDeleteSeqRef.current === capturedOwner.deleteGen &&
+        projectIdRef.current === capturedOwner.projectId &&
+        modeRef.current === capturedOwner.mode
+      ) {
+        setTaskToDelete(null);
+        setDeleteError(null);
+        deletePendingRef.current = false;
+        setIsDeletePending(false);
+      }
+    } catch {
+      if (currentDeleteGen === taskDeleteSeqRef.current) {
+        setDeleteError("Failed to delete task. Please try again.");
+        deletePendingRef.current = false;
+        setIsDeletePending(false);
+      }
+    }
+  }, [
+    taskToDelete,
+    selectedTaskId,
+    fetchListPage,
+    fetchMobileSequential,
+    fetchBoardColumnInitial,
+  ]);
 
   // Observer callback for Mobile Sentinel
   const handleMobileLoadMore = useCallback(() => {
@@ -1248,6 +1596,7 @@ export default function ProjectTasksPage() {
                           key={task.id}
                           task={task}
                           onSelect={(id) => setSelectedTaskId(id)}
+                          onDeleteRequested={handleDeleteRequested}
                         />
                       ))
                     )}
@@ -1371,6 +1720,7 @@ export default function ProjectTasksPage() {
                     task={task}
                     variant="mobile"
                     onSelect={(id) => setSelectedTaskId(id)}
+                    onDeleteRequested={handleDeleteRequested}
                   />
                 ))}
               </div>
@@ -1415,8 +1765,24 @@ export default function ProjectTasksPage() {
             projectId={projectId}
             taskId={selectedTaskId}
             onClose={() => setSelectedTaskId(null)}
+            onDeleteRequested={
+              mode === "board" ? handleBoardDeleteRequested : undefined
+            }
           />
         ) : null}
+
+        {/* Task Delete Confirmation Modal */}
+        <DeleteConfirmationModal
+          isOpen={Boolean(taskToDelete)}
+          title="Delete Task?"
+          description="Are you sure you want to delete this task? This action cannot be undone."
+          confirmLabel="Delete Task"
+          pendingLabel="Deleting..."
+          error={deleteError}
+          isPending={isDeletePending}
+          onConfirm={handleDeleteConfirm}
+          onClose={handleDeleteCancel}
+        />
 
         {/* Mobile Fixed Bottom Navigation Bar */}
         <ProjectMobileBottomNav projectId={projectId} />

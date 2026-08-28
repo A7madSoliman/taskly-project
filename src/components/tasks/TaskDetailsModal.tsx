@@ -7,6 +7,7 @@ import {
   Copy,
   Layers,
   RotateCw,
+  Trash2,
   UserRound,
   X,
 } from "lucide-react";
@@ -18,6 +19,10 @@ interface TaskDetailsModalProps {
   projectId: string;
   taskId: string;
   onClose: () => void;
+  onDeleteRequested?: (target: {
+    id: string;
+    status: TaskDetails["status"];
+  }) => void;
 }
 
 const taskDueDateFormat = new Intl.DateTimeFormat("en-GB", {
@@ -29,19 +34,20 @@ const taskDueDateFormat = new Intl.DateTimeFormat("en-GB", {
 function formatDetailsDueDate(dateString: string | null | undefined): string {
   if (dateString === null || dateString === undefined) return "No due date";
   const date = new Date(dateString);
-  return Number.isNaN(date.getTime()) ? "�" : taskDueDateFormat.format(date);
+  return Number.isNaN(date.getTime()) ? "—" : taskDueDateFormat.format(date);
 }
 
 function formatDetailsCreatedAt(dateString: string | null | undefined): string {
-  if (!dateString) return "�";
+  if (!dateString) return "—";
   const date = new Date(dateString);
-  return Number.isNaN(date.getTime()) ? "�" : taskDueDateFormat.format(date);
+  return Number.isNaN(date.getTime()) ? "—" : taskDueDateFormat.format(date);
 }
 
 export function TaskDetailsModal({
   projectId,
   taskId,
   onClose,
+  onDeleteRequested,
 }: TaskDetailsModalProps) {
   const [task, setTask] = useState<TaskDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -364,13 +370,28 @@ export function TaskDetailsModal({
                 <span>Copy link</span>
               </button>
 
-              <button
-                type="button"
-                onClick={onClose}
-                className="cursor-pointer rounded-[6px] bg-[#e8edf7] px-5 py-2 text-[13px] font-semibold text-[#041b3c] transition-colors hover:bg-[#dbe4ff]"
-              >
-                Close
-              </button>
+              <div className="flex items-center gap-3">
+                {onDeleteRequested && task ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onDeleteRequested({ id: task.id, status: task.status })
+                    }
+                    className="inline-flex items-center gap-1.5 rounded-[6px] border border-[#fecdca] bg-[#fff4f2] px-4 py-2 text-[13px] font-semibold text-[#d92d20] transition-colors hover:bg-[#fee4e2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d92d20] cursor-pointer"
+                  >
+                    <Trash2 size={14} strokeWidth={2} aria-hidden="true" />
+                    <span>Delete Task</span>
+                  </button>
+                ) : null}
+
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="cursor-pointer rounded-[6px] bg-[#e8edf7] px-5 py-2 text-[13px] font-semibold text-[#041b3c] transition-colors hover:bg-[#dbe4ff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0052cc]"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </>
         ) : null}

@@ -1,6 +1,5 @@
 import { supabase } from "@/lib/supabase/client";
 import type { PostgrestError } from "@supabase/supabase-js";
-import { SUPABASE_URL, getHeaders } from "./config";
 
 export type TaskStatus =
   | "TO_DO"
@@ -201,10 +200,7 @@ export const TasksService = {
 
     return { error };
   },
-  delete: async (token: string, taskId: string) => {
-    return fetch(`${SUPABASE_URL}/rest/v1/tasks?id=eq.${taskId}`, {
-      method: "DELETE",
-      headers: getHeaders(token),
-    });
+  delete: async (taskId: string) => {
+    return supabase.from("tasks").delete().eq("id", taskId);
   },
 };

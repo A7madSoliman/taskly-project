@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { Trash2 } from "lucide-react";
 import { ProjectEpic } from "@/services/api/epics.service";
 
 /**
@@ -18,7 +19,7 @@ import { ProjectEpic } from "@/services/api/epics.service";
 
 const CARD_BASE =
   "relative bg-white rounded-[8px] border border-[rgba(195,198,214,0.3)] " +
-  "shadow-[0px_1px_3px_0px_rgba(0,0,0,0.05)] overflow-hidden";
+  "shadow-[0px_1px_3px_0px_rgba(0,0,0,0.05)]";
 
 /** Left accent stripe (PRESERVED DESIGN — sampled #004e32 from reference.png). */
 function AccentStripe() {
@@ -53,14 +54,54 @@ export function formatCreatedDate(created_at: string): string | null {
 export function EpicCard({
   epic,
   onOpenDetails,
+  onDeleteRequested,
 }: {
   epic: ProjectEpic;
   onOpenDetails?: () => void;
+  onDeleteRequested?: (epic: ProjectEpic) => void;
 }) {
   // Null-assignee contract (§11): omit the identity block entirely;
   // content-driven layout lets the card collapse without blank gaps.
   const initials = getInitials(epic.assignee?.name);
   const createdDate = formatCreatedDate(epic.created_at);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isMenuOpen]);
+
+  const handleToggleMenu = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsMenuOpen((prev) => !prev);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsMenuOpen(false);
+    onDeleteRequested?.(epic);
+  };
 
   return (
     <div
@@ -82,7 +123,7 @@ export function EpicCard({
       {/* Body — grounded on epics-list-desktop.png: 16px top/side padding,
           badge h≈23px, badge→title ≈12px, title→assignee ≈16px. */}
       <div className="pointer-events-none relative z-[1] pl-5 pr-4 pt-4">
-        {/* Badge + inert 3-dots (canonical icon is 4×16px, inset ~15px
+        {/* Badge + 3-dots action menu (canonical icon is 4×16px, inset ~15px
             from top/right, aligned with the badge row) */}
         <div className="flex items-start justify-between">
           {epic.epic_id ? (
@@ -90,23 +131,48 @@ export function EpicCard({
               {epic.epic_id}
             </span>
           ) : null}
-          <button
-            type="button"
-            aria-label="More options"
-            tabIndex={-1}
-            aria-disabled="true"
-            onClick={(event) => event.stopPropagation()}
-            onKeyDown={(event) => event.stopPropagation()}
-            className="pointer-events-auto -m-1 shrink-0 cursor-default p-1"
-          >
-            <Image
-              src="/assets/svg/icons/icon-more-options.svg"
-              alt=""
-              width={4}
-              height={16}
-              aria-hidden="true"
-            />
-          </button>
+          <div ref={menuRef} className="relative pointer-events-auto shrink-0">
+            <button
+              type="button"
+              aria-label="More options"
+              aria-haspopup="menu"
+              aria-expanded={isMenuOpen}
+              onClick={handleToggleMenu}
+              onKeyDown={(event) => {
+                event.stopPropagation();
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  setIsMenuOpen((prev) => !prev);
+                }
+              }}
+              className="pointer-events-auto -m-1.5 flex h-8 w-8 items-center justify-center rounded-[4px] p-1 text-[#737685] transition-colors hover:bg-[#f0f2f7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0052cc] cursor-pointer"
+            >
+              <Image
+                src="/assets/svg/icons/icon-more-options.svg"
+                alt=""
+                width={4}
+                height={16}
+                aria-hidden="true"
+              />
+            </button>
+
+            {isMenuOpen && (
+              <div
+                role="menu"
+                className="absolute right-0 top-full z-30 mt-1 min-w-[140px] rounded-[6px] border border-[#e5e8f0] bg-white py-1 shadow-[0px_4px_16px_rgba(4,27,60,0.12)]"
+              >
+                <button
+                  role="menuitem"
+                  type="button"
+                  onClick={handleDeleteClick}
+                  className="flex w-full items-center gap-2 px-3.5 py-2 text-left text-[13px] font-medium text-[#d92d20] transition-colors hover:bg-[#fff4f2] focus-visible:bg-[#fff4f2] focus-visible:outline-none cursor-pointer"
+                >
+                  <Trash2 size={15} strokeWidth={1.9} aria-hidden="true" />
+                  <span>Delete Epic</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Title */}

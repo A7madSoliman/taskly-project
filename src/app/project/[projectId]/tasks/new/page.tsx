@@ -89,26 +89,46 @@ export default function NewTaskPage() {
   const [assigneeOpen, setAssigneeOpen] = useState(false);
   const [epicSearch, setEpicSearch] = useState("");
 
-  const statusRef = useRef<HTMLDivElement>(null);
-  const epicRef = useRef<HTMLDivElement>(null);
-  const assigneeRef = useRef<HTMLDivElement>(null);
+  const desktopStatusRef = useRef<HTMLDivElement>(null);
+  const desktopEpicRef = useRef<HTMLDivElement>(null);
+  const desktopAssigneeRef = useRef<HTMLDivElement>(null);
+
+  const mobileStatusRef = useRef<HTMLDivElement>(null);
+  const mobileEpicRef = useRef<HTMLDivElement>(null);
+  const mobileAssigneeRef = useRef<HTMLDivElement>(null);
+
   const epicSearchInputRef = useRef<HTMLInputElement>(null);
+  const mobileEpicSearchInputRef = useRef<HTMLInputElement>(null);
 
   const titleInputId = useId();
   const dueDateInputId = useId();
   const descriptionInputId = useId();
 
-  // Close dropdowns on outside pointer down or escape
+  // Close dropdowns on outside mousedown/pointerdown or escape
   useEffect(() => {
-    const handlePointerDown = (e: PointerEvent) => {
+    const handleOutsideClick = (e: MouseEvent | PointerEvent) => {
       const target = e.target as Node;
-      if (statusRef.current && !statusRef.current.contains(target)) {
+      const isInsideStatus =
+        (desktopStatusRef.current &&
+          desktopStatusRef.current.contains(target)) ||
+        (mobileStatusRef.current && mobileStatusRef.current.contains(target));
+      if (!isInsideStatus) {
         setStatusOpen(false);
       }
-      if (epicRef.current && !epicRef.current.contains(target)) {
+
+      const isInsideEpic =
+        (desktopEpicRef.current && desktopEpicRef.current.contains(target)) ||
+        (mobileEpicRef.current && mobileEpicRef.current.contains(target));
+      if (!isInsideEpic) {
         setEpicOpen(false);
       }
-      if (assigneeRef.current && !assigneeRef.current.contains(target)) {
+
+      const isInsideAssignee =
+        (desktopAssigneeRef.current &&
+          desktopAssigneeRef.current.contains(target)) ||
+        (mobileAssigneeRef.current &&
+          mobileAssigneeRef.current.contains(target));
+      if (!isInsideAssignee) {
         setAssigneeOpen(false);
       }
     };
@@ -121,10 +141,10 @@ export default function NewTaskPage() {
       }
     };
 
-    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("mousedown", handleOutsideClick);
     document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("mousedown", handleOutsideClick);
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
@@ -134,6 +154,7 @@ export default function NewTaskPage() {
     if (epicOpen) {
       const timer = setTimeout(() => {
         epicSearchInputRef.current?.focus();
+        mobileEpicSearchInputRef.current?.focus();
       }, 50);
       return () => clearTimeout(timer);
     }
@@ -333,7 +354,10 @@ export default function NewTaskPage() {
             {/* Status & Assignee Row */}
             <div className="grid grid-cols-2 gap-6">
               {/* Status Custom Dropdown */}
-              <div ref={statusRef} className="flex flex-col w-full relative">
+              <div
+                ref={desktopStatusRef}
+                className="flex flex-col w-full relative"
+              >
                 <label className="text-slate-700 text-[11px] font-bold uppercase tracking-[0.55px] mb-2 px-1">
                   STATUS <span className="text-error">*</span>
                 </label>
@@ -390,7 +414,10 @@ export default function NewTaskPage() {
               </div>
 
               {/* Assignee Custom Dropdown */}
-              <div ref={assigneeRef} className="flex flex-col w-full relative">
+              <div
+                ref={desktopAssigneeRef}
+                className="flex flex-col w-full relative"
+              >
                 <label className="text-slate-700 text-[11px] font-bold uppercase tracking-[0.55px] mb-2 px-1">
                   ASSIGNEE
                 </label>
@@ -472,7 +499,7 @@ export default function NewTaskPage() {
             </div>
 
             {/* Epic Custom Dropdown with Search */}
-            <div ref={epicRef} className="flex flex-col w-full relative">
+            <div ref={desktopEpicRef} className="flex flex-col w-full relative">
               <label className="text-slate-700 text-[11px] font-bold uppercase tracking-[0.55px] mb-2 px-1">
                 EPIC
               </label>
@@ -685,7 +712,10 @@ export default function NewTaskPage() {
             </div>
 
             {/* Mobile Status */}
-            <div ref={statusRef} className="flex flex-col w-full relative">
+            <div
+              ref={mobileStatusRef}
+              className="flex flex-col w-full relative"
+            >
               <label className="text-slate-700 text-[11px] font-bold uppercase tracking-[0.55px] mb-2 px-1">
                 STATUS
               </label>
@@ -742,7 +772,7 @@ export default function NewTaskPage() {
             </div>
 
             {/* Mobile Epic */}
-            <div ref={epicRef} className="flex flex-col w-full relative">
+            <div ref={mobileEpicRef} className="flex flex-col w-full relative">
               <label className="text-slate-700 text-[11px] font-bold uppercase tracking-[0.55px] mb-2 px-1">
                 EPIC
               </label>
@@ -787,6 +817,7 @@ export default function NewTaskPage() {
                   {/* Search Input */}
                   <div className="relative mb-2 shrink-0">
                     <input
+                      ref={mobileEpicSearchInputRef}
                       type="text"
                       placeholder="Search Epics..."
                       value={epicSearch}
@@ -853,7 +884,10 @@ export default function NewTaskPage() {
             </div>
 
             {/* Mobile Assignee */}
-            <div ref={assigneeRef} className="flex flex-col w-full relative">
+            <div
+              ref={mobileAssigneeRef}
+              className="flex flex-col w-full relative"
+            >
               <label className="text-slate-700 text-[11px] font-bold uppercase tracking-[0.55px] mb-2 px-1">
                 ASSIGNEE
               </label>

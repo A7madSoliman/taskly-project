@@ -16,6 +16,7 @@ import { ProjectsService } from "@/services/api/projects.service";
 import { EpicCard, EpicCardSkeletonGrid } from "@/components/epics/EpicCard";
 import { EpicDetailsModal } from "@/components/epics/EpicDetailsModal";
 import { TaskDetailsModal } from "@/components/tasks/TaskDetailsModal";
+import { DeleteConfirmationModal } from "@/components/ui/DeleteConfirmationModal";
 import { ProjectMobileBottomNav } from "@/components/layout/ProjectMobileBottomNav";
 import {
   ChartNoAxesCombined,
@@ -61,6 +62,13 @@ export default function ProjectEpicsPage() {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [isSearchPending, setIsSearchPending] = useState<boolean>(false);
 
+  // Delete state
+  const [epicToDelete, setEpicToDelete] = useState<ProjectEpic | null>(null);
+  const [isDeletePending, setIsDeletePending] = useState<boolean>(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const deletePendingRef = useRef(false);
+  const epicDeleteSeqRef = useRef(0);
+
   const handleEpicUpdated = useCallback((updatedEpic: ProjectEpic) => {
     setEpics((current) =>
       current.map((epic) =>
@@ -80,10 +88,31 @@ export default function ProjectEpicsPage() {
   const loadedCountRef = useRef(0);
   const loadMoreErrorRef = useRef(false);
   const projectIdRef = useRef(projectId);
+  const prevProjectIdRef = useRef(projectId);
   const startedPageRef = useRef(1);
   const debouncedSearchTermRef = useRef(debouncedSearchTerm);
   const isSearchPendingRef = useRef(false);
   const isInitialMountRef = useRef(true);
+
+  // Surviving project ownership transition
+  useEffect(() => {
+    if (prevProjectIdRef.current !== projectId) {
+      prevProjectIdRef.current = projectId;
+      epicDeleteSeqRef.current++;
+      deletePendingRef.current = false;
+      setIsDeletePending(false);
+      setEpicToDelete(null);
+      setDeleteError(null);
+    }
+  }, [projectId]);
+
+  // True unmount-only invalidation
+  useEffect(() => {
+    const seqRef = epicDeleteSeqRef;
+    return () => {
+      seqRef.current++;
+    };
+  }, []);
 
   // Debounce search input
   useEffect(() => {
@@ -127,9 +156,16 @@ export default function ProjectEpicsPage() {
     return () => mq.removeEventListener("change", update);
   }, []);
 
-  // Initial fetch / Search query change
+  // Initial fetch / Search query change / Reconciliation
   const loadInitial = useCallback(
-    async (queryToFetch?: string, isSearchTransition = false) => {
+    async (
+      queryToFetch?: string,
+      isSearchTransition = false,
+      deleteOwner?: { deleteGen: number; projectId: string; search: string }
+    ): Promise<{
+      outcome: "success" | "controlled-error" | "stale";
+      total: number;
+    }> => {
       const activeQuery = queryToFetch ?? debouncedSearchTermRef.current;
       const reqId = ++requestSeq.current;
       pageLoadingRef.current = false;
@@ -155,12 +191,21 @@ export default function ProjectEpicsPage() {
           projectId,
           { page: 1, limit: PAGE_SIZE, search: activeQuery }
         );
-        if (reqId !== requestSeq.current) return;
+        if (reqId !== requestSeq.current) return { outcome: "stale", total: 0 };
+        if (
+          deleteOwner &&
+          (epicDeleteSeqRef.current !== deleteOwner.deleteGen ||
+            projectIdRef.current !== deleteOwner.projectId ||
+            debouncedSearchTermRef.current !== deleteOwner.search)
+        ) {
+          return { outcome: "stale", total: 0 };
+        }
+
         if (error) {
           setStatus("error");
           setIsSearchPending(false);
           isSearchPendingRef.current = false;
-          return;
+          return { outcome: "controlled-error", total: 0 };
         }
         const rows = data ?? [];
         const total = count ?? 0;
@@ -173,8 +218,20 @@ export default function ProjectEpicsPage() {
           setCurrentPage(1);
           setStatus("ready");
         }
+        return { outcome: "success", total };
       } catch {
-        if (reqId === requestSeq.current) setStatus("error");
+        if (reqId === requestSeq.current) {
+          if (
+            !deleteOwner ||
+            (epicDeleteSeqRef.current === deleteOwner.deleteGen &&
+              projectIdRef.current === deleteOwner.projectId &&
+              debouncedSearchTermRef.current === deleteOwner.search)
+          ) {
+            setStatus("error");
+            return { outcome: "controlled-error", total: 0 };
+          }
+        }
+        return { outcome: "stale", total: 0 };
       } finally {
         if (reqId === requestSeq.current) {
           setIsSearchPending(false);
@@ -207,45 +264,241 @@ export default function ProjectEpicsPage() {
     };
   }, [projectId, debouncedSearchTerm, loadInitial]);
 
-  // Desktop page change
+  // Desktop page change / Reconciliation
   const goToPage = useCallback(
-    (page: number) => {
-      if (pageLoadingRef.current) return;
-      const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-      if (page < 1 || page > totalPages || page === currentPage) return;
+    async (
+      page: number,
+      deleteOwner?: { deleteGen: number; projectId: string; search: string }
+    ): Promise<{
+      outcome: "success" | "controlled-error" | "stale";
+      total: number;
+    }> => {
+      if (pageLoadingRef.current && !deleteOwner) {
+        return { outcome: "stale", total: totalCountRef.current };
+      }
       const reqId = ++requestSeq.current;
       pageLoadingRef.current = true;
       setPageTransitionLoading(true);
-      (async () => {
-        try {
-          const { data, error, count } = await EpicsService.getByProject(
-            projectId,
-            {
-              page,
-              limit: PAGE_SIZE,
-              search: debouncedSearchTermRef.current,
-            }
-          );
-          if (reqId !== requestSeq.current) return;
-          if (error) {
-            setStatus("error");
-            return;
+      try {
+        const { data, error, count } = await EpicsService.getByProject(
+          projectId,
+          {
+            page,
+            limit: PAGE_SIZE,
+            search: debouncedSearchTermRef.current,
           }
-          setEpics(data ?? []);
-          setTotalCount(count ?? 0);
+        );
+        if (reqId !== requestSeq.current) return { outcome: "stale", total: 0 };
+        if (
+          deleteOwner &&
+          (epicDeleteSeqRef.current !== deleteOwner.deleteGen ||
+            projectIdRef.current !== deleteOwner.projectId ||
+            debouncedSearchTermRef.current !== deleteOwner.search)
+        ) {
+          return { outcome: "stale", total: 0 };
+        }
+
+        if (error) {
+          setStatus("error");
+          return { outcome: "controlled-error", total: 0 };
+        }
+
+        const rows = data ?? [];
+        const total = count ?? 0;
+        const calculatedTotalPages =
+          total === 0 ? 0 : Math.ceil(total / PAGE_SIZE);
+
+        if (total === 0) {
+          setEpics([]);
+          setTotalCount(0);
+          setCurrentPage(1);
+          setStatus("empty");
+          return { outcome: "success", total: 0 };
+        } else if (page > calculatedTotalPages && calculatedTotalPages >= 1) {
+          // Fetch final valid page
+          const finalPage = calculatedTotalPages;
+          const corrResult = await EpicsService.getByProject(projectId, {
+            page: finalPage,
+            limit: PAGE_SIZE,
+            search: debouncedSearchTermRef.current,
+          });
+          if (reqId !== requestSeq.current)
+            return { outcome: "stale", total: 0 };
+          if (
+            deleteOwner &&
+            (epicDeleteSeqRef.current !== deleteOwner.deleteGen ||
+              projectIdRef.current !== deleteOwner.projectId ||
+              debouncedSearchTermRef.current !== deleteOwner.search)
+          ) {
+            return { outcome: "stale", total: 0 };
+          }
+
+          if (corrResult.error) {
+            setStatus("error");
+            return { outcome: "controlled-error", total: 0 };
+          }
+
+          setEpics(corrResult.data ?? []);
+          setTotalCount(corrResult.count ?? total);
+          setCurrentPage(finalPage);
+          setStatus("ready");
+          return {
+            outcome: "success",
+            total: corrResult.count ?? total,
+          };
+        } else {
+          setEpics(rows);
+          setTotalCount(total);
           setCurrentPage(page);
-        } catch {
-          if (reqId === requestSeq.current) setStatus("error");
-        } finally {
-          if (reqId === requestSeq.current) {
-            pageLoadingRef.current = false;
-            setPageTransitionLoading(false);
+          setStatus("ready");
+          return { outcome: "success", total };
+        }
+      } catch {
+        if (reqId === requestSeq.current) {
+          if (
+            !deleteOwner ||
+            (epicDeleteSeqRef.current === deleteOwner.deleteGen &&
+              projectIdRef.current === deleteOwner.projectId &&
+              debouncedSearchTermRef.current === deleteOwner.search)
+          ) {
+            setStatus("error");
+            return { outcome: "controlled-error", total: 0 };
           }
         }
-      })();
+        return { outcome: "stale", total: 0 };
+      } finally {
+        if (reqId === requestSeq.current) {
+          pageLoadingRef.current = false;
+          setPageTransitionLoading(false);
+        }
+      }
     },
-    [projectId, totalCount, currentPage]
+    [projectId]
   );
+
+  // Delete handlers
+  const handleDeleteRequested = useCallback((epic: ProjectEpic) => {
+    epicDeleteSeqRef.current++;
+    deletePendingRef.current = false;
+    setIsDeletePending(false);
+    setEpicToDelete(epic);
+    setDeleteError(null);
+  }, []);
+
+  const handleDeleteCancel = useCallback(() => {
+    if (deletePendingRef.current) return;
+    epicDeleteSeqRef.current++;
+    setEpicToDelete(null);
+    setDeleteError(null);
+  }, []);
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!epicToDelete || deletePendingRef.current) return;
+
+    const currentDeleteGen = ++epicDeleteSeqRef.current;
+    deletePendingRef.current = true;
+    setIsDeletePending(true);
+    setDeleteError(null);
+
+    const capturedOwner = {
+      deleteGen: currentDeleteGen,
+      targetUuid: epicToDelete.id,
+      projectId: projectIdRef.current,
+      search: debouncedSearchTermRef.current,
+      page: currentPageRef.current,
+    };
+
+    try {
+      const { error: deleteErr } = await EpicsService.delete(
+        capturedOwner.targetUuid
+      );
+      if (currentDeleteGen !== epicDeleteSeqRef.current) return;
+
+      if (deleteErr) {
+        setDeleteError("Failed to delete epic. Please try again.");
+        deletePendingRef.current = false;
+        setIsDeletePending(false);
+        return;
+      }
+
+      // Authoritative read-back verification: ensure record is absent
+      const { data: readBackData, error: readBackErr } =
+        await EpicsService.getDetails(
+          capturedOwner.projectId,
+          capturedOwner.targetUuid
+        );
+      if (currentDeleteGen !== epicDeleteSeqRef.current) return;
+
+      if (readBackErr) {
+        setDeleteError("Failed to delete epic. Please try again.");
+        deletePendingRef.current = false;
+        setIsDeletePending(false);
+        return;
+      }
+
+      if (readBackData !== null) {
+        // Record still exists - treat as delete failure / no-op
+        setDeleteError("Failed to delete epic. Please try again.");
+        deletePendingRef.current = false;
+        setIsDeletePending(false);
+        return;
+      }
+
+      // Verified successful deletion: Invalidate prior collection GET requests
+      requestSeq.current++;
+
+      if (selectedEpicId === capturedOwner.targetUuid) {
+        setSelectedEpicId(null);
+      }
+
+      // Reconcile collection with joint ownership
+      const deleteOwnerGuard = {
+        deleteGen: capturedOwner.deleteGen,
+        projectId: capturedOwner.projectId,
+        search: capturedOwner.search,
+      };
+
+      let reconResult: {
+        outcome: "success" | "controlled-error" | "stale";
+        total: number;
+      };
+
+      if (isMobile) {
+        // Mobile: reload stream from page 1
+        reconResult = await loadInitial(
+          capturedOwner.search,
+          false,
+          deleteOwnerGuard
+        );
+      } else {
+        // Desktop: fetch current page or clamp using authoritative returned count
+        reconResult = await goToPage(capturedOwner.page, deleteOwnerGuard);
+      }
+
+      if (reconResult.outcome === "stale") {
+        // Stale generation: commit ZERO state writes
+        return;
+      }
+
+      // After reconciliation attempt settles, verify delete owner is still current before closing
+      if (
+        epicDeleteSeqRef.current === capturedOwner.deleteGen &&
+        projectIdRef.current === capturedOwner.projectId &&
+        debouncedSearchTermRef.current === capturedOwner.search
+      ) {
+        setEpicToDelete(null);
+        setDeleteError(null);
+        deletePendingRef.current = false;
+        setIsDeletePending(false);
+      }
+    } catch {
+      if (currentDeleteGen === epicDeleteSeqRef.current) {
+        setDeleteError("Failed to delete epic. Please try again.");
+        deletePendingRef.current = false;
+        setIsDeletePending(false);
+      }
+    }
+  }, [epicToDelete, isMobile, selectedEpicId, goToPage, loadInitial]);
 
   // Mobile infinite scroll load-more
   const loadMore = useCallback(() => {
@@ -592,6 +845,7 @@ export default function ProjectEpicsPage() {
                     key={epic.id}
                     epic={epic}
                     onOpenDetails={() => setSelectedEpicId(epic.id)}
+                    onDeleteRequested={handleDeleteRequested}
                   />
                 ))
               )}
@@ -742,6 +996,19 @@ export default function ProjectEpicsPage() {
             onClose={() => setSelectedTaskId(null)}
           />
         ) : null}
+
+        {/* Epic Delete Confirmation Modal */}
+        <DeleteConfirmationModal
+          isOpen={Boolean(epicToDelete)}
+          title="Delete Epic?"
+          description="Deleting this epic will also permanently delete all tasks linked to it. This action cannot be undone."
+          confirmLabel="Delete Epic"
+          pendingLabel="Deleting..."
+          error={deleteError}
+          isPending={isDeletePending}
+          onConfirm={handleDeleteConfirm}
+          onClose={handleDeleteCancel}
+        />
 
         {/* Mobile Fixed Bottom Navigation Bar */}
         <ProjectMobileBottomNav projectId={projectId} />

@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { UserRound } from "lucide-react";
+import { MoreHorizontal, Trash2, UserRound } from "lucide-react";
 import { BoardTask, TaskStatus } from "@/services/api/tasks.service";
 import { getInitials } from "@/lib/utils/avatar";
 
@@ -84,22 +84,63 @@ interface TaskCardProps {
   task: BoardTask;
   variant?: "desktop" | "mobile";
   onSelect?: (taskId: string) => void;
+  onDeleteRequested?: (task: BoardTask) => void;
 }
 
 export function TaskCard({
   task,
   variant = "desktop",
   onSelect,
+  onDeleteRequested,
 }: TaskCardProps) {
   const assigneeName = task.assignee?.name?.trim() || null;
   const dueDateFormatted = formatTaskDueDate(task.due_date);
   const statusCfg = STATUS_CONFIG[task.status] || STATUS_CONFIG.TO_DO;
+
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isMenuOpen]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (onSelect && (e.key === "Enter" || e.key === " ")) {
       e.preventDefault();
       onSelect(task.id);
     }
+  };
+
+  const handleToggleMenu = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsMenuOpen((prev) => !prev);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsMenuOpen(false);
+    onDeleteRequested?.(task);
   };
 
   if (variant === "mobile") {
@@ -109,7 +150,7 @@ export function TaskCard({
         tabIndex={onSelect ? 0 : undefined}
         onClick={() => onSelect?.(task.id)}
         onKeyDown={handleKeyDown}
-        className={`flex flex-col justify-between rounded-[8px] border border-[#d9e1f2] bg-white p-4 shadow-[0_1px_2px_rgba(4,27,60,0.03)] transition-all ${
+        className={`relative flex flex-col justify-between rounded-[8px] border border-[#d9e1f2] bg-white p-4 shadow-[0_1px_2px_rgba(4,27,60,0.03)] transition-all ${
           onSelect
             ? "cursor-pointer hover:border-[#ccd4e5] focus:outline-none focus:ring-2 focus:ring-[#0052cc]"
             : ""
@@ -119,11 +160,49 @@ export function TaskCard({
           <span className="text-[11px] font-bold uppercase tracking-[0.3px] text-[#737685]">
             {task.task_id || "TASK"}
           </span>
-          <span
-            className={`inline-flex items-center gap-1 rounded-[3px] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.2px] ${statusCfg.bg} ${statusCfg.text}`}
-          >
-            {statusCfg.label}
-          </span>
+          <div className="flex items-center gap-2">
+            <span
+              className={`inline-flex items-center gap-1 rounded-[3px] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.2px] ${statusCfg.bg} ${statusCfg.text}`}
+            >
+              {statusCfg.label}
+            </span>
+            <div ref={menuRef} className="relative inline-block text-left">
+              <button
+                type="button"
+                aria-label="Task settings"
+                aria-haspopup="menu"
+                aria-expanded={isMenuOpen}
+                onClick={handleToggleMenu}
+                onKeyDown={(e) => {
+                  e.stopPropagation();
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setIsMenuOpen((prev) => !prev);
+                  }
+                }}
+                className="flex h-7 w-7 items-center justify-center rounded-[4px] text-[#737685] transition-colors hover:bg-[#f0f2f7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0052cc] cursor-pointer"
+              >
+                <MoreHorizontal size={16} aria-hidden="true" />
+              </button>
+
+              {isMenuOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 top-full z-30 mt-1 min-w-[140px] rounded-[6px] border border-[#e5e8f0] bg-white py-1 shadow-[0px_4px_16px_rgba(4,27,60,0.12)] text-left"
+                >
+                  <button
+                    role="menuitem"
+                    type="button"
+                    onClick={handleDeleteClick}
+                    className="flex w-full items-center gap-2 px-3.5 py-2 text-left text-[13px] font-medium text-[#d92d20] transition-colors hover:bg-[#fff4f2] focus-visible:bg-[#fff4f2] focus-visible:outline-none cursor-pointer"
+                  >
+                    <Trash2 size={15} strokeWidth={1.9} aria-hidden="true" />
+                    <span>Delete Task</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         <h4 className="mt-2.5 text-[15px] font-semibold leading-snug text-[#041b3c] break-words">

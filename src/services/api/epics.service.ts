@@ -1,5 +1,4 @@
 import { supabase } from "@/lib/supabase/client";
-import { SUPABASE_URL, getHeaders } from "./config";
 
 export interface NewEpicInput {
   title: string;
@@ -116,10 +115,7 @@ export const EpicsService = {
   update: async (epicId: string, data: UpdateEpicInput) => {
     return supabase.from("epics").update(data).eq("id", epicId);
   },
-  delete: async (token: string, epicId: string) => {
-    return fetch(`${SUPABASE_URL}/rest/v1/epics?id=eq.${epicId}`, {
-      method: "DELETE",
-      headers: getHeaders(token),
-    });
+  delete: async (epicId: string) => {
+    return supabase.from("epics").delete().eq("id", epicId);
   },
 };
