@@ -18,6 +18,14 @@ import {
   RotateCw,
   Search,
 } from "lucide-react";
+import {
+  DndContext,
+  DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
 import { AppShell } from "@/components/layout/AppShell";
 import { ProjectsService } from "@/services/api/projects.service";
 import {
@@ -186,6 +194,358 @@ export default function ProjectTasksPage() {
   const mobileSeqRef = useRef<number>(0);
   const mobileInFlightRef = useRef<boolean>(false);
 
+  // --- TM-27 Board DnD State ---
+  const [boardDragPending, setBoardDragPending] = useState<boolean>(false);
+  const [boardDragError, setBoardDragError] = useState<string | null>(null);
+  const pendingMutationRef = useRef<boolean>(false);
+  const pendingMoveStatusesRef = useRef<Set<TaskStatus>>(new Set());
+  const boardMutationSeqRef = useRef<number>(0);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 6,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      keyboardCodes: {
+        start: ["Space"],
+        cancel: ["Escape"],
+        end: ["Space"],
+      },
+    })
+  );
+
+  const fetchBoardColumnInitial = useCallback(
+    async (status: TaskStatus) => {
+      const seq = ++boardSeqRef.current[status];
+      boardInFlightRef.current[status] = true;
+
+      setBoardLoadingInitial((prev) => ({ ...prev, [status]: true }));
+      setBoardErrorInitial((prev) => ({ ...prev, [status]: false }));
+      setBoardErrorMore((prev) => ({ ...prev, [status]: false }));
+
+      try {
+        const { data, count, error } =
+          await TasksService.getByProjectStatusPaginated(
+            projectId,
+            status,
+            0,
+            PAGE_SIZE - 1
+          );
+        if (seq !== boardSeqRef.current[status]) return;
+
+        if (error) {
+          setBoardErrorInitial((prev) => ({ ...prev, [status]: true }));
+        } else {
+          setBoardTasks((prev) => ({ ...prev, [status]: data ?? [] }));
+          setBoardTotalCounts((prev) => ({ ...prev, [status]: count ?? 0 }));
+          setBoardPageIndex((prev) => ({ ...prev, [status]: 0 }));
+        }
+      } catch {
+        if (seq !== boardSeqRef.current[status]) return;
+        setBoardErrorInitial((prev) => ({ ...prev, [status]: true }));
+      } finally {
+        if (seq === boardSeqRef.current[status]) {
+          boardInFlightRef.current[status] = false;
+          setBoardLoadingInitial((prev) => ({ ...prev, [status]: false }));
+        }
+      }
+    },
+    [projectId]
+  );
+
+  const handleDragStart = useCallback(() => {
+    setBoardDragError(null);
+  }, []);
+
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over) return;
+
+      const activeData = active.data.current as
+        | {
+            taskId?: string;
+            sourceStatus?: unknown;
+            task?: BoardTask;
+          }
+        | undefined;
+      const overData = over.data.current as
+        | {
+            status?: unknown;
+          }
+        | undefined;
+
+      if (!activeData || !overData) return;
+
+      const rawSourceStatus = activeData.sourceStatus;
+      const rawTargetStatus = overData.status;
+      const taskId = activeData.taskId;
+      const activeTask = activeData.task;
+
+      if (!taskId || !activeTask) return;
+
+      // Status whitelist validation
+      const validStatuses: TaskStatus[] = [
+        "TO_DO",
+        "IN_PROGRESS",
+        "BLOCKED",
+        "IN_REVIEW",
+        "READY_FOR_QA",
+        "REOPENED",
+        "READY_FOR_PRODUCTION",
+        "DONE",
+      ];
+
+      if (
+        typeof rawSourceStatus !== "string" ||
+        !validStatuses.includes(rawSourceStatus as TaskStatus) ||
+        typeof rawTargetStatus !== "string" ||
+        !validStatuses.includes(rawTargetStatus as TaskStatus)
+      ) {
+        return;
+      }
+
+      const sourceStatus = rawSourceStatus as TaskStatus;
+      const targetStatus = rawTargetStatus as TaskStatus;
+
+      // Same status: NO-OP, no PATCH, no local reorder (BEFORE anything else)
+      if (sourceStatus === targetStatus) return;
+
+      // Guard: At most ONE Board status mutation at a time
+      if (pendingMutationRef.current) return;
+
+      // Invariant: Verify task exists in current loaded source rows
+      const originalSourceIndex = boardTasks[sourceStatus].findIndex(
+        (t) => t.id === taskId
+      );
+      if (originalSourceIndex < 0) return;
+
+      // Capture pre-move request state & immutable rollback data
+      const sourceHadInFlightRead = boardInFlightRef.current[sourceStatus];
+      const targetHadInFlightRead = boardInFlightRef.current[targetStatus];
+
+      const originalTask: BoardTask = { ...activeTask, status: sourceStatus };
+      const prevSourceCount = boardTotalCounts[sourceStatus];
+      const prevTargetCount = boardTotalCounts[targetStatus];
+
+      // Mutation Generation
+      const mutationSeq = ++boardMutationSeqRef.current;
+
+      // Synchronously invalidate collection generations for sourceStatus and targetStatus
+      const sourceReconcileSeq = ++boardSeqRef.current[sourceStatus];
+      const targetReconcileSeq = ++boardSeqRef.current[targetStatus];
+
+      // Clear stale loading/in-flight states synchronously for ONLY source & target
+      boardInFlightRef.current[sourceStatus] = false;
+      boardInFlightRef.current[targetStatus] = false;
+      setBoardLoadingInitial((prev) => ({
+        ...prev,
+        [sourceStatus]: false,
+        [targetStatus]: false,
+      }));
+      setBoardLoadingMore((prev) => ({
+        ...prev,
+        [sourceStatus]: false,
+        [targetStatus]: false,
+      }));
+
+      // Mark pending mutation & pause new load-more for source/target
+      pendingMutationRef.current = true;
+      pendingMoveStatusesRef.current.add(sourceStatus);
+      pendingMoveStatusesRef.current.add(targetStatus);
+      setBoardDragPending(true);
+      setBoardDragError(null);
+
+      // Optimistic visual placement
+      const optimisticMovedTask: BoardTask = {
+        ...activeTask,
+        status: targetStatus,
+      };
+
+      setBoardTasks((prev) => {
+        const nextSource = prev[sourceStatus].filter((t) => t.id !== taskId);
+        const existingTarget = prev[targetStatus].filter(
+          (t) => t.id !== taskId
+        );
+        return {
+          ...prev,
+          [sourceStatus]: nextSource,
+          [targetStatus]: [...existingTarget, optimisticMovedTask],
+        };
+      });
+
+      // ----------------------------------------------------
+      // PHASE A: PATCH MUTATION
+      // ----------------------------------------------------
+      let patchSucceeded = false;
+      try {
+        const { error } = await TasksService.updateStatus(taskId, targetStatus);
+        if (error) {
+          throw error;
+        }
+        patchSucceeded = true;
+      } catch {
+        // Genuine PATCH failure: execute rollback ONLY if mutation generation still owns lifecycle
+        if (mutationSeq === boardMutationSeqRef.current) {
+          setBoardTasks((prev) => {
+            const currentSource = prev[sourceStatus].filter(
+              (t) => t.id !== taskId
+            );
+            const restoredSource = [...currentSource];
+            if (
+              originalSourceIndex >= 0 &&
+              originalSourceIndex <= restoredSource.length
+            ) {
+              restoredSource.splice(originalSourceIndex, 0, originalTask);
+            } else {
+              restoredSource.push(originalTask);
+            }
+
+            const currentTarget = prev[targetStatus].filter(
+              (t) => t.id !== taskId
+            );
+
+            return {
+              ...prev,
+              [sourceStatus]: restoredSource,
+              [targetStatus]: currentTarget,
+            };
+          });
+
+          setBoardTotalCounts((prev) => ({
+            ...prev,
+            [sourceStatus]: prevSourceCount,
+            [targetStatus]: prevTargetCount,
+          }));
+
+          setBoardDragError(
+            "Failed to update task status. The task was restored."
+          );
+
+          // If source or target had an in-flight read lost at drag start, recover that read
+          if (sourceHadInFlightRead) {
+            void fetchBoardColumnInitial(sourceStatus);
+          }
+          if (targetHadInFlightRead) {
+            void fetchBoardColumnInitial(targetStatus);
+          }
+        }
+      }
+
+      if (!patchSucceeded) {
+        if (mutationSeq === boardMutationSeqRef.current) {
+          pendingMoveStatusesRef.current.delete(sourceStatus);
+          pendingMoveStatusesRef.current.delete(targetStatus);
+          pendingMutationRef.current = false;
+          setBoardDragPending(false);
+        }
+        return;
+      }
+
+      // Check mutation ownership after PATCH await
+      if (mutationSeq !== boardMutationSeqRef.current) return;
+
+      // Immediate post-PATCH arithmetic for local UI continuity
+      setBoardTotalCounts((prev) => ({
+        ...prev,
+        [sourceStatus]: Math.max(0, prevSourceCount - 1),
+        [targetStatus]: prevTargetCount + 1,
+      }));
+      setBoardDragError(null);
+
+      // ----------------------------------------------------
+      // PHASE B: INDEPENDENT RECONCILIATION (PAGE 0)
+      // ----------------------------------------------------
+      boardInFlightRef.current[sourceStatus] = true;
+      boardInFlightRef.current[targetStatus] = true;
+
+      const [sourceResult, targetResult] = await Promise.allSettled([
+        TasksService.getByProjectStatusPaginated(
+          projectId,
+          sourceStatus,
+          0,
+          PAGE_SIZE - 1
+        ),
+        TasksService.getByProjectStatusPaginated(
+          projectId,
+          targetStatus,
+          0,
+          PAGE_SIZE - 1
+        ),
+      ]);
+
+      // Check mutation ownership after reconciliation await
+      if (mutationSeq !== boardMutationSeqRef.current) return;
+
+      // Handle Source Reconciliation independently
+      if (sourceReconcileSeq === boardSeqRef.current[sourceStatus]) {
+        boardInFlightRef.current[sourceStatus] = false;
+        if (
+          sourceResult.status === "fulfilled" &&
+          !sourceResult.value.error &&
+          sourceResult.value.data
+        ) {
+          const sourceRows = sourceResult.value.data.filter(
+            (t) => t.id !== taskId
+          );
+          setBoardTasks((prev) => ({
+            ...prev,
+            [sourceStatus]: sourceRows,
+          }));
+          setBoardTotalCounts((prev) => ({
+            ...prev,
+            [sourceStatus]: sourceResult.value.count ?? 0,
+          }));
+          setBoardPageIndex((prev) => ({ ...prev, [sourceStatus]: 0 }));
+          setBoardErrorInitial((prev) => ({ ...prev, [sourceStatus]: false }));
+          setBoardErrorMore((prev) => ({ ...prev, [sourceStatus]: false }));
+        } else {
+          // Reconciliation failed: do NOT rollback PATCH. Mark column error and remain retryable
+          setBoardErrorInitial((prev) => ({ ...prev, [sourceStatus]: true }));
+        }
+      }
+
+      // Handle Target Reconciliation independently
+      if (targetReconcileSeq === boardSeqRef.current[targetStatus]) {
+        boardInFlightRef.current[targetStatus] = false;
+        if (
+          targetResult.status === "fulfilled" &&
+          !targetResult.value.error &&
+          targetResult.value.data
+        ) {
+          const fetchedTarget = targetResult.value.data.filter(
+            (t) => t.id !== taskId
+          );
+          setBoardTasks((prev) => ({
+            ...prev,
+            [targetStatus]: [...fetchedTarget, optimisticMovedTask],
+          }));
+          setBoardTotalCounts((prev) => ({
+            ...prev,
+            [targetStatus]: targetResult.value.count ?? 0,
+          }));
+          setBoardPageIndex((prev) => ({ ...prev, [targetStatus]: 0 }));
+          setBoardErrorInitial((prev) => ({ ...prev, [targetStatus]: false }));
+          setBoardErrorMore((prev) => ({ ...prev, [targetStatus]: false }));
+        } else {
+          // Reconciliation failed: do NOT rollback PATCH. Mark column error and remain retryable
+          setBoardErrorInitial((prev) => ({ ...prev, [targetStatus]: true }));
+        }
+      }
+
+      // Cleanup pending mutation lock if still owning generation
+      if (mutationSeq === boardMutationSeqRef.current) {
+        pendingMoveStatusesRef.current.delete(sourceStatus);
+        pendingMoveStatusesRef.current.delete(targetStatus);
+        pendingMutationRef.current = false;
+        setBoardDragPending(false);
+      }
+    },
+    [boardTasks, boardTotalCounts, projectId, fetchBoardColumnInitial]
+  );
+
   // Evaluate media query
   useEffect(() => {
     let isMounted = true;
@@ -229,10 +589,6 @@ export default function ProjectTasksPage() {
   // ----------------------------------------------------
   const fetchListPage = useCallback(
     async (pageToFetch: number) => {
-      if (pageToFetch === currentPage && !listError && listTasks.length > 0) {
-        return; // Current-page click does nothing
-      }
-
       const seq = ++listSeqRef.current;
       setRequestedPage(pageToFetch);
       setListLoading(true);
@@ -309,58 +665,20 @@ export default function ProjectTasksPage() {
         }
       }
     },
-    [projectId, currentPage, listError, listTasks.length]
-  );
-
-  // ----------------------------------------------------
-  // DESKTOP BOARD FETCH & INFINITE SCROLL
-  // ----------------------------------------------------
-  const fetchBoardColumnInitial = useCallback(
-    async (status: TaskStatus) => {
-      const seq = ++boardSeqRef.current[status];
-      boardInFlightRef.current[status] = true;
-
-      setBoardLoadingInitial((prev) => ({ ...prev, [status]: true }));
-      setBoardErrorInitial((prev) => ({ ...prev, [status]: false }));
-      setBoardErrorMore((prev) => ({ ...prev, [status]: false }));
-
-      try {
-        const { data, count, error } =
-          await TasksService.getByProjectStatusPaginated(
-            projectId,
-            status,
-            0,
-            PAGE_SIZE - 1
-          );
-        if (seq !== boardSeqRef.current[status]) return;
-
-        if (error) {
-          setBoardErrorInitial((prev) => ({ ...prev, [status]: true }));
-        } else {
-          setBoardTasks((prev) => ({ ...prev, [status]: data ?? [] }));
-          setBoardTotalCounts((prev) => ({ ...prev, [status]: count ?? 0 }));
-          setBoardPageIndex((prev) => ({ ...prev, [status]: 0 }));
-        }
-      } catch {
-        if (seq !== boardSeqRef.current[status]) return;
-        setBoardErrorInitial((prev) => ({ ...prev, [status]: true }));
-      } finally {
-        if (seq === boardSeqRef.current[status]) {
-          boardInFlightRef.current[status] = false;
-          setBoardLoadingInitial((prev) => ({ ...prev, [status]: false }));
-        }
-      }
-    },
     [projectId]
   );
 
   const fetchBoardColumnNext = useCallback(
     async (status: TaskStatus, options?: { isRetry?: boolean }) => {
       if (boardInFlightRef.current[status]) return;
+      if (pendingMoveStatusesRef.current.has(status)) return;
 
-      const currentLoaded = boardTasks[status].length;
       const total = boardTotalCounts[status];
-      if (currentLoaded >= total) return;
+      const consumedBackendRows = Math.min(
+        (boardPageIndex[status] + 1) * PAGE_SIZE,
+        total
+      );
+      if (consumedBackendRows >= total) return;
       if (boardErrorMore[status] && !options?.isRetry) return;
 
       const nextPageIndex = boardPageIndex[status] + 1;
@@ -410,7 +728,7 @@ export default function ProjectTasksPage() {
         }
       }
     },
-    [projectId, boardTasks, boardTotalCounts, boardPageIndex, boardErrorMore]
+    [projectId, boardTotalCounts, boardPageIndex, boardErrorMore]
   );
 
   const retryBoardColumnMore = useCallback(
@@ -561,10 +879,18 @@ export default function ProjectTasksPage() {
   useEffect(() => {
     if (mode === null) return;
 
+    // Invalidate any active Board DnD mutation lifecycle immediately on transition
+    boardMutationSeqRef.current++;
+    pendingMutationRef.current = false;
+    pendingMoveStatusesRef.current.clear();
+
     let isMounted = true;
     const run = async () => {
       await Promise.resolve();
       if (!isMounted) return;
+
+      setBoardDragPending(false);
+      setBoardDragError(null);
 
       if (mode === "list") {
         // Reset Board & Mobile sequences and in-flight flags
@@ -764,30 +1090,56 @@ export default function ProjectTasksPage() {
 
         {/* Desktop Kanban Board View */}
         {isDesktop && mode === "board" ? (
-          <div className="hidden lg:block flex-1 overflow-x-auto pb-4">
-            <div className="flex gap-6 items-start min-w-max">
-              {BOARD_COLUMNS.map((col) => (
-                <TaskColumn
-                  key={col.status}
-                  projectId={projectId}
-                  status={col.status}
-                  tasks={boardTasks[col.status]}
-                  totalCount={boardTotalCounts[col.status]}
-                  loading={boardLoadingInitial[col.status]}
-                  error={boardErrorInitial[col.status]}
-                  onRetry={() => void fetchBoardColumnInitial(col.status)}
-                  onSelectTask={(id) => setSelectedTaskId(id)}
-                  hasMore={
-                    boardTasks[col.status].length < boardTotalCounts[col.status]
-                  }
-                  loadMoreLoading={boardLoadingMore[col.status]}
-                  loadMoreError={boardErrorMore[col.status]}
-                  onLoadMore={() => void fetchBoardColumnNext(col.status)}
-                  onLoadMoreRetry={() => retryBoardColumnMore(col.status)}
-                />
-              ))}
+          <DndContext
+            sensors={sensors}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            {boardDragError ? (
+              <div
+                role="alert"
+                className="mb-4 flex items-center justify-between rounded-[6px] border border-[#fda29b] bg-[#fff4f2] px-4 py-3 text-[13px] font-medium text-[#b42318]"
+              >
+                <span>{boardDragError}</span>
+                <button
+                  type="button"
+                  onClick={() => setBoardDragError(null)}
+                  className="cursor-pointer text-[12px] font-semibold text-[#b42318] hover:underline"
+                >
+                  Dismiss
+                </button>
+              </div>
+            ) : null}
+
+            <div className="hidden lg:block flex-1 overflow-x-auto pb-4">
+              <div className="flex gap-6 items-start min-w-max">
+                {BOARD_COLUMNS.map((col) => (
+                  <TaskColumn
+                    key={col.status}
+                    projectId={projectId}
+                    status={col.status}
+                    tasks={boardTasks[col.status]}
+                    totalCount={boardTotalCounts[col.status]}
+                    loading={boardLoadingInitial[col.status]}
+                    error={boardErrorInitial[col.status]}
+                    onRetry={() => void fetchBoardColumnInitial(col.status)}
+                    onSelectTask={(id) => setSelectedTaskId(id)}
+                    hasMore={
+                      Math.min(
+                        (boardPageIndex[col.status] + 1) * PAGE_SIZE,
+                        boardTotalCounts[col.status]
+                      ) < boardTotalCounts[col.status]
+                    }
+                    loadMoreLoading={boardLoadingMore[col.status]}
+                    loadMoreError={boardErrorMore[col.status]}
+                    onLoadMore={() => void fetchBoardColumnNext(col.status)}
+                    onLoadMoreRetry={() => retryBoardColumnMore(col.status)}
+                    isDragDisabled={boardDragPending}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
+          </DndContext>
         ) : null}
 
         {/* Desktop List View */}

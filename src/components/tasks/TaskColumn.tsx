@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { Plus, RotateCw } from "lucide-react";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { BoardTask, TaskStatus } from "@/services/api/tasks.service";
 import { TaskCard, STATUS_CONFIG } from "./TaskCard";
 
@@ -20,6 +21,67 @@ interface TaskColumnProps {
   loadMoreError: boolean;
   onLoadMore: () => void;
   onLoadMoreRetry: () => void;
+  isDragDisabled?: boolean;
+}
+
+function DraggableTaskCard({
+  task,
+  onSelect,
+  disabled,
+}: {
+  task: BoardTask;
+  onSelect?: (taskId: string) => void;
+  disabled?: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, isDragging, transform } =
+    useDraggable({
+      id: task.id,
+      data: {
+        taskId: task.id,
+        sourceStatus: task.status,
+        task,
+      },
+      disabled,
+    });
+
+  const transformStyle = transform
+    ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+      }
+    : undefined;
+
+  const { onKeyDown: dndOnKeyDown, ...restListeners } = listeners || {};
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      onSelect?.(task.id);
+    } else {
+      dndOnKeyDown?.(e);
+    }
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={transformStyle}
+      {...restListeners}
+      {...attributes}
+      role={onSelect ? "button" : undefined}
+      tabIndex={onSelect ? 0 : undefined}
+      onClick={() => onSelect?.(task.id)}
+      onKeyDown={handleKeyDown}
+      className={`touch-none rounded-[4px] focus:outline-none focus:ring-2 focus:ring-[#0052cc] ${
+        disabled
+          ? "cursor-default"
+          : isDragging
+            ? "cursor-grabbing opacity-50 z-50"
+            : "cursor-grab"
+      }`}
+    >
+      <TaskCard task={task} variant="desktop" />
+    </div>
+  );
 }
 
 export function TaskColumn({
@@ -36,10 +98,18 @@ export function TaskColumn({
   loadMoreError,
   onLoadMore,
   onLoadMoreRetry,
+  isDragDisabled,
 }: TaskColumnProps) {
   const statusCfg = STATUS_CONFIG[status] || STATUS_CONFIG.TO_DO;
 
   const sentinelRef = React.useRef<HTMLDivElement | null>(null);
+
+  const { setNodeRef: setDroppableNodeRef } = useDroppable({
+    id: status,
+    data: {
+      status,
+    },
+  });
 
   const setSentinelRef = React.useCallback(
     (node: HTMLDivElement | null) => {
@@ -68,7 +138,10 @@ export function TaskColumn({
   );
 
   return (
-    <div className="flex w-[284px] min-w-[284px] shrink-0 flex-col rounded-[10px] border border-[#e2e6f0] bg-[#f8f9fc] p-3 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+    <div
+      ref={setDroppableNodeRef}
+      className="flex w-[284px] min-w-[284px] shrink-0 flex-col rounded-[10px] border border-[#e2e6f0] bg-[#f8f9fc] p-3 shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
+    >
       {/* Column Header */}
       <div className="flex items-center justify-between gap-2 pb-3">
         <div className="flex min-w-0 items-center gap-2">
@@ -132,11 +205,11 @@ export function TaskColumn({
 
         {!loading && !error && tasks.length > 0
           ? tasks.map((task) => (
-              <TaskCard
+              <DraggableTaskCard
                 key={task.id}
                 task={task}
-                variant="desktop"
                 onSelect={onSelectTask}
+                disabled={isDragDisabled}
               />
             ))
           : null}

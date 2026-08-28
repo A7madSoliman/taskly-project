@@ -190,12 +190,16 @@ export const TasksService = {
     if (error) return { data: null, error };
     return { data: data as CreatedTask, error: null };
   },
-  updateStatus: async (token: string, taskId: string, status: string) => {
-    return fetch(`${SUPABASE_URL}/rest/v1/tasks?id=eq.${taskId}`, {
-      method: "PATCH",
-      headers: getHeaders(token),
-      body: JSON.stringify({ status }),
-    });
+  updateStatus: async (
+    taskId: string,
+    status: TaskStatus
+  ): Promise<{ error: PostgrestError | null }> => {
+    const { error } = await supabase
+      .from("tasks")
+      .update({ status })
+      .eq("id", taskId);
+
+    return { error };
   },
   delete: async (token: string, taskId: string) => {
     return fetch(`${SUPABASE_URL}/rest/v1/tasks?id=eq.${taskId}`, {
