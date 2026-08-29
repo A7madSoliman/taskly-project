@@ -115,12 +115,20 @@ export function Sidebar({
             className={isEpicsActive ? activeLinkClass : inactiveLinkClass}
             title="Project Epics"
           >
-            <Image
-              src="/assets/svg/icons/icon-epics.svg"
-              alt=""
-              width={20}
-              height={18}
-              className="shrink-0"
+            <span
+              className={`shrink-0 inline-block w-[20px] h-[18px] transition-colors ${
+                isEpicsActive ? "bg-[#0052cc]" : "bg-[#4f5f7b]"
+              }`}
+              style={{
+                maskImage: 'url("/assets/svg/icons/icon-epics.svg")',
+                WebkitMaskImage: 'url("/assets/svg/icons/icon-epics.svg")',
+                maskRepeat: "no-repeat",
+                WebkitMaskRepeat: "no-repeat",
+                maskPosition: "center",
+                WebkitMaskPosition: "center",
+                maskSize: "contain",
+                WebkitMaskSize: "contain",
+              }}
               aria-hidden="true"
             />
             {!isCollapsed && <span>Project Epics</span>}
@@ -132,12 +140,18 @@ export function Sidebar({
             title="Project Epics"
             disabled
           >
-            <Image
-              src="/assets/svg/icons/icon-epics.svg"
-              alt=""
-              width={20}
-              height={18}
-              className="shrink-0"
+            <span
+              className="shrink-0 inline-block w-[20px] h-[18px] bg-[#4f5f7b]"
+              style={{
+                maskImage: 'url("/assets/svg/icons/icon-epics.svg")',
+                WebkitMaskImage: 'url("/assets/svg/icons/icon-epics.svg")',
+                maskRepeat: "no-repeat",
+                WebkitMaskRepeat: "no-repeat",
+                maskPosition: "center",
+                WebkitMaskPosition: "center",
+                maskSize: "contain",
+                WebkitMaskSize: "contain",
+              }}
               aria-hidden="true"
             />
             {!isCollapsed && <span>Project Epics</span>}
@@ -151,12 +165,20 @@ export function Sidebar({
             className={isTasksActive ? activeLinkClass : inactiveLinkClass}
             title="Project Tasks"
           >
-            <Image
-              src="/assets/svg/icons/icon-tasks.svg"
-              alt=""
-              width={20}
-              height={16}
-              className="shrink-0"
+            <span
+              className={`shrink-0 inline-block w-[20px] h-[16px] transition-colors ${
+                isTasksActive ? "bg-[#0052cc]" : "bg-[#4f5f7b]"
+              }`}
+              style={{
+                maskImage: 'url("/assets/svg/icons/icon-tasks.svg")',
+                WebkitMaskImage: 'url("/assets/svg/icons/icon-tasks.svg")',
+                maskRepeat: "no-repeat",
+                WebkitMaskRepeat: "no-repeat",
+                maskPosition: "center",
+                WebkitMaskPosition: "center",
+                maskSize: "contain",
+                WebkitMaskSize: "contain",
+              }}
               aria-hidden="true"
             />
             {!isCollapsed && <span>Project Tasks</span>}
@@ -168,12 +190,18 @@ export function Sidebar({
             title="Project Tasks"
             disabled
           >
-            <Image
-              src="/assets/svg/icons/icon-tasks.svg"
-              alt=""
-              width={20}
-              height={16}
-              className="shrink-0"
+            <span
+              className="shrink-0 inline-block w-[20px] h-[16px] bg-[#4f5f7b]"
+              style={{
+                maskImage: 'url("/assets/svg/icons/icon-tasks.svg")',
+                WebkitMaskImage: 'url("/assets/svg/icons/icon-tasks.svg")',
+                maskRepeat: "no-repeat",
+                WebkitMaskRepeat: "no-repeat",
+                maskPosition: "center",
+                WebkitMaskPosition: "center",
+                maskSize: "contain",
+                WebkitMaskSize: "contain",
+              }}
               aria-hidden="true"
             />
             {!isCollapsed && <span>Project Tasks</span>}
@@ -187,12 +215,20 @@ export function Sidebar({
             className={isMembersActive ? activeLinkClass : inactiveLinkClass}
             title="Project Members"
           >
-            <Image
-              src="/assets/svg/icons/icon-members.svg"
-              alt=""
-              width={22}
-              height={16}
-              className="shrink-0"
+            <span
+              className={`shrink-0 inline-block w-[22px] h-[16px] transition-colors ${
+                isMembersActive ? "bg-[#0052cc]" : "bg-[#4f5f7b]"
+              }`}
+              style={{
+                maskImage: 'url("/assets/svg/icons/icon-members.svg")',
+                WebkitMaskImage: 'url("/assets/svg/icons/icon-members.svg")',
+                maskRepeat: "no-repeat",
+                WebkitMaskRepeat: "no-repeat",
+                maskPosition: "center",
+                WebkitMaskPosition: "center",
+                maskSize: "contain",
+                WebkitMaskSize: "contain",
+              }}
               aria-hidden="true"
             />
             {!isCollapsed && <span>Project Members</span>}
@@ -204,12 +240,18 @@ export function Sidebar({
             title="Project Members"
             disabled
           >
-            <Image
-              src="/assets/svg/icons/icon-members.svg"
-              alt=""
-              width={22}
-              height={16}
-              className="shrink-0"
+            <span
+              className="shrink-0 inline-block w-[22px] h-[16px] bg-[#4f5f7b]"
+              style={{
+                maskImage: 'url("/assets/svg/icons/icon-members.svg")',
+                WebkitMaskImage: 'url("/assets/svg/icons/icon-members.svg")',
+                maskRepeat: "no-repeat",
+                WebkitMaskRepeat: "no-repeat",
+                maskPosition: "center",
+                WebkitMaskPosition: "center",
+                maskSize: "contain",
+                WebkitMaskSize: "contain",
+              }}
               aria-hidden="true"
             />
             {!isCollapsed && <span>Project Members</span>}
@@ -223,12 +265,20 @@ export function Sidebar({
             className={isDetailsActive ? activeLinkClass : inactiveLinkClass}
             title="Project Details"
           >
-            <Image
-              src="/assets/svg/icons/icon-details.svg"
-              alt=""
-              width={20}
-              height={20}
-              className="shrink-0"
+            <span
+              className={`shrink-0 inline-block w-[20px] h-[20px] transition-colors ${
+                isDetailsActive ? "bg-[#0052cc]" : "bg-[#4f5f7b]"
+              }`}
+              style={{
+                maskImage: 'url("/assets/svg/icons/icon-details.svg")',
+                WebkitMaskImage: 'url("/assets/svg/icons/icon-details.svg")',
+                maskRepeat: "no-repeat",
+                WebkitMaskRepeat: "no-repeat",
+                maskPosition: "center",
+                WebkitMaskPosition: "center",
+                maskSize: "contain",
+                WebkitMaskSize: "contain",
+              }}
               aria-hidden="true"
             />
             {!isCollapsed && <span>Project Details</span>}
@@ -240,12 +290,18 @@ export function Sidebar({
             title="Project Details"
             disabled
           >
-            <Image
-              src="/assets/svg/icons/icon-details.svg"
-              alt=""
-              width={20}
-              height={20}
-              className="shrink-0"
+            <span
+              className="shrink-0 inline-block w-[20px] h-[20px] bg-[#4f5f7b]"
+              style={{
+                maskImage: 'url("/assets/svg/icons/icon-details.svg")',
+                WebkitMaskImage: 'url("/assets/svg/icons/icon-details.svg")',
+                maskRepeat: "no-repeat",
+                WebkitMaskRepeat: "no-repeat",
+                maskPosition: "center",
+                WebkitMaskPosition: "center",
+                maskSize: "contain",
+                WebkitMaskSize: "contain",
+              }}
               aria-hidden="true"
             />
             {!isCollapsed && <span>Project Details</span>}

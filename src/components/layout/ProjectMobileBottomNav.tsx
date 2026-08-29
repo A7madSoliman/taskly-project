@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -92,13 +91,23 @@ export function ProjectMobileBottomNav({
                 : "font-semibold text-[#737685] hover:text-[#0052cc]"
             }`}
           >
-            <Image
-              src={dest.icon}
-              alt=""
-              width={dest.iconWidth}
-              height={dest.iconHeight}
+            <span
+              className={`shrink-0 inline-block transition-colors ${
+                active ? "bg-[#0052cc]" : "bg-[#737685]"
+              }`}
+              style={{
+                width: `${dest.iconWidth}px`,
+                height: `${dest.iconHeight}px`,
+                maskImage: `url("${dest.icon}")`,
+                WebkitMaskImage: `url("${dest.icon}")`,
+                maskRepeat: "no-repeat",
+                WebkitMaskRepeat: "no-repeat",
+                maskPosition: "center",
+                WebkitMaskPosition: "center",
+                maskSize: "contain",
+                WebkitMaskSize: "contain",
+              }}
               aria-hidden="true"
-              className={active ? "" : "opacity-70"}
             />
             <span>{dest.label}</span>
           </Link>

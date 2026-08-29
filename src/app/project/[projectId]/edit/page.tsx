@@ -437,16 +437,26 @@ export default function ProjectEditPage() {
 
       {/* Project not found */}
       {status === "not-found" && (
-        <div className="w-full max-w-[1216px] mx-auto py-2">
-          <div className="bg-white rounded-lg border border-[rgba(195,198,214,0.3)] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.05)] p-8 flex flex-col items-center gap-4">
-            <p className="text-[14px] font-semibold text-[#d92d20]">
-              Project not found.
+        <div className="w-full max-w-[560px] mx-auto py-12 px-4">
+          <div className="bg-white rounded-lg border border-[rgba(195,198,214,0.3)] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.05)] p-8 flex flex-col items-center text-center">
+            <div className="w-12 h-12 rounded-full bg-[#fee4e2] flex items-center justify-center mb-4">
+              <AlertTriangle
+                size={24}
+                className="text-[#d92d20]"
+                aria-hidden="true"
+              />
+            </div>
+            <h2 className="text-[20px] font-bold text-[#041b3c] mb-2">
+              Project not found
+            </h2>
+            <p className="text-[14px] text-[#53627b] max-w-[420px] mb-6 leading-relaxed">
+              This project may have been removed or you may not have access to
+              it.
             </p>
-            <Link
-              href="/project"
-              className="text-[14px] font-bold text-[#0052cc] hover:text-[#003d99] transition-colors focus:outline-none focus:underline"
-            >
-              Back to Projects
+            <Link href="/project">
+              <Button fullWidth={false} className="px-6 py-2.5">
+                Back to Projects
+              </Button>
             </Link>
           </div>
         </div>
@@ -454,7 +464,7 @@ export default function ProjectEditPage() {
 
       {/* Edit form */}
       {status === "ready" && (
-        <div className="max-w-[1024px] mx-auto py-2">
+        <div className="max-w-[1024px] mx-auto py-2 pb-24 lg:pb-2">
           {/* Desktop Breadcrumbs and Main Page Heading */}
           <div className="hidden lg:block mb-6">
             <div className="text-[11px] font-bold text-slate-400 uppercase tracking-[1px] mb-2">
@@ -478,18 +488,19 @@ export default function ProjectEditPage() {
                 </span>
                 <div>
                   <h2 className="text-[18px] font-bold leading-6 text-[#041b3c]">
-                    Edit Project
+                    Project Details
                   </h2>
-                  <p className="mt-1 text-[14px] leading-5 text-[#737685]">
-                    Define the scope and foundational details of your project.
+                  <p className="text-[13px] text-slate-500 mt-1">
+                    Update the high-level configuration and scope of this
+                    project workspace.
                   </p>
                 </div>
               </div>
 
               {formFields}
 
-              {/* Desktop Action Row */}
-              <div className="flex items-center justify-between w-full pt-6 border-t border-[rgba(195,198,214,0.2)] mt-2">
+              {/* Action Buttons */}
+              <div className="flex items-center justify-between pt-6 border-t border-[rgba(195,198,214,0.2)] mt-2">
                 <Link
                   href="/project"
                   className="text-[14px] font-bold text-slate-500 hover:text-slate-800 transition-colors focus:outline-none focus:underline"
@@ -500,17 +511,18 @@ export default function ProjectEditPage() {
                   type="submit"
                   fullWidth={false}
                   isLoading={isSubmitting}
-                  className="px-6 py-3 shrink-0"
+                  className="px-6 py-3"
                 >
                   Save Changes
                 </Button>
               </div>
             </form>
-            <div className="flex items-center gap-3 border-t border-[rgba(195,198,214,0.25)] bg-[#f7f8ff] px-8 py-5 text-[13px] leading-5 text-[#4f5f7b]">
+
+            {/* Attached Pro Tip footer */}
+            <div className="bg-[#f1f3ff] px-8 py-4 border-t border-[rgba(195,198,214,0.2)] text-[12px] text-slate-600 flex items-center gap-3">
               <Lightbulb
-                size={19}
-                strokeWidth={1.9}
-                className="shrink-0 text-[#0052cc]"
+                size={16}
+                className="text-[#0052cc] shrink-0"
                 aria-hidden="true"
               />
               <p>

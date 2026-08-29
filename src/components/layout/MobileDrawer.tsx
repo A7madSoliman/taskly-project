@@ -119,12 +119,20 @@ export function MobileDrawer({
             onClick={onClose}
             className={isProjectsActive ? activeLinkClass : inactiveLinkClass}
           >
-            <Image
-              src="/assets/svg/icons/icon-projects.svg"
-              alt=""
-              width={18}
-              height={18}
-              className="shrink-0"
+            <span
+              className={`shrink-0 inline-block w-[18px] h-[18px] transition-colors ${
+                isProjectsActive ? "bg-[#0052cc]" : "bg-[#4f5f7b]"
+              }`}
+              style={{
+                maskImage: 'url("/assets/svg/icons/icon-projects.svg")',
+                WebkitMaskImage: 'url("/assets/svg/icons/icon-projects.svg")',
+                maskRepeat: "no-repeat",
+                WebkitMaskRepeat: "no-repeat",
+                maskPosition: "center",
+                WebkitMaskPosition: "center",
+                maskSize: "contain",
+                WebkitMaskSize: "contain",
+              }}
               aria-hidden="true"
             />
             <span>Projects</span>
@@ -137,24 +145,38 @@ export function MobileDrawer({
               onClick={onClose}
               className={isEpicsActive ? activeLinkClass : inactiveLinkClass}
             >
-              <Image
-                src="/assets/svg/icons/icon-epics.svg"
-                alt=""
-                width={20}
-                height={18}
-                className="shrink-0"
+              <span
+                className={`shrink-0 inline-block w-[20px] h-[18px] transition-colors ${
+                  isEpicsActive ? "bg-[#0052cc]" : "bg-[#4f5f7b]"
+                }`}
+                style={{
+                  maskImage: 'url("/assets/svg/icons/icon-epics.svg")',
+                  WebkitMaskImage: 'url("/assets/svg/icons/icon-epics.svg")',
+                  maskRepeat: "no-repeat",
+                  WebkitMaskRepeat: "no-repeat",
+                  maskPosition: "center",
+                  WebkitMaskPosition: "center",
+                  maskSize: "contain",
+                  WebkitMaskSize: "contain",
+                }}
                 aria-hidden="true"
               />
               <span>Project Epics</span>
             </Link>
           ) : (
             <button type="button" className={disabledButtonClass} disabled>
-              <Image
-                src="/assets/svg/icons/icon-epics.svg"
-                alt=""
-                width={20}
-                height={18}
-                className="shrink-0"
+              <span
+                className="shrink-0 inline-block w-[20px] h-[18px] bg-[#4f5f7b]"
+                style={{
+                  maskImage: 'url("/assets/svg/icons/icon-epics.svg")',
+                  WebkitMaskImage: 'url("/assets/svg/icons/icon-epics.svg")',
+                  maskRepeat: "no-repeat",
+                  WebkitMaskRepeat: "no-repeat",
+                  maskPosition: "center",
+                  WebkitMaskPosition: "center",
+                  maskSize: "contain",
+                  WebkitMaskSize: "contain",
+                }}
                 aria-hidden="true"
               />
               <span>Project Epics</span>
@@ -168,24 +190,38 @@ export function MobileDrawer({
               onClick={onClose}
               className={isTasksActive ? activeLinkClass : inactiveLinkClass}
             >
-              <Image
-                src="/assets/svg/icons/icon-tasks.svg"
-                alt=""
-                width={20}
-                height={16}
-                className="shrink-0"
+              <span
+                className={`shrink-0 inline-block w-[20px] h-[16px] transition-colors ${
+                  isTasksActive ? "bg-[#0052cc]" : "bg-[#4f5f7b]"
+                }`}
+                style={{
+                  maskImage: 'url("/assets/svg/icons/icon-tasks.svg")',
+                  WebkitMaskImage: 'url("/assets/svg/icons/icon-tasks.svg")',
+                  maskRepeat: "no-repeat",
+                  WebkitMaskRepeat: "no-repeat",
+                  maskPosition: "center",
+                  WebkitMaskPosition: "center",
+                  maskSize: "contain",
+                  WebkitMaskSize: "contain",
+                }}
                 aria-hidden="true"
               />
               <span>Project Tasks</span>
             </Link>
           ) : (
             <button type="button" className={disabledButtonClass} disabled>
-              <Image
-                src="/assets/svg/icons/icon-tasks.svg"
-                alt=""
-                width={20}
-                height={16}
-                className="shrink-0"
+              <span
+                className="shrink-0 inline-block w-[20px] h-[16px] bg-[#4f5f7b]"
+                style={{
+                  maskImage: 'url("/assets/svg/icons/icon-tasks.svg")',
+                  WebkitMaskImage: 'url("/assets/svg/icons/icon-tasks.svg")',
+                  maskRepeat: "no-repeat",
+                  WebkitMaskRepeat: "no-repeat",
+                  maskPosition: "center",
+                  WebkitMaskPosition: "center",
+                  maskSize: "contain",
+                  WebkitMaskSize: "contain",
+                }}
                 aria-hidden="true"
               />
               <span>Project Tasks</span>
@@ -199,24 +235,38 @@ export function MobileDrawer({
               onClick={onClose}
               className={isMembersActive ? activeLinkClass : inactiveLinkClass}
             >
-              <Image
-                src="/assets/svg/icons/icon-members.svg"
-                alt=""
-                width={22}
-                height={16}
-                className="shrink-0"
+              <span
+                className={`shrink-0 inline-block w-[22px] h-[16px] transition-colors ${
+                  isMembersActive ? "bg-[#0052cc]" : "bg-[#4f5f7b]"
+                }`}
+                style={{
+                  maskImage: 'url("/assets/svg/icons/icon-members.svg")',
+                  WebkitMaskImage: 'url("/assets/svg/icons/icon-members.svg")',
+                  maskRepeat: "no-repeat",
+                  WebkitMaskRepeat: "no-repeat",
+                  maskPosition: "center",
+                  WebkitMaskPosition: "center",
+                  maskSize: "contain",
+                  WebkitMaskSize: "contain",
+                }}
                 aria-hidden="true"
               />
               <span>Project Members</span>
             </Link>
           ) : (
             <button type="button" className={disabledButtonClass} disabled>
-              <Image
-                src="/assets/svg/icons/icon-members.svg"
-                alt=""
-                width={22}
-                height={16}
-                className="shrink-0"
+              <span
+                className="shrink-0 inline-block w-[22px] h-[16px] bg-[#4f5f7b]"
+                style={{
+                  maskImage: 'url("/assets/svg/icons/icon-members.svg")',
+                  WebkitMaskImage: 'url("/assets/svg/icons/icon-members.svg")',
+                  maskRepeat: "no-repeat",
+                  WebkitMaskRepeat: "no-repeat",
+                  maskPosition: "center",
+                  WebkitMaskPosition: "center",
+                  maskSize: "contain",
+                  WebkitMaskSize: "contain",
+                }}
                 aria-hidden="true"
               />
               <span>Project Members</span>
@@ -230,24 +280,38 @@ export function MobileDrawer({
               onClick={onClose}
               className={isDetailsActive ? activeLinkClass : inactiveLinkClass}
             >
-              <Image
-                src="/assets/svg/icons/icon-details.svg"
-                alt=""
-                width={20}
-                height={20}
-                className="shrink-0"
+              <span
+                className={`shrink-0 inline-block w-[20px] h-[20px] transition-colors ${
+                  isDetailsActive ? "bg-[#0052cc]" : "bg-[#4f5f7b]"
+                }`}
+                style={{
+                  maskImage: 'url("/assets/svg/icons/icon-details.svg")',
+                  WebkitMaskImage: 'url("/assets/svg/icons/icon-details.svg")',
+                  maskRepeat: "no-repeat",
+                  WebkitMaskRepeat: "no-repeat",
+                  maskPosition: "center",
+                  WebkitMaskPosition: "center",
+                  maskSize: "contain",
+                  WebkitMaskSize: "contain",
+                }}
                 aria-hidden="true"
               />
               <span>Project Details</span>
             </Link>
           ) : (
             <button type="button" className={disabledButtonClass} disabled>
-              <Image
-                src="/assets/svg/icons/icon-details.svg"
-                alt=""
-                width={20}
-                height={20}
-                className="shrink-0"
+              <span
+                className="shrink-0 inline-block w-[20px] h-[20px] bg-[#4f5f7b]"
+                style={{
+                  maskImage: 'url("/assets/svg/icons/icon-details.svg")',
+                  WebkitMaskImage: 'url("/assets/svg/icons/icon-details.svg")',
+                  maskRepeat: "no-repeat",
+                  WebkitMaskRepeat: "no-repeat",
+                  maskPosition: "center",
+                  WebkitMaskPosition: "center",
+                  maskSize: "contain",
+                  WebkitMaskSize: "contain",
+                }}
                 aria-hidden="true"
               />
               <span>Project Details</span>

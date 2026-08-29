@@ -25,7 +25,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
   const formattedDate = formatProjectDate(project.created_at);
 
   return (
-    <div className="relative bg-white rounded-[8px] border border-[rgba(195,198,214,0.3)] shadow-[0px_1px_3px_0px_rgba(4,27,60,0.05)] p-5 flex flex-col justify-between h-full min-h-[190px]">
+    <div className="relative bg-white rounded-[8px] border-2 border-[#c3c6d6] shadow-[0px_1px_3px_0px_rgba(4,27,60,0.05)] p-5 flex flex-col justify-between h-full min-h-[190px]">
       {/* Overlay Link for semantic, accessible card navigation */}
       <Link
         href={`/project/${project.id}/epics`}

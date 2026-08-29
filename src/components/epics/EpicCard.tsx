@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { Trash2 } from "lucide-react";
+import { EllipsisVertical, Trash2 } from "lucide-react";
 import { ProjectEpic } from "@/services/api/epics.service";
 
 /**
@@ -145,13 +145,11 @@ export function EpicCard({
                   setIsMenuOpen((prev) => !prev);
                 }
               }}
-              className="pointer-events-auto -m-1.5 flex h-8 w-8 items-center justify-center rounded-[4px] p-1 text-[#737685] transition-colors hover:bg-[#f0f2f7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0052cc] cursor-pointer"
+              className="pointer-events-auto -m-1.5 flex h-8 w-8 items-center justify-center rounded-[4px] p-1 text-[#4f5f7b] hover:text-[#041b3c] transition-colors hover:bg-[#f0f2f7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0052cc] cursor-pointer"
             >
-              <Image
-                src="/assets/svg/icons/icon-more-options.svg"
-                alt=""
-                width={4}
-                height={16}
+              <EllipsisVertical
+                size={18}
+                strokeWidth={2.5}
                 aria-hidden="true"
               />
             </button>
