@@ -1,20 +1,23 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
 import { ProjectMobileBottomNav } from "@/components/layout/ProjectMobileBottomNav";
-import { ProjectsService } from "@/services/api/projects.service";
-import { Lightbulb, SquarePen } from "lucide-react";
+import { DeleteConfirmationModal } from "@/components/ui/DeleteConfirmationModal";
+import { ProjectsService, Project } from "@/services/api/projects.service";
+import { AuthService } from "@/services/api/auth.service";
+import { AlertTriangle, Lightbulb, SquarePen, Trash2 } from "lucide-react";
 
 type PreloadStatus = "loading" | "error" | "not-found" | "ready";
 
 export default function ProjectEditPage() {
   const params = useParams();
+  const router = useRouter();
   const projectId = params?.projectId as string;
 
   const [status, setStatus] = useState<PreloadStatus>("loading");
@@ -27,6 +30,84 @@ export default function ProjectEditPage() {
   const [errors, setErrors] = useState<{ name?: string; description?: string }>(
     {}
   );
+  const [isOwner, setIsOwner] = useState<boolean>(false);
+
+  // Delete state & refs
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+  const [isDeletePending, setIsDeletePending] = useState<boolean>(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const deletePendingRef = useRef<boolean>(false);
+  const deleteGenerationRef = useRef<number>(0);
+  const ownershipRequestSeqRef = useRef<number>(0);
+  const projectIdRef = useRef<string>(projectId);
+  const prevProjectIdRef = useRef<string>(projectId);
+
+  // Live projectIdRef and surviving projectId change reset
+  useEffect(() => {
+    projectIdRef.current = projectId;
+    if (prevProjectIdRef.current !== projectId) {
+      prevProjectIdRef.current = projectId;
+      ownershipRequestSeqRef.current++;
+      deleteGenerationRef.current++;
+      deletePendingRef.current = false;
+      setIsDeletePending(false);
+      setProjectToDelete(null);
+      setDeleteError(null);
+      setIsOwner(false);
+    }
+  }, [projectId]);
+
+  // True unmount-only invalidation
+  useEffect(() => {
+    const genRef = deleteGenerationRef;
+    const ownerSeqRef = ownershipRequestSeqRef;
+    return () => {
+      genRef.current++;
+      ownerSeqRef.current++;
+    };
+  }, []);
+
+  const checkOwnership = useCallback(async () => {
+    const capturedRequestSeq = ++ownershipRequestSeqRef.current;
+    const capturedProjectId = projectId;
+
+    try {
+      const [userRes, membersRes] = await Promise.all([
+        AuthService.getUser(),
+        ProjectsService.getMembers(capturedProjectId),
+      ]);
+
+      if (
+        ownershipRequestSeqRef.current !== capturedRequestSeq ||
+        projectIdRef.current !== capturedProjectId
+      ) {
+        return;
+      }
+
+      const currentUserId = userRes.data?.user?.id;
+      if (!currentUserId || membersRes.error || !membersRes.data) {
+        setIsOwner(false);
+        return;
+      }
+
+      const isCurrentOwner = membersRes.data.some(
+        (m) =>
+          m.user_id === currentUserId &&
+          m.project_id === capturedProjectId &&
+          m.role === "owner"
+      );
+
+      setIsOwner(isCurrentOwner);
+    } catch {
+      if (
+        ownershipRequestSeqRef.current === capturedRequestSeq &&
+        projectIdRef.current === capturedProjectId
+      ) {
+        setIsOwner(false);
+      }
+    }
+  }, [projectId]);
 
   useEffect(() => {
     let isMounted = true;
@@ -54,6 +135,9 @@ export default function ProjectEditPage() {
         setName(data.name);
         setDescription(data.description ?? "");
         setStatus("ready");
+
+        // Check ownership when project loads successfully
+        void checkOwnership();
       } catch (err: unknown) {
         if (!isMounted) return;
         const errorMessage =
@@ -68,7 +152,7 @@ export default function ProjectEditPage() {
     return () => {
       isMounted = false;
     };
-  }, [projectId]);
+  }, [projectId, checkOwnership]);
 
   const validate = () => {
     const newErrors: { name?: string; description?: string } = {};
@@ -121,6 +205,91 @@ export default function ProjectEditPage() {
       setSubmitError(`Failed to update project: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteOpen = () => {
+    if (deletePendingRef.current || !isOwner || status !== "ready") return;
+
+    deleteGenerationRef.current++;
+    setDeleteError(null);
+    setProjectToDelete({
+      id: projectId,
+      name,
+      description: description || null,
+      created_at: "",
+    });
+  };
+
+  const handleDeleteCancel = () => {
+    if (deletePendingRef.current) return;
+    deleteGenerationRef.current++;
+    setProjectToDelete(null);
+    setDeleteError(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (deletePendingRef.current) return;
+
+    const capturedDeleteGeneration = deleteGenerationRef.current;
+    const capturedProjectId = projectId;
+
+    deletePendingRef.current = true;
+    setIsDeletePending(true);
+    setDeleteError(null);
+
+    try {
+      const { error } = await ProjectsService.delete(capturedProjectId);
+
+      // Verify still current lifecycle
+      if (
+        deleteGenerationRef.current !== capturedDeleteGeneration ||
+        projectIdRef.current !== capturedProjectId
+      ) {
+        return;
+      }
+
+      if (error) {
+        deletePendingRef.current = false;
+        setIsDeletePending(false);
+        setDeleteError("Failed to delete project. Please try again.");
+        return;
+      }
+
+      // Read-back verification
+      const { data: readBackData, error: readBackError } =
+        await ProjectsService.getById(capturedProjectId);
+
+      if (
+        deleteGenerationRef.current !== capturedDeleteGeneration ||
+        projectIdRef.current !== capturedProjectId
+      ) {
+        return;
+      }
+
+      if (readBackError || readBackData !== null) {
+        deletePendingRef.current = false;
+        setIsDeletePending(false);
+        setDeleteError("Failed to delete project. Please try again.");
+        return;
+      }
+
+      // Verified deletion success: navigate to /project
+      deletePendingRef.current = false;
+      setIsDeletePending(false);
+      setProjectToDelete(null);
+      setDeleteError(null);
+
+      router.push("/project");
+    } catch {
+      if (
+        deleteGenerationRef.current === capturedDeleteGeneration &&
+        projectIdRef.current === capturedProjectId
+      ) {
+        deletePendingRef.current = false;
+        setIsDeletePending(false);
+        setDeleteError("Failed to delete project. Please try again.");
+      }
     }
   };
 
@@ -193,6 +362,43 @@ export default function ProjectEditPage() {
       )}
     </>
   );
+
+  const dangerZoneSection = isOwner ? (
+    <div className="mt-8 rounded-[8px] border border-[#fecdca] bg-white overflow-hidden shadow-[0px_1px_3px_0px_rgba(0,0,0,0.05)]">
+      <div className="flex items-center gap-3 border-b border-[#fee4e2] bg-[#fffbfa] px-6 py-4">
+        <AlertTriangle
+          size={20}
+          className="text-[#d92d20] shrink-0"
+          aria-hidden="true"
+        />
+        <div>
+          <h2 className="text-[16px] font-bold text-[#b42318]">Danger Zone</h2>
+          <p className="text-[13px] text-[#737685]">
+            Destructive actions that cannot be undone.
+          </p>
+        </div>
+      </div>
+      <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h3 className="text-[15px] font-bold text-[#041b3c]">
+            Delete this project
+          </h3>
+          <p className="mt-0.5 text-[13px] text-[#53627b] max-w-[580px]">
+            Once you delete a project, all of its epics, tasks, members, and
+            invitations will be permanently removed.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleDeleteOpen}
+          className="inline-flex items-center justify-center gap-2 rounded-[6px] bg-[#d92d20] px-4 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-[#b42318] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d92d20] focus-visible:ring-offset-1 shrink-0 cursor-pointer shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)]"
+        >
+          <Trash2 size={16} aria-hidden="true" />
+          <span>Delete Project</span>
+        </button>
+      </div>
+    </div>
+  ) : null;
 
   return (
     <AppShell>
@@ -315,8 +521,8 @@ export default function ProjectEditPage() {
             </div>
           </div>
 
-          {/* Mobile Design Container (Flat Layout) — MINIMAL RESPONSIVE ENGINEERING ADAPTATION */}
-          <div className="block lg:hidden px-2 pb-24">
+          {/* Mobile Design Container (Flat Layout) */}
+          <div className="block lg:hidden px-2 pb-6">
             {feedbackBanners}
             <form onSubmit={handleSubmit} className="flex flex-col gap-6">
               <h1 className="text-[24px] font-bold text-[#041b3c] tracking-[-0.5px]">
@@ -343,6 +549,22 @@ export default function ProjectEditPage() {
               </div>
             </form>
           </div>
+
+          {/* Danger Zone */}
+          {dangerZoneSection}
+
+          {/* Project Delete Confirmation Modal */}
+          <DeleteConfirmationModal
+            isOpen={Boolean(projectToDelete)}
+            title="Delete Project?"
+            description="Deleting this project will permanently delete all associated epics, tasks, project members, and project invitations. This action cannot be undone."
+            confirmLabel="Delete Project"
+            pendingLabel="Deleting..."
+            error={deleteError}
+            isPending={isDeletePending}
+            onConfirm={handleDeleteConfirm}
+            onClose={handleDeleteCancel}
+          />
 
           {/* Mobile Fixed Bottom Navigation Bar */}
           <ProjectMobileBottomNav projectId={projectId} />

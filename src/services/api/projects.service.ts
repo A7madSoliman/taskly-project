@@ -88,4 +88,7 @@ export const ProjectsService = {
       p_token: input.token,
     });
   },
+  delete: async (projectId: string) => {
+    return supabase.from("projects").delete().eq("id", projectId);
+  },
 };
