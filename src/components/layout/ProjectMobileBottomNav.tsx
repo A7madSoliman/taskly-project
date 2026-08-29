@@ -3,80 +3,114 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ChartNoAxesCombined } from "lucide-react";
 
 interface ProjectMobileBottomNavProps {
-  projectId: string;
+  projectId?: string;
 }
 
 interface NavDestination {
   label: string;
   href: string;
-  icon: string;
+  icon?: string;
+  isLucideIcon?: boolean;
   iconWidth: number;
   iconHeight: number;
-  isActive: (pathname: string, projectId: string) => boolean;
+  isActive: (pathname: string, projectId?: string) => boolean;
 }
 
 export function ProjectMobileBottomNav({
   projectId,
 }: ProjectMobileBottomNavProps) {
   const pathname = usePathname() || "";
+  const isProjectScoped = Boolean(projectId);
 
-  const destinations: NavDestination[] = [
-    {
-      label: "Projects",
-      href: "/project",
-      icon: "/assets/svg/icons/icon-projects.svg",
-      iconWidth: 20,
-      iconHeight: 20,
-      isActive: (path) => path === "/project",
-    },
-    {
-      label: "Epics",
-      href: `/project/${projectId}/epics`,
-      icon: "/assets/svg/icons/icon-epics.svg",
-      iconWidth: 20,
-      iconHeight: 20,
-      isActive: (path, id) =>
-        path === `/project/${id}/epics` ||
-        path.startsWith(`/project/${id}/epics/`),
-    },
-    {
-      label: "Tasks",
-      href: `/project/${projectId}/tasks`,
-      icon: "/assets/svg/icons/icon-tasks.svg",
-      iconWidth: 20,
-      iconHeight: 20,
-      isActive: (path, id) =>
-        path === `/project/${id}/tasks` ||
-        path.startsWith(`/project/${id}/tasks/`),
-    },
-    {
-      label: "Members",
-      href: `/project/${projectId}/members`,
-      icon: "/assets/svg/icons/icon-members.svg",
-      iconWidth: 22,
-      iconHeight: 20,
-      isActive: (path, id) =>
-        path === `/project/${id}/members` ||
-        path.startsWith(`/project/${id}/members/`),
-    },
-    {
-      label: "Details",
-      href: `/project/${projectId}/edit`,
-      icon: "/assets/svg/icons/icon-details.svg",
-      iconWidth: 20,
-      iconHeight: 20,
-      isActive: (path, id) =>
-        path === `/project/${id}/edit` ||
-        path.startsWith(`/project/${id}/edit/`),
-    },
-  ];
+  const destinations: NavDestination[] = isProjectScoped
+    ? [
+        {
+          label: "Projects",
+          href: "/project",
+          icon: "/assets/svg/icons/icon-projects.svg",
+          iconWidth: 18,
+          iconHeight: 18,
+          isActive: (path) => path === "/project",
+        },
+        {
+          label: "Statistics",
+          href: "/my-statistics",
+          isLucideIcon: true,
+          iconWidth: 18,
+          iconHeight: 18,
+          isActive: (path) => path === "/my-statistics",
+        },
+        {
+          label: "Epics",
+          href: `/project/${projectId}/epics`,
+          icon: "/assets/svg/icons/icon-epics.svg",
+          iconWidth: 18,
+          iconHeight: 18,
+          isActive: (path, id) =>
+            Boolean(id) &&
+            (path === `/project/${id}/epics` ||
+              path.startsWith(`/project/${id}/epics/`)),
+        },
+        {
+          label: "Tasks",
+          href: `/project/${projectId}/tasks`,
+          icon: "/assets/svg/icons/icon-tasks.svg",
+          iconWidth: 18,
+          iconHeight: 18,
+          isActive: (path, id) =>
+            Boolean(id) &&
+            (path === `/project/${id}/tasks` ||
+              path.startsWith(`/project/${id}/tasks/`)),
+        },
+        {
+          label: "Members",
+          href: `/project/${projectId}/members`,
+          icon: "/assets/svg/icons/icon-members.svg",
+          iconWidth: 20,
+          iconHeight: 18,
+          isActive: (path, id) =>
+            Boolean(id) &&
+            (path === `/project/${id}/members` ||
+              path.startsWith(`/project/${id}/members/`)),
+        },
+        {
+          label: "Details",
+          href: `/project/${projectId}/edit`,
+          icon: "/assets/svg/icons/icon-details.svg",
+          iconWidth: 18,
+          iconHeight: 18,
+          isActive: (path, id) =>
+            Boolean(id) &&
+            (path === `/project/${id}/edit` ||
+              path.startsWith(`/project/${id}/edit/`)),
+        },
+      ]
+    : [
+        {
+          label: "Projects",
+          href: "/project",
+          icon: "/assets/svg/icons/icon-projects.svg",
+          iconWidth: 20,
+          iconHeight: 20,
+          isActive: (path) => path === "/project",
+        },
+        {
+          label: "My Statistics",
+          href: "/my-statistics",
+          isLucideIcon: true,
+          iconWidth: 20,
+          iconHeight: 20,
+          isActive: (path) => path === "/my-statistics",
+        },
+      ];
 
   return (
     <nav
       aria-label="Mobile Bottom Navigation"
-      className="fixed bottom-0 left-0 right-0 z-30 flex h-16 items-center justify-around border-t border-[#e5e8f0] bg-white px-2 shadow-[0_-2px_10px_rgba(4,27,60,0.05)] lg:hidden"
+      className="fixed bottom-0 left-0 right-0 z-30 flex h-16 items-center justify-around border-t border-[#e5e8f0] bg-white px-1 shadow-[0_-2px_10px_rgba(4,27,60,0.05)] lg:hidden"
     >
       {destinations.map((dest) => {
         const active = dest.isActive(pathname, projectId);
@@ -85,31 +119,48 @@ export function ProjectMobileBottomNav({
             key={dest.label}
             href={dest.href}
             aria-current={active ? "page" : undefined}
-            className={`flex flex-1 flex-col items-center justify-center gap-1 py-1 text-[10px] transition-colors ${
+            className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-1 text-[10px] transition-colors min-w-0 ${
               active
                 ? "font-bold text-[#0052cc]"
                 : "font-semibold text-[#737685] hover:text-[#0052cc]"
             }`}
           >
-            <span
-              className={`shrink-0 inline-block transition-colors ${
-                active ? "bg-[#0052cc]" : "bg-[#737685]"
-              }`}
-              style={{
-                width: `${dest.iconWidth}px`,
-                height: `${dest.iconHeight}px`,
-                maskImage: `url("${dest.icon}")`,
-                WebkitMaskImage: `url("${dest.icon}")`,
-                maskRepeat: "no-repeat",
-                WebkitMaskRepeat: "no-repeat",
-                maskPosition: "center",
-                WebkitMaskPosition: "center",
-                maskSize: "contain",
-                WebkitMaskSize: "contain",
-              }}
-              aria-hidden="true"
-            />
-            <span>{dest.label}</span>
+            {dest.isLucideIcon ? (
+              <span
+                className={`flex items-center justify-center shrink-0 transition-colors ${
+                  active ? "text-[#0052cc]" : "text-[#737685]"
+                }`}
+                style={{
+                  width: `${dest.iconWidth}px`,
+                  height: `${dest.iconHeight}px`,
+                }}
+                aria-hidden="true"
+              >
+                <ChartNoAxesCombined size={dest.iconWidth} strokeWidth={2} />
+              </span>
+            ) : (
+              <span
+                className={`shrink-0 inline-block transition-colors ${
+                  active ? "bg-[#0052cc]" : "bg-[#737685]"
+                }`}
+                style={{
+                  width: `${dest.iconWidth}px`,
+                  height: `${dest.iconHeight}px`,
+                  maskImage: `url("${dest.icon}")`,
+                  WebkitMaskImage: `url("${dest.icon}")`,
+                  maskRepeat: "no-repeat",
+                  WebkitMaskRepeat: "no-repeat",
+                  maskPosition: "center",
+                  WebkitMaskPosition: "center",
+                  maskSize: "contain",
+                  WebkitMaskSize: "contain",
+                }}
+                aria-hidden="true"
+              />
+            )}
+            <span className="truncate max-w-full tracking-[-0.2px] text-[10px]">
+              {dest.label}
+            </span>
           </Link>
         );
       })}

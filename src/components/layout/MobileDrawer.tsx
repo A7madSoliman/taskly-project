@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useParams } from "next/navigation";
+import { ChartNoAxesCombined } from "lucide-react";
 import { getInitials } from "@/lib/utils/avatar";
 
 export interface MobileDrawerProps {
@@ -43,6 +44,7 @@ export function MobileDrawer({
 
   const isProjectsActive =
     pathname === "/project" || pathname === "/project/add";
+  const isStatisticsActive = pathname === "/my-statistics";
   const isEpicsActive =
     Boolean(isProjectScoped) &&
     (pathname === `${projectBase}/epics` ||
@@ -136,6 +138,21 @@ export function MobileDrawer({
               aria-hidden="true"
             />
             <span>Projects</span>
+          </Link>
+
+          {/* My Statistics */}
+          <Link
+            href="/my-statistics"
+            onClick={onClose}
+            className={isStatisticsActive ? activeLinkClass : inactiveLinkClass}
+          >
+            <span
+              className="flex h-5 w-5 shrink-0 items-center justify-center"
+              aria-hidden="true"
+            >
+              <ChartNoAxesCombined size={18} strokeWidth={2} />
+            </span>
+            <span>My Statistics</span>
           </Link>
 
           {/* Project Epics */}

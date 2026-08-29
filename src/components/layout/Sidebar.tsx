@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useParams } from "next/navigation";
-import { FolderOpen, LayoutGrid } from "lucide-react";
+import { FolderOpen, LayoutGrid, ChartNoAxesCombined } from "lucide-react";
 
 export interface SidebarProps {
   isCollapsed: boolean;
@@ -35,6 +35,7 @@ export function Sidebar({
 
   const isProjectsActive =
     pathname === "/project" || pathname === "/project/add";
+  const isStatisticsActive = pathname === "/my-statistics";
   const isEpicsActive =
     Boolean(isProjectScoped) &&
     (pathname === `${projectBase}/epics` ||
@@ -106,6 +107,21 @@ export function Sidebar({
             )}
           </span>
           {!isCollapsed && <span>Projects</span>}
+        </Link>
+
+        {/* My Statistics */}
+        <Link
+          href="/my-statistics"
+          className={isStatisticsActive ? activeLinkClass : inactiveLinkClass}
+          title="My Statistics"
+        >
+          <span
+            className="flex h-5 w-5 shrink-0 items-center justify-center"
+            aria-hidden="true"
+          >
+            <ChartNoAxesCombined size={20} strokeWidth={2} />
+          </span>
+          {!isCollapsed && <span>My Statistics</span>}
         </Link>
 
         {/* Project Epics */}
