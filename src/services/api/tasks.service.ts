@@ -118,19 +118,26 @@ export const TasksService = {
   getByProjectPaginated: async (
     projectId: string,
     from: number,
-    to: number
+    to: number,
+    searchTerm?: string
   ): Promise<{
     data: BoardTask[] | null;
     count: number | null;
     error: PostgrestError | null;
   }> => {
-    const { data, error, count } = await supabase
+    let query = supabase
       .from("project_tasks")
       .select("id, task_id, title, due_date, status, assignee", {
         count: "exact",
       })
-      .eq("project_id", projectId)
-      .range(from, to);
+      .eq("project_id", projectId);
+
+    const trimmed = searchTerm?.trim();
+    if (trimmed) {
+      query = query.ilike("title", `%${trimmed}%`);
+    }
+
+    const { data, error, count } = await query.range(from, to);
 
     if (error) return { data: null, count: null, error };
     return { data: (data as BoardTask[]) ?? [], count, error: null };
@@ -139,20 +146,27 @@ export const TasksService = {
     projectId: string,
     status: TaskStatus,
     from: number,
-    to: number
+    to: number,
+    searchTerm?: string
   ): Promise<{
     data: BoardTask[] | null;
     count: number | null;
     error: PostgrestError | null;
   }> => {
-    const { data, error, count } = await supabase
+    let query = supabase
       .from("project_tasks")
       .select("id, task_id, title, due_date, status, assignee", {
         count: "exact",
       })
       .eq("project_id", projectId)
-      .eq("status", status)
-      .range(from, to);
+      .eq("status", status);
+
+    const trimmed = searchTerm?.trim();
+    if (trimmed) {
+      query = query.ilike("title", `%${trimmed}%`);
+    }
+
+    const { data, error, count } = await query.range(from, to);
 
     if (error) return { data: null, count: null, error };
     return { data: (data as BoardTask[]) ?? [], count, error: null };

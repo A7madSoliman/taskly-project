@@ -63,6 +63,14 @@ export default function ProjectTasksPage() {
   const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
+  // --- Search State (Page-Local) ---
+  const [searchInput, setSearchInput] = useState<string>("");
+  const [inputSearchGen, setInputSearchGen] = useState<number>(0);
+  const [debouncedSearch, setDebouncedSearch] = useState<string>("");
+  const [activeSearchGen, setActiveSearchGen] = useState<number>(0);
+  const searchRequestSeqRef = useRef<number>(0);
+  const searchTermRef = useRef<string>("");
+
   // --- Desktop List State ---
   const [listTasks, setListTasks] = useState<BoardTask[]>([]);
   const [listTotalCount, setListTotalCount] = useState<number>(0);
@@ -131,6 +139,18 @@ export default function ProjectTasksPage() {
     REOPENED: false,
     READY_FOR_PRODUCTION: false,
     DONE: false,
+  });
+  const [boardInitialSuccessGen, setBoardInitialSuccessGen] = useState<
+    Record<TaskStatus, number | null>
+  >({
+    TO_DO: null,
+    IN_PROGRESS: null,
+    BLOCKED: null,
+    IN_REVIEW: null,
+    READY_FOR_QA: null,
+    REOPENED: null,
+    READY_FOR_PRODUCTION: null,
+    DONE: null,
   });
   const [boardLoadingMore, setBoardLoadingMore] = useState<
     Record<TaskStatus, boolean>
@@ -222,6 +242,27 @@ export default function ProjectTasksPage() {
     currentPageRef.current = currentPage;
   });
 
+  // --- Search Input & Debounce Handling ---
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchInput(value);
+    // Immediate Stale-Query Invalidation on EVERY user keystroke
+    const nextGen = ++searchRequestSeqRef.current;
+    setInputSearchGen(nextGen);
+    searchTermRef.current = value.trim();
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchInput.trim());
+      setActiveSearchGen(searchRequestSeqRef.current);
+    }, 300);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchInput]);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -245,27 +286,48 @@ export default function ProjectTasksPage() {
         projectId: string;
         mode: "board" | "list" | "mobile" | null;
         status: TaskStatus;
-      }
+        searchGen: number;
+        searchTerm: string;
+      },
+      overrideSearch?: string
     ): Promise<{
       outcome: "success" | "controlled-error" | "stale";
       total: number;
     }> => {
+      const activeSearch =
+        overrideSearch !== undefined
+          ? overrideSearch
+          : deleteOwner
+            ? deleteOwner.searchTerm
+            : debouncedSearch;
+      const capturedSearchGen = deleteOwner
+        ? deleteOwner.searchGen
+        : searchRequestSeqRef.current;
+      const capturedSearchTerm = activeSearch;
+      const capturedProjectId = projectId;
       const seq = ++boardSeqRef.current[status];
       boardInFlightRef.current[status] = true;
 
       setBoardLoadingInitial((prev) => ({ ...prev, [status]: true }));
       setBoardErrorInitial((prev) => ({ ...prev, [status]: false }));
       setBoardErrorMore((prev) => ({ ...prev, [status]: false }));
+      setBoardInitialSuccessGen((prev) => ({ ...prev, [status]: null }));
 
       try {
         const { data, count, error } =
           await TasksService.getByProjectStatusPaginated(
-            projectId,
+            capturedProjectId,
             status,
             0,
-            PAGE_SIZE - 1
+            PAGE_SIZE - 1,
+            capturedSearchTerm
           );
-        if (seq !== boardSeqRef.current[status]) {
+        if (
+          seq !== boardSeqRef.current[status] ||
+          capturedSearchGen !== searchRequestSeqRef.current ||
+          capturedProjectId !== projectIdRef.current ||
+          modeRef.current !== "board"
+        ) {
           return { outcome: "stale", total: 0 };
         }
         if (
@@ -280,16 +342,26 @@ export default function ProjectTasksPage() {
 
         if (error) {
           setBoardErrorInitial((prev) => ({ ...prev, [status]: true }));
+          setBoardInitialSuccessGen((prev) => ({ ...prev, [status]: null }));
           return { outcome: "controlled-error", total: 0 };
         } else {
           const total = count ?? 0;
           setBoardTasks((prev) => ({ ...prev, [status]: data ?? [] }));
           setBoardTotalCounts((prev) => ({ ...prev, [status]: total }));
           setBoardPageIndex((prev) => ({ ...prev, [status]: 0 }));
+          setBoardInitialSuccessGen((prev) => ({
+            ...prev,
+            [status]: capturedSearchGen,
+          }));
           return { outcome: "success", total };
         }
       } catch {
-        if (seq !== boardSeqRef.current[status]) {
+        if (
+          seq !== boardSeqRef.current[status] ||
+          capturedSearchGen !== searchRequestSeqRef.current ||
+          capturedProjectId !== projectIdRef.current ||
+          modeRef.current !== "board"
+        ) {
           return { outcome: "stale", total: 0 };
         }
         if (
@@ -300,17 +372,23 @@ export default function ProjectTasksPage() {
             deleteOwner.status === status)
         ) {
           setBoardErrorInitial((prev) => ({ ...prev, [status]: true }));
+          setBoardInitialSuccessGen((prev) => ({ ...prev, [status]: null }));
           return { outcome: "controlled-error", total: 0 };
         }
         return { outcome: "stale", total: 0 };
       } finally {
-        if (seq === boardSeqRef.current[status]) {
+        if (
+          seq === boardSeqRef.current[status] &&
+          capturedSearchGen === searchRequestSeqRef.current &&
+          capturedProjectId === projectIdRef.current &&
+          modeRef.current === "board"
+        ) {
           boardInFlightRef.current[status] = false;
           setBoardLoadingInitial((prev) => ({ ...prev, [status]: false }));
         }
       }
     },
-    [projectId]
+    [projectId, debouncedSearch]
   );
 
   const handleDragStart = useCallback(() => {
@@ -388,8 +466,11 @@ export default function ProjectTasksPage() {
       const prevSourceCount = boardTotalCounts[sourceStatus];
       const prevTargetCount = boardTotalCounts[targetStatus];
 
-      // Mutation Generation
+      // Mutation Generation & Captured Search Dimensions
       const mutationSeq = ++boardMutationSeqRef.current;
+      const capturedSearchGen = searchRequestSeqRef.current;
+      const capturedSearchTerm = debouncedSearch;
+      const capturedProjectId = projectId;
 
       // Synchronously invalidate collection generations for sourceStatus and targetStatus
       const sourceReconcileSeq = ++boardSeqRef.current[sourceStatus];
@@ -446,7 +527,12 @@ export default function ProjectTasksPage() {
         patchSucceeded = true;
       } catch {
         // Genuine PATCH failure: execute rollback ONLY if mutation generation still owns lifecycle
-        if (mutationSeq === boardMutationSeqRef.current) {
+        if (
+          mutationSeq === boardMutationSeqRef.current &&
+          capturedSearchGen === searchRequestSeqRef.current &&
+          capturedProjectId === projectIdRef.current &&
+          modeRef.current === "board"
+        ) {
           setBoardTasks((prev) => {
             const currentSource = prev[sourceStatus].filter(
               (t) => t.id !== taskId
@@ -505,13 +591,19 @@ export default function ProjectTasksPage() {
       // Check mutation ownership after PATCH await
       if (mutationSeq !== boardMutationSeqRef.current) return;
 
-      // Immediate post-PATCH arithmetic for local UI continuity
-      setBoardTotalCounts((prev) => ({
-        ...prev,
-        [sourceStatus]: Math.max(0, prevSourceCount - 1),
-        [targetStatus]: prevTargetCount + 1,
-      }));
-      setBoardDragError(null);
+      // Immediate post-PATCH arithmetic for local UI continuity if search didn't change
+      if (
+        capturedSearchGen === searchRequestSeqRef.current &&
+        capturedProjectId === projectIdRef.current &&
+        modeRef.current === "board"
+      ) {
+        setBoardTotalCounts((prev) => ({
+          ...prev,
+          [sourceStatus]: Math.max(0, prevSourceCount - 1),
+          [targetStatus]: prevTargetCount + 1,
+        }));
+        setBoardDragError(null);
+      }
 
       // ----------------------------------------------------
       // PHASE B: INDEPENDENT RECONCILIATION (PAGE 0)
@@ -521,16 +613,18 @@ export default function ProjectTasksPage() {
 
       const [sourceResult, targetResult] = await Promise.allSettled([
         TasksService.getByProjectStatusPaginated(
-          projectId,
+          capturedProjectId,
           sourceStatus,
           0,
-          PAGE_SIZE - 1
+          PAGE_SIZE - 1,
+          capturedSearchTerm
         ),
         TasksService.getByProjectStatusPaginated(
-          projectId,
+          capturedProjectId,
           targetStatus,
           0,
-          PAGE_SIZE - 1
+          PAGE_SIZE - 1,
+          capturedSearchTerm
         ),
       ]);
 
@@ -538,7 +632,12 @@ export default function ProjectTasksPage() {
       if (mutationSeq !== boardMutationSeqRef.current) return;
 
       // Handle Source Reconciliation independently
-      if (sourceReconcileSeq === boardSeqRef.current[sourceStatus]) {
+      if (
+        sourceReconcileSeq === boardSeqRef.current[sourceStatus] &&
+        capturedSearchGen === searchRequestSeqRef.current &&
+        capturedProjectId === projectIdRef.current &&
+        modeRef.current === "board"
+      ) {
         boardInFlightRef.current[sourceStatus] = false;
         if (
           sourceResult.status === "fulfilled" &&
@@ -566,7 +665,12 @@ export default function ProjectTasksPage() {
       }
 
       // Handle Target Reconciliation independently
-      if (targetReconcileSeq === boardSeqRef.current[targetStatus]) {
+      if (
+        targetReconcileSeq === boardSeqRef.current[targetStatus] &&
+        capturedSearchGen === searchRequestSeqRef.current &&
+        capturedProjectId === projectIdRef.current &&
+        modeRef.current === "board"
+      ) {
         boardInFlightRef.current[targetStatus] = false;
         if (
           targetResult.status === "fulfilled" &&
@@ -600,8 +704,24 @@ export default function ProjectTasksPage() {
         pendingMutationRef.current = false;
         setBoardDragPending(false);
       }
+
+      // If search changed during DnD, trigger current-query reconciliation read
+      if (
+        capturedSearchGen !== searchRequestSeqRef.current &&
+        capturedProjectId === projectIdRef.current &&
+        modeRef.current === "board"
+      ) {
+        void fetchBoardColumnInitial(sourceStatus);
+        void fetchBoardColumnInitial(targetStatus);
+      }
     },
-    [boardTasks, boardTotalCounts, projectId, fetchBoardColumnInitial]
+    [
+      boardTasks,
+      boardTotalCounts,
+      projectId,
+      debouncedSearch,
+      fetchBoardColumnInitial,
+    ]
   );
 
   // Evaluate media query
@@ -633,6 +753,13 @@ export default function ProjectTasksPage() {
   useEffect(() => {
     const prev = prevOwnerRef.current;
     if (prev.projectId !== projectId || prev.mode !== mode) {
+      if (prev.projectId !== projectId) {
+        // Reset search input on project identity change
+        setSearchInput("");
+        setDebouncedSearch("");
+        searchTermRef.current = "";
+        searchRequestSeqRef.current++;
+      }
       prevOwnerRef.current = { projectId, mode };
       taskDeleteSeqRef.current++;
       deletePendingRef.current = false;
@@ -678,11 +805,24 @@ export default function ProjectTasksPage() {
         deleteGen: number;
         projectId: string;
         mode: "board" | "list" | "mobile" | null;
-      }
+        searchGen: number;
+        searchTerm: string;
+      },
+      overrideSearch?: string
     ): Promise<{
       outcome: "success" | "controlled-error" | "stale";
       total: number;
     }> => {
+      const activeSearch =
+        overrideSearch !== undefined
+          ? overrideSearch
+          : deleteOwner
+            ? deleteOwner.searchTerm
+            : debouncedSearch;
+      const searchGen = deleteOwner
+        ? deleteOwner.searchGen
+        : searchRequestSeqRef.current;
+      const capturedProjectId = projectId;
       const seq = ++listSeqRef.current;
       setRequestedPage(pageToFetch);
       setListLoading(true);
@@ -693,11 +833,19 @@ export default function ProjectTasksPage() {
 
       try {
         const { data, count, error } = await TasksService.getByProjectPaginated(
-          projectId,
+          capturedProjectId,
           from,
-          to
+          to,
+          activeSearch
         );
-        if (seq !== listSeqRef.current) return { outcome: "stale", total: 0 };
+        if (
+          seq !== listSeqRef.current ||
+          searchGen !== searchRequestSeqRef.current ||
+          capturedProjectId !== projectIdRef.current ||
+          modeRef.current !== "list"
+        ) {
+          return { outcome: "stale", total: 0 };
+        }
         if (
           deleteOwner &&
           (taskDeleteSeqRef.current !== deleteOwner.deleteGen ||
@@ -730,12 +878,19 @@ export default function ProjectTasksPage() {
             const clampedTo = clampedFrom + PAGE_SIZE - 1;
 
             const corrResult = await TasksService.getByProjectPaginated(
-              projectId,
+              capturedProjectId,
               clampedFrom,
-              clampedTo
+              clampedTo,
+              activeSearch
             );
-            if (seq !== listSeqRef.current)
+            if (
+              seq !== listSeqRef.current ||
+              searchGen !== searchRequestSeqRef.current ||
+              capturedProjectId !== projectIdRef.current ||
+              modeRef.current !== "list"
+            ) {
               return { outcome: "stale", total: 0 };
+            }
             if (
               deleteOwner &&
               (taskDeleteSeqRef.current !== deleteOwner.deleteGen ||
@@ -773,7 +928,14 @@ export default function ProjectTasksPage() {
           }
         }
       } catch {
-        if (seq !== listSeqRef.current) return { outcome: "stale", total: 0 };
+        if (
+          seq !== listSeqRef.current ||
+          searchGen !== searchRequestSeqRef.current ||
+          capturedProjectId !== projectIdRef.current ||
+          modeRef.current !== "list"
+        ) {
+          return { outcome: "stale", total: 0 };
+        }
         if (
           !deleteOwner ||
           (taskDeleteSeqRef.current === deleteOwner.deleteGen &&
@@ -785,12 +947,17 @@ export default function ProjectTasksPage() {
         }
         return { outcome: "stale", total: 0 };
       } finally {
-        if (seq === listSeqRef.current) {
+        if (
+          seq === listSeqRef.current &&
+          searchGen === searchRequestSeqRef.current &&
+          capturedProjectId === projectIdRef.current &&
+          modeRef.current === "list"
+        ) {
           setListLoading(false);
         }
       }
     },
-    [projectId]
+    [projectId, debouncedSearch]
   );
 
   const fetchBoardColumnNext = useCallback(
@@ -810,6 +977,9 @@ export default function ProjectTasksPage() {
       const from = nextPageIndex * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
 
+      const capturedSearchGen = searchRequestSeqRef.current;
+      const capturedSearchTerm = debouncedSearch;
+      const capturedProjectId = projectId;
       const seq = ++boardSeqRef.current[status];
       boardInFlightRef.current[status] = true;
 
@@ -819,12 +989,20 @@ export default function ProjectTasksPage() {
       try {
         const { data, count, error } =
           await TasksService.getByProjectStatusPaginated(
-            projectId,
+            capturedProjectId,
             status,
             from,
-            to
+            to,
+            capturedSearchTerm
           );
-        if (seq !== boardSeqRef.current[status]) return;
+        if (
+          seq !== boardSeqRef.current[status] ||
+          capturedSearchGen !== searchRequestSeqRef.current ||
+          capturedProjectId !== projectIdRef.current ||
+          modeRef.current !== "board"
+        ) {
+          return;
+        }
 
         if (error) {
           setBoardErrorMore((prev) => ({ ...prev, [status]: true }));
@@ -844,16 +1022,34 @@ export default function ProjectTasksPage() {
           setBoardPageIndex((prev) => ({ ...prev, [status]: nextPageIndex }));
         }
       } catch {
-        if (seq !== boardSeqRef.current[status]) return;
+        if (
+          seq !== boardSeqRef.current[status] ||
+          capturedSearchGen !== searchRequestSeqRef.current ||
+          capturedProjectId !== projectIdRef.current ||
+          modeRef.current !== "board"
+        ) {
+          return;
+        }
         setBoardErrorMore((prev) => ({ ...prev, [status]: true }));
       } finally {
-        if (seq === boardSeqRef.current[status]) {
+        if (
+          seq === boardSeqRef.current[status] &&
+          capturedSearchGen === searchRequestSeqRef.current &&
+          capturedProjectId === projectIdRef.current &&
+          modeRef.current === "board"
+        ) {
           boardInFlightRef.current[status] = false;
           setBoardLoadingMore((prev) => ({ ...prev, [status]: false }));
         }
       }
     },
-    [projectId, boardTotalCounts, boardPageIndex, boardErrorMore]
+    [
+      projectId,
+      debouncedSearch,
+      boardTotalCounts,
+      boardPageIndex,
+      boardErrorMore,
+    ]
   );
 
   const retryBoardColumnMore = useCallback(
@@ -875,7 +1071,10 @@ export default function ProjectTasksPage() {
         deleteGen: number;
         projectId: string;
         mode: "board" | "list" | "mobile" | null;
-      }
+        searchGen: number;
+        searchTerm: string;
+      },
+      overrideSearch?: string
     ): Promise<{ outcome: "success" | "controlled-error" | "stale" }> => {
       if (mobileInFlightRef.current && !deleteOwner) {
         return { outcome: "stale" };
@@ -891,6 +1090,16 @@ export default function ProjectTasksPage() {
         return { outcome: "success" };
       }
 
+      const activeSearch =
+        overrideSearch !== undefined
+          ? overrideSearch
+          : deleteOwner
+            ? deleteOwner.searchTerm
+            : debouncedSearch;
+      const searchGen = deleteOwner
+        ? deleteOwner.searchGen
+        : searchRequestSeqRef.current;
+      const capturedProjectId = projectId;
       const seq = ++mobileSeqRef.current;
       mobileInFlightRef.current = true;
 
@@ -903,7 +1112,6 @@ export default function ProjectTasksPage() {
 
       try {
         // Stream through statuses. For each status, fetch until exhausted, then advance.
-        // On initial mobile entry or when continuing, loop until we either load tasks or exhaust all statuses.
         while (curStatusIdx < BOARD_COLUMNS.length) {
           const status = BOARD_COLUMNS[curStatusIdx].status;
           const from = curPageIdx * PAGE_SIZE;
@@ -911,13 +1119,21 @@ export default function ProjectTasksPage() {
 
           const { data, count, error } =
             await TasksService.getByProjectStatusPaginated(
-              projectId,
+              capturedProjectId,
               status,
               from,
-              to
+              to,
+              activeSearch
             );
 
-          if (seq !== mobileSeqRef.current) return { outcome: "stale" };
+          if (
+            seq !== mobileSeqRef.current ||
+            searchGen !== searchRequestSeqRef.current ||
+            capturedProjectId !== projectIdRef.current ||
+            modeRef.current !== "mobile"
+          ) {
+            return { outcome: "stale" };
+          }
           if (
             deleteOwner &&
             (taskDeleteSeqRef.current !== deleteOwner.deleteGen ||
@@ -977,7 +1193,14 @@ export default function ProjectTasksPage() {
         }
         return { outcome: "success" };
       } catch {
-        if (seq !== mobileSeqRef.current) return { outcome: "stale" };
+        if (
+          seq !== mobileSeqRef.current ||
+          searchGen !== searchRequestSeqRef.current ||
+          capturedProjectId !== projectIdRef.current ||
+          modeRef.current !== "mobile"
+        ) {
+          return { outcome: "stale" };
+        }
         if (
           !deleteOwner ||
           (taskDeleteSeqRef.current === deleteOwner.deleteGen &&
@@ -989,14 +1212,19 @@ export default function ProjectTasksPage() {
         }
         return { outcome: "stale" };
       } finally {
-        if (seq === mobileSeqRef.current) {
+        if (
+          seq === mobileSeqRef.current &&
+          searchGen === searchRequestSeqRef.current &&
+          capturedProjectId === projectIdRef.current &&
+          modeRef.current === "mobile"
+        ) {
           mobileInFlightRef.current = false;
           setMobileLoadingInitial(false);
           setMobileLoadingMore(false);
         }
       }
     },
-    [projectId]
+    [projectId, debouncedSearch]
   );
 
   // ----------------------------------------------------
@@ -1055,6 +1283,8 @@ export default function ProjectTasksPage() {
       projectId: projectIdRef.current,
       mode: modeRef.current,
       page: currentPageRef.current,
+      searchGen: searchRequestSeqRef.current,
+      searchTerm: debouncedSearch,
     };
 
     try {
@@ -1114,6 +1344,8 @@ export default function ProjectTasksPage() {
           deleteGen: capturedOwner.deleteGen,
           projectId: capturedOwner.projectId,
           mode: capturedOwner.mode,
+          searchGen: capturedOwner.searchGen,
+          searchTerm: capturedOwner.searchTerm,
         });
         reconOutcome = res.outcome;
       } else if (capturedOwner.mode === "list") {
@@ -1123,6 +1355,8 @@ export default function ProjectTasksPage() {
           deleteGen: capturedOwner.deleteGen,
           projectId: capturedOwner.projectId,
           mode: capturedOwner.mode,
+          searchGen: capturedOwner.searchGen,
+          searchTerm: capturedOwner.searchTerm,
         });
         reconOutcome = res.outcome;
       } else if (capturedOwner.mode === "board") {
@@ -1136,6 +1370,8 @@ export default function ProjectTasksPage() {
               projectId: capturedOwner.projectId,
               mode: capturedOwner.mode,
               status: capturedOwner.targetStatus,
+              searchGen: capturedOwner.searchGen,
+              searchTerm: capturedOwner.searchTerm,
             }
           );
           reconOutcome = res.outcome;
@@ -1143,13 +1379,26 @@ export default function ProjectTasksPage() {
       }
 
       if (reconOutcome === "stale") {
-        // Stale generation: commit ZERO state writes
+        // If search changed during delete, refresh current active search
+        if (
+          capturedOwner.searchGen !== searchRequestSeqRef.current &&
+          projectIdRef.current === capturedOwner.projectId
+        ) {
+          if (modeRef.current === "list") {
+            void fetchListPage(currentPageRef.current);
+          } else if (
+            modeRef.current === "board" &&
+            capturedOwner.targetStatus
+          ) {
+            void fetchBoardColumnInitial(capturedOwner.targetStatus);
+          } else if (modeRef.current === "mobile") {
+            void fetchMobileSequential(0, 0, true);
+          }
+        }
         return;
       }
 
       // For both "success" and "controlled-error":
-      // Since deletion was already verified absent via read-back,
-      // close confirmation and release pending if delete owner is still current.
       if (
         taskDeleteSeqRef.current === capturedOwner.deleteGen &&
         projectIdRef.current === capturedOwner.projectId &&
@@ -1162,14 +1411,22 @@ export default function ProjectTasksPage() {
       }
     } catch {
       if (currentDeleteGen === taskDeleteSeqRef.current) {
-        setDeleteError("Failed to delete task. Please try again.");
         deletePendingRef.current = false;
         setIsDeletePending(false);
+        if (
+          projectIdRef.current === capturedOwner.projectId &&
+          modeRef.current === capturedOwner.mode &&
+          searchRequestSeqRef.current === capturedOwner.searchGen &&
+          debouncedSearch === capturedOwner.searchTerm
+        ) {
+          setDeleteError("Failed to delete task. Please try again.");
+        }
       }
     }
   }, [
     taskToDelete,
     selectedTaskId,
+    debouncedSearch,
     fetchListPage,
     fetchMobileSequential,
     fetchBoardColumnInitial,
@@ -1222,7 +1479,7 @@ export default function ProjectTasksPage() {
   );
 
   // ----------------------------------------------------
-  // MODE & PROJECT RESPONSIVE LIFECYCLE INITIALIZATION
+  // MODE, PROJECT & SEARCH RESPONSIVE LIFECYCLE INITIALIZATION
   // ----------------------------------------------------
   useEffect(() => {
     if (mode === null) return;
@@ -1247,6 +1504,16 @@ export default function ProjectTasksPage() {
           boardSeqRef.current[statusKey]++;
           boardInFlightRef.current[statusKey] = false;
         });
+        setBoardInitialSuccessGen({
+          TO_DO: null,
+          IN_PROGRESS: null,
+          BLOCKED: null,
+          IN_REVIEW: null,
+          READY_FOR_QA: null,
+          REOPENED: null,
+          READY_FOR_PRODUCTION: null,
+          DONE: null,
+        });
         mobileSeqRef.current++;
         mobileInFlightRef.current = false;
 
@@ -1266,6 +1533,16 @@ export default function ProjectTasksPage() {
           boardSeqRef.current[statusKey]++;
           boardInFlightRef.current[statusKey] = false;
         });
+        setBoardInitialSuccessGen({
+          TO_DO: null,
+          IN_PROGRESS: null,
+          BLOCKED: null,
+          IN_REVIEW: null,
+          READY_FOR_QA: null,
+          REOPENED: null,
+          READY_FOR_PRODUCTION: null,
+          DONE: null,
+        });
 
         BOARD_COLUMNS.forEach((col) => {
           void fetchBoardColumnInitial(col.status);
@@ -1277,6 +1554,16 @@ export default function ProjectTasksPage() {
           const statusKey = k as TaskStatus;
           boardSeqRef.current[statusKey]++;
           boardInFlightRef.current[statusKey] = false;
+        });
+        setBoardInitialSuccessGen({
+          TO_DO: null,
+          IN_PROGRESS: null,
+          BLOCKED: null,
+          IN_REVIEW: null,
+          READY_FOR_QA: null,
+          REOPENED: null,
+          READY_FOR_PRODUCTION: null,
+          DONE: null,
         });
 
         mobileSeqRef.current++;
@@ -1301,6 +1588,7 @@ export default function ProjectTasksPage() {
   }, [
     projectId,
     mode,
+    debouncedSearch,
     fetchListPage,
     fetchBoardColumnInitial,
     fetchMobileSequential,
@@ -1332,6 +1620,33 @@ export default function ProjectTasksPage() {
     pages.push(totalPages);
     return pages;
   }, [totalPages, currentPage]);
+
+  // --- Board Search All-Zero Computation ---
+  const isBoardSearchAllZero = useMemo(() => {
+    if (
+      mode !== "board" ||
+      !debouncedSearch ||
+      activeSearchGen !== inputSearchGen
+    ) {
+      return false;
+    }
+    const allEightCurrentGenCompleted = BOARD_COLUMNS.every(
+      (col) =>
+        boardInitialSuccessGen[col.status] !== null &&
+        boardInitialSuccessGen[col.status] === activeSearchGen
+    );
+    const totalCountAllZero = BOARD_COLUMNS.every(
+      (col) => boardTotalCounts[col.status] === 0
+    );
+    return allEightCurrentGenCompleted && totalCountAllZero;
+  }, [
+    mode,
+    debouncedSearch,
+    activeSearchGen,
+    inputSearchGen,
+    boardInitialSuccessGen,
+    boardTotalCounts,
+  ]);
 
   return (
     <AppShell>
@@ -1381,9 +1696,10 @@ export default function ProjectTasksPage() {
               />
               <input
                 type="text"
+                value={searchInput}
+                onChange={handleSearchChange}
                 placeholder="Search tasks..."
                 aria-label="Search tasks"
-                readOnly
                 tabIndex={0}
                 className="h-10 w-full rounded-[4px] border border-[#d9deeb] bg-[#f8f9fc] pl-9 pr-3 text-[13px] text-[#041b3c] placeholder:text-[#737685] focus:border-[#0052cc] focus:outline-none focus:ring-1 focus:ring-[#0052cc]"
               />
@@ -1419,9 +1735,10 @@ export default function ProjectTasksPage() {
               />
               <input
                 type="text"
+                value={searchInput}
+                onChange={handleSearchChange}
                 placeholder="Search tasks..."
                 aria-label="Search tasks"
-                readOnly
                 tabIndex={0}
                 className="h-11 w-full rounded-[6px] border border-[#d9deeb] bg-[#dbe4ff]/40 pl-9 pr-3 text-[14px] text-[#041b3c] placeholder:text-[#737685] focus:border-[#0052cc] focus:outline-none focus:ring-1 focus:ring-[#0052cc]"
               />
@@ -1456,6 +1773,15 @@ export default function ProjectTasksPage() {
                 >
                   Dismiss
                 </button>
+              </div>
+            ) : null}
+
+            {isBoardSearchAllZero ? (
+              <div
+                role="status"
+                className="mb-4 rounded-[6px] border border-[#d9deeb] bg-[#f8f9fc] px-4 py-3 text-[13px] font-medium text-[#53627b]"
+              >
+                No tasks found matching your search
               </div>
             ) : null}
 
@@ -1553,7 +1879,9 @@ export default function ProjectTasksPage() {
                         <td colSpan={6} className="px-6 py-12 text-center">
                           <div className="flex flex-col items-center justify-center gap-2">
                             <p className="text-[14px] font-medium text-[#b42318]">
-                              Failed to load tasks
+                              {debouncedSearch
+                                ? "Failed to search tasks"
+                                : "Failed to load tasks"}
                             </p>
                             <button
                               type="button"
@@ -1571,22 +1899,28 @@ export default function ProjectTasksPage() {
                         <td colSpan={6} className="px-6 py-16 text-center">
                           <div className="flex flex-col items-center justify-center gap-3">
                             <p className="text-[15px] font-semibold text-[#041b3c]">
-                              No tasks found
+                              {debouncedSearch
+                                ? "No tasks found matching your search"
+                                : "No tasks found for this project"}
                             </p>
-                            <p className="text-[13px] text-[#737685]">
-                              There are no tasks in this project yet.
-                            </p>
-                            <Link
-                              href={`/project/${projectId}/tasks/new`}
-                              className="inline-flex items-center gap-1.5 rounded-[4px] bg-[#0052cc] px-4 py-2 text-[13px] font-semibold text-white shadow-[0_1px_2px_rgba(0,82,204,0.2)] transition-opacity hover:opacity-90"
-                            >
-                              <Plus
-                                size={15}
-                                strokeWidth={2.2}
-                                aria-hidden="true"
-                              />
-                              <span>Add Task</span>
-                            </Link>
+                            {!debouncedSearch && (
+                              <>
+                                <p className="text-[13px] text-[#737685]">
+                                  There are no tasks in this project yet.
+                                </p>
+                                <Link
+                                  href={`/project/${projectId}/tasks/new`}
+                                  className="inline-flex items-center gap-1.5 rounded-[4px] bg-[#0052cc] px-4 py-2 text-[13px] font-semibold text-white shadow-[0_1px_2px_rgba(0,82,204,0.2)] transition-opacity hover:opacity-90"
+                                >
+                                  <Plus
+                                    size={15}
+                                    strokeWidth={2.2}
+                                    aria-hidden="true"
+                                  />
+                                  <span>Add Task</span>
+                                </Link>
+                              </>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -1697,18 +2031,24 @@ export default function ProjectTasksPage() {
             mobileAllExhausted ? (
               <div className="flex flex-col items-center justify-center rounded-[10px] border border-dashed border-[#d9deeb] bg-[#f8f9ff] px-5 py-12 text-center">
                 <p className="text-[16px] font-semibold text-[#041b3c]">
-                  No tasks found
+                  {debouncedSearch
+                    ? "No tasks found matching your search"
+                    : "No tasks found for this project"}
                 </p>
-                <p className="mt-1 text-[13px] text-[#68758c]">
-                  Get started by creating your first task in this project.
-                </p>
-                <Link
-                  href={`/project/${projectId}/tasks/new`}
-                  className="mt-5 inline-flex h-11 items-center gap-2 rounded-[6px] bg-[#0052cc] px-6 text-[14px] font-semibold text-white shadow-[0_2px_4px_rgba(0,82,204,0.18)]"
-                >
-                  <Plus size={16} strokeWidth={2.2} aria-hidden="true" />
-                  Create Task
-                </Link>
+                {!debouncedSearch && (
+                  <>
+                    <p className="mt-1 text-[13px] text-[#68758c]">
+                      Get started by creating your first task in this project.
+                    </p>
+                    <Link
+                      href={`/project/${projectId}/tasks/new`}
+                      className="mt-5 inline-flex h-11 items-center gap-2 rounded-[6px] bg-[#0052cc] px-6 text-[14px] font-semibold text-white shadow-[0_2px_4px_rgba(0,82,204,0.18)]"
+                    >
+                      <Plus size={16} strokeWidth={2.2} aria-hidden="true" />
+                      Create Task
+                    </Link>
+                  </>
+                )}
               </div>
             ) : null}
 
@@ -1744,7 +2084,9 @@ export default function ProjectTasksPage() {
             {mobileError ? (
               <div className="my-4 flex flex-col items-center justify-center rounded-[8px] border border-dashed border-[#fda29b] bg-[#fff4f2] p-4 text-center">
                 <p className="text-[13px] font-medium text-[#b42318]">
-                  Failed to load tasks
+                  {debouncedSearch
+                    ? "Failed to search tasks"
+                    : "Failed to load tasks"}
                 </p>
                 <button
                   type="button"
