@@ -82,6 +82,15 @@ export interface TaskDetails {
   assignee: ProjectTaskAssignee | null;
 }
 
+export interface TaskUpdatePatch {
+  title?: string;
+  description?: string | null;
+  assignee_id?: string | null;
+  due_date?: string | null;
+  epic_id?: string | null;
+  status?: TaskStatus;
+}
+
 export const TasksService = {
   getDetails: async (
     projectId: string,
@@ -203,16 +212,22 @@ export const TasksService = {
     if (error) return { data: null, error };
     return { data: data as CreatedTask, error: null };
   },
+  update: async (
+    taskId: string,
+    patch: TaskUpdatePatch
+  ): Promise<{ error: PostgrestError | null }> => {
+    const { error } = await supabase
+      .from("tasks")
+      .update(patch)
+      .eq("id", taskId);
+
+    return { error };
+  },
   updateStatus: async (
     taskId: string,
     status: TaskStatus
   ): Promise<{ error: PostgrestError | null }> => {
-    const { error } = await supabase
-      .from("tasks")
-      .update({ status })
-      .eq("id", taskId);
-
-    return { error };
+    return TasksService.update(taskId, { status });
   },
   delete: async (taskId: string) => {
     return supabase.from("tasks").delete().eq("id", taskId);

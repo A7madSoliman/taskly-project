@@ -31,11 +31,16 @@ import {
   TasksService,
   BoardTask,
   TaskStatus,
+  TaskUpdatePatch,
 } from "@/services/api/tasks.service";
 import { TaskColumn } from "@/components/tasks/TaskColumn";
 import { TaskCard } from "@/components/tasks/TaskCard";
 import { TaskRow } from "@/components/tasks/TaskRow";
-import { TaskDetailsModal } from "@/components/tasks/TaskDetailsModal";
+import {
+  TaskDetailsModal,
+  TaskUpdateField,
+  TaskUpdateResult,
+} from "@/components/tasks/TaskDetailsModal";
 import { DeleteConfirmationModal } from "@/components/ui/DeleteConfirmationModal";
 import { ProjectMobileBottomNav } from "@/components/layout/ProjectMobileBottomNav";
 
@@ -215,19 +220,29 @@ export default function ProjectTasksPage() {
   const mobileSeqRef = useRef<number>(0);
   const mobileInFlightRef = useRef<boolean>(false);
 
-  // --- TM-27 Board DnD State ---
+  // --- TM-27 & TM-30 Mutation Tracking Refs ---
   const [boardDragPending, setBoardDragPending] = useState<boolean>(false);
   const [boardDragError, setBoardDragError] = useState<string | null>(null);
   const pendingMutationRef = useRef<boolean>(false);
   const pendingMoveStatusesRef = useRef<Set<TaskStatus>>(new Set());
   const boardMutationSeqRef = useRef<number>(0);
+  const taskStatusMutationSeqRef = useRef<Record<string, number>>({});
+  const taskUpdateSeqRef = useRef<Record<string, Record<string, number>>>({});
 
   // --- Task Delete State (Shared by Desktop List TaskRow and Mobile TaskCard) ---
   const [taskToDelete, setTaskToDelete] = useState<BoardTask | null>(null);
   const [isDeletePending, setIsDeletePending] = useState<boolean>(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const deletePendingRef = useRef<boolean>(false);
-  const taskDeleteSeqRef = useRef<number>(0);
+  const activeDeleteOwnerRef = useRef<{
+    taskId: string;
+    deleteGen: number;
+    pending: boolean;
+  }>({
+    taskId: "",
+    deleteGen: 0,
+    pending: false,
+  });
+  const taskDeleteSeqRef = useRef<Record<string, number>>({});
 
   const projectIdRef = useRef(projectId);
   const modeRef = useRef<"board" | "list" | "mobile" | null>(null);
@@ -282,6 +297,7 @@ export default function ProjectTasksPage() {
     async (
       status: TaskStatus,
       deleteOwner?: {
+        targetUuid: string;
         deleteGen: number;
         projectId: string;
         mode: "board" | "list" | "mobile" | null;
@@ -332,7 +348,8 @@ export default function ProjectTasksPage() {
         }
         if (
           deleteOwner &&
-          (taskDeleteSeqRef.current !== deleteOwner.deleteGen ||
+          (taskDeleteSeqRef.current[deleteOwner.targetUuid] !==
+            deleteOwner.deleteGen ||
             projectIdRef.current !== deleteOwner.projectId ||
             modeRef.current !== deleteOwner.mode ||
             deleteOwner.status !== status)
@@ -366,7 +383,8 @@ export default function ProjectTasksPage() {
         }
         if (
           !deleteOwner ||
-          (taskDeleteSeqRef.current === deleteOwner.deleteGen &&
+          (taskDeleteSeqRef.current[deleteOwner.targetUuid] ===
+            deleteOwner.deleteGen &&
             projectIdRef.current === deleteOwner.projectId &&
             modeRef.current === deleteOwner.mode &&
             deleteOwner.status === status)
@@ -449,6 +467,14 @@ export default function ProjectTasksPage() {
       // Same status: NO-OP, no PATCH, no local reorder (BEFORE anything else)
       if (sourceStatus === targetStatus) return;
 
+      // Check if confirmed delete is actively pending for this exact task
+      if (
+        activeDeleteOwnerRef.current.pending &&
+        activeDeleteOwnerRef.current.taskId === taskId
+      ) {
+        return;
+      }
+
       // Guard: At most ONE Board status mutation at a time
       if (pendingMutationRef.current) return;
 
@@ -468,6 +494,11 @@ export default function ProjectTasksPage() {
 
       // Mutation Generation & Captured Search Dimensions
       const mutationSeq = ++boardMutationSeqRef.current;
+      const nextTaskStatusSeq =
+        (taskStatusMutationSeqRef.current[taskId] || 0) + 1;
+      taskStatusMutationSeqRef.current[taskId] = nextTaskStatusSeq;
+      const taskStatusSeq = nextTaskStatusSeq;
+      const capturedDeleteGen = taskDeleteSeqRef.current[taskId] || 0;
       const capturedSearchGen = searchRequestSeqRef.current;
       const capturedSearchTerm = debouncedSearch;
       const capturedProjectId = projectId;
@@ -529,6 +560,12 @@ export default function ProjectTasksPage() {
         // Genuine PATCH failure: execute rollback ONLY if mutation generation still owns lifecycle
         if (
           mutationSeq === boardMutationSeqRef.current &&
+          taskStatusSeq === taskStatusMutationSeqRef.current[taskId] &&
+          capturedDeleteGen === (taskDeleteSeqRef.current[taskId] || 0) &&
+          !(
+            activeDeleteOwnerRef.current.pending &&
+            activeDeleteOwnerRef.current.taskId === taskId
+          ) &&
           capturedSearchGen === searchRequestSeqRef.current &&
           capturedProjectId === projectIdRef.current &&
           modeRef.current === "board"
@@ -589,7 +626,15 @@ export default function ProjectTasksPage() {
       }
 
       // Check mutation ownership after PATCH await
-      if (mutationSeq !== boardMutationSeqRef.current) return;
+      if (
+        mutationSeq !== boardMutationSeqRef.current ||
+        taskStatusSeq !== taskStatusMutationSeqRef.current[taskId] ||
+        capturedDeleteGen !== (taskDeleteSeqRef.current[taskId] || 0) ||
+        (activeDeleteOwnerRef.current.pending &&
+          activeDeleteOwnerRef.current.taskId === taskId)
+      ) {
+        return;
+      }
 
       // Immediate post-PATCH arithmetic for local UI continuity if search didn't change
       if (
@@ -629,7 +674,15 @@ export default function ProjectTasksPage() {
       ]);
 
       // Check mutation ownership after reconciliation await
-      if (mutationSeq !== boardMutationSeqRef.current) return;
+      if (
+        mutationSeq !== boardMutationSeqRef.current ||
+        taskStatusSeq !== taskStatusMutationSeqRef.current[taskId] ||
+        capturedDeleteGen !== (taskDeleteSeqRef.current[taskId] || 0) ||
+        (activeDeleteOwnerRef.current.pending &&
+          activeDeleteOwnerRef.current.taskId === taskId)
+      ) {
+        return;
+      }
 
       // Handle Source Reconciliation independently
       if (
@@ -761,8 +814,12 @@ export default function ProjectTasksPage() {
         searchRequestSeqRef.current++;
       }
       prevOwnerRef.current = { projectId, mode };
-      taskDeleteSeqRef.current++;
-      deletePendingRef.current = false;
+      taskDeleteSeqRef.current = {};
+      activeDeleteOwnerRef.current = {
+        taskId: "",
+        deleteGen: 0,
+        pending: false,
+      };
       setIsDeletePending(false);
       setTaskToDelete(null);
       setDeleteError(null);
@@ -772,8 +829,14 @@ export default function ProjectTasksPage() {
   // True unmount-only invalidation
   useEffect(() => {
     const seqRef = taskDeleteSeqRef;
+    const deleteOwner = activeDeleteOwnerRef;
     return () => {
-      seqRef.current++;
+      seqRef.current = {};
+      deleteOwner.current = {
+        taskId: "",
+        deleteGen: 0,
+        pending: false,
+      };
     };
   }, []);
 
@@ -802,6 +865,7 @@ export default function ProjectTasksPage() {
     async (
       pageToFetch: number,
       deleteOwner?: {
+        targetUuid: string;
         deleteGen: number;
         projectId: string;
         mode: "board" | "list" | "mobile" | null;
@@ -848,7 +912,8 @@ export default function ProjectTasksPage() {
         }
         if (
           deleteOwner &&
-          (taskDeleteSeqRef.current !== deleteOwner.deleteGen ||
+          (taskDeleteSeqRef.current[deleteOwner.targetUuid] !==
+            deleteOwner.deleteGen ||
             projectIdRef.current !== deleteOwner.projectId ||
             modeRef.current !== deleteOwner.mode)
         ) {
@@ -893,7 +958,8 @@ export default function ProjectTasksPage() {
             }
             if (
               deleteOwner &&
-              (taskDeleteSeqRef.current !== deleteOwner.deleteGen ||
+              (taskDeleteSeqRef.current[deleteOwner.targetUuid] !==
+                deleteOwner.deleteGen ||
                 projectIdRef.current !== deleteOwner.projectId ||
                 modeRef.current !== deleteOwner.mode)
             ) {
@@ -938,7 +1004,8 @@ export default function ProjectTasksPage() {
         }
         if (
           !deleteOwner ||
-          (taskDeleteSeqRef.current === deleteOwner.deleteGen &&
+          (taskDeleteSeqRef.current[deleteOwner.targetUuid] ===
+            deleteOwner.deleteGen &&
             projectIdRef.current === deleteOwner.projectId &&
             modeRef.current === deleteOwner.mode)
         ) {
@@ -1068,6 +1135,7 @@ export default function ProjectTasksPage() {
       initialPageIdx: number,
       isInitialMobileEntry: boolean = false,
       deleteOwner?: {
+        targetUuid: string;
         deleteGen: number;
         projectId: string;
         mode: "board" | "list" | "mobile" | null;
@@ -1105,15 +1173,17 @@ export default function ProjectTasksPage() {
 
       if (isInitialMobileEntry || (curStatusIdx === 0 && curPageIdx === 0)) {
         setMobileLoadingInitial(true);
+        setMobileError(false);
       } else {
         setMobileLoadingMore(true);
+        setMobileError(false);
       }
-      setMobileError(false);
 
       try {
         // Stream through statuses. For each status, fetch until exhausted, then advance.
         while (curStatusIdx < BOARD_COLUMNS.length) {
-          const status = BOARD_COLUMNS[curStatusIdx].status;
+          const statusCol = BOARD_COLUMNS[curStatusIdx];
+          const status = statusCol.status;
           const from = curPageIdx * PAGE_SIZE;
           const to = from + PAGE_SIZE - 1;
 
@@ -1136,7 +1206,8 @@ export default function ProjectTasksPage() {
           }
           if (
             deleteOwner &&
-            (taskDeleteSeqRef.current !== deleteOwner.deleteGen ||
+            (taskDeleteSeqRef.current[deleteOwner.targetUuid] !==
+              deleteOwner.deleteGen ||
               projectIdRef.current !== deleteOwner.projectId ||
               modeRef.current !== deleteOwner.mode)
           ) {
@@ -1203,7 +1274,8 @@ export default function ProjectTasksPage() {
         }
         if (
           !deleteOwner ||
-          (taskDeleteSeqRef.current === deleteOwner.deleteGen &&
+          (taskDeleteSeqRef.current[deleteOwner.targetUuid] ===
+            deleteOwner.deleteGen &&
             projectIdRef.current === deleteOwner.projectId &&
             modeRef.current === deleteOwner.mode)
         ) {
@@ -1231,19 +1303,14 @@ export default function ProjectTasksPage() {
   // SHARED TASK DELETE HANDLERS (Desktop List, Mobile & Board)
   // ----------------------------------------------------
   const handleDeleteRequested = useCallback((task: BoardTask) => {
-    taskDeleteSeqRef.current++;
-    deletePendingRef.current = false;
-    setIsDeletePending(false);
+    // Opening confirmation is NOT confirmed delete; do not increment taskDeleteSeqRef
     setTaskToDelete(task);
     setDeleteError(null);
   }, []);
 
   const handleBoardDeleteRequested = useCallback(
     (target: { id: string; status: TaskStatus }) => {
-      taskDeleteSeqRef.current++;
-      deletePendingRef.current = false;
-      setIsDeletePending(false);
-
+      // Opening confirmation is NOT confirmed delete; do not increment taskDeleteSeqRef
       const deleteTarget: BoardTask = {
         id: target.id,
         task_id: "TASK",
@@ -1262,23 +1329,31 @@ export default function ProjectTasksPage() {
   );
 
   const handleDeleteCancel = useCallback(() => {
-    if (deletePendingRef.current) return;
-    taskDeleteSeqRef.current++;
+    // Cancel confirmation: if no active delete mutation is pending, clear selection with zero invalidation
+    if (activeDeleteOwnerRef.current.pending) return;
     setTaskToDelete(null);
     setDeleteError(null);
   }, []);
 
   const handleDeleteConfirm = useCallback(async () => {
-    if (!taskToDelete || deletePendingRef.current) return;
+    if (!taskToDelete || activeDeleteOwnerRef.current.pending) return;
 
-    const currentDeleteGen = ++taskDeleteSeqRef.current;
-    deletePendingRef.current = true;
+    const targetUuid = taskToDelete.id;
+    const nextDeleteGen = (taskDeleteSeqRef.current[targetUuid] || 0) + 1;
+    taskDeleteSeqRef.current[targetUuid] = nextDeleteGen;
+    const currentDeleteGen = nextDeleteGen;
+
+    activeDeleteOwnerRef.current = {
+      taskId: targetUuid,
+      deleteGen: currentDeleteGen,
+      pending: true,
+    };
     setIsDeletePending(true);
     setDeleteError(null);
 
     const capturedOwner = {
       deleteGen: currentDeleteGen,
-      targetUuid: taskToDelete.id,
+      targetUuid,
       targetStatus: taskToDelete.status,
       projectId: projectIdRef.current,
       mode: modeRef.current,
@@ -1291,11 +1366,21 @@ export default function ProjectTasksPage() {
       const { error: deleteErr } = await TasksService.delete(
         capturedOwner.targetUuid
       );
-      if (currentDeleteGen !== taskDeleteSeqRef.current) return;
+      if (
+        currentDeleteGen !== taskDeleteSeqRef.current[targetUuid] ||
+        !activeDeleteOwnerRef.current.pending ||
+        activeDeleteOwnerRef.current.taskId !== targetUuid
+      ) {
+        return;
+      }
 
       if (deleteErr) {
         setDeleteError("Failed to delete task. Please try again.");
-        deletePendingRef.current = false;
+        activeDeleteOwnerRef.current = {
+          taskId: "",
+          deleteGen: 0,
+          pending: false,
+        };
         setIsDeletePending(false);
         return;
       }
@@ -1306,11 +1391,21 @@ export default function ProjectTasksPage() {
           capturedOwner.projectId,
           capturedOwner.targetUuid
         );
-      if (currentDeleteGen !== taskDeleteSeqRef.current) return;
+      if (
+        currentDeleteGen !== taskDeleteSeqRef.current[targetUuid] ||
+        !activeDeleteOwnerRef.current.pending ||
+        activeDeleteOwnerRef.current.taskId !== targetUuid
+      ) {
+        return;
+      }
 
       if (readBackErr) {
         setDeleteError("Failed to delete task. Please try again.");
-        deletePendingRef.current = false;
+        activeDeleteOwnerRef.current = {
+          taskId: "",
+          deleteGen: 0,
+          pending: false,
+        };
         setIsDeletePending(false);
         return;
       }
@@ -1318,7 +1413,11 @@ export default function ProjectTasksPage() {
       if (readBackData !== null) {
         // Record still exists - treat as delete failure / no-op
         setDeleteError("Failed to delete task. Please try again.");
-        deletePendingRef.current = false;
+        activeDeleteOwnerRef.current = {
+          taskId: "",
+          deleteGen: 0,
+          pending: false,
+        };
         setIsDeletePending(false);
         return;
       }
@@ -1341,6 +1440,7 @@ export default function ProjectTasksPage() {
         setMobileError(false);
 
         const res = await fetchMobileSequential(0, 0, true, {
+          targetUuid: capturedOwner.targetUuid,
           deleteGen: capturedOwner.deleteGen,
           projectId: capturedOwner.projectId,
           mode: capturedOwner.mode,
@@ -1352,6 +1452,7 @@ export default function ProjectTasksPage() {
         // Desktop List: invalidate prior list sequence and re-fetch list page
         listSeqRef.current++;
         const res = await fetchListPage(capturedOwner.page, {
+          targetUuid: capturedOwner.targetUuid,
           deleteGen: capturedOwner.deleteGen,
           projectId: capturedOwner.projectId,
           mode: capturedOwner.mode,
@@ -1366,6 +1467,7 @@ export default function ProjectTasksPage() {
           const res = await fetchBoardColumnInitial(
             capturedOwner.targetStatus,
             {
+              targetUuid: capturedOwner.targetUuid,
               deleteGen: capturedOwner.deleteGen,
               projectId: capturedOwner.projectId,
               mode: capturedOwner.mode,
@@ -1400,18 +1502,30 @@ export default function ProjectTasksPage() {
 
       // For both "success" and "controlled-error":
       if (
-        taskDeleteSeqRef.current === capturedOwner.deleteGen &&
+        taskDeleteSeqRef.current[targetUuid] === capturedOwner.deleteGen &&
+        activeDeleteOwnerRef.current.taskId === targetUuid &&
         projectIdRef.current === capturedOwner.projectId &&
         modeRef.current === capturedOwner.mode
       ) {
         setTaskToDelete(null);
         setDeleteError(null);
-        deletePendingRef.current = false;
+        activeDeleteOwnerRef.current = {
+          taskId: "",
+          deleteGen: 0,
+          pending: false,
+        };
         setIsDeletePending(false);
       }
     } catch {
-      if (currentDeleteGen === taskDeleteSeqRef.current) {
-        deletePendingRef.current = false;
+      if (
+        currentDeleteGen === taskDeleteSeqRef.current[targetUuid] &&
+        activeDeleteOwnerRef.current.taskId === targetUuid
+      ) {
+        activeDeleteOwnerRef.current = {
+          taskId: "",
+          deleteGen: 0,
+          pending: false,
+        };
         setIsDeletePending(false);
         if (
           projectIdRef.current === capturedOwner.projectId &&
@@ -1431,6 +1545,233 @@ export default function ProjectTasksPage() {
     fetchMobileSequential,
     fetchBoardColumnInitial,
   ]);
+
+  // ----------------------------------------------------
+  // TM-30 TASK UPDATE COORDINATOR
+  // ----------------------------------------------------
+  const handleTaskUpdate = useCallback(
+    async (
+      targetTaskId: string,
+      field: TaskUpdateField,
+      patch: TaskUpdatePatch,
+      previousStatus?: TaskStatus,
+      targetStatus?: TaskStatus
+    ): Promise<TaskUpdateResult> => {
+      // Safety Guard: Check if confirmed delete is actively pending for this exact task
+      if (
+        activeDeleteOwnerRef.current.pending &&
+        activeDeleteOwnerRef.current.taskId === targetTaskId
+      ) {
+        return { outcome: "stale" };
+      }
+
+      // Track per-task per-field generation
+      if (!taskUpdateSeqRef.current[targetTaskId]) {
+        taskUpdateSeqRef.current[targetTaskId] = {};
+      }
+      const nextFieldSeq =
+        (taskUpdateSeqRef.current[targetTaskId][field] || 0) + 1;
+      taskUpdateSeqRef.current[targetTaskId][field] = nextFieldSeq;
+      const fieldSeq = nextFieldSeq;
+
+      let taskStatusSeq = 0;
+      if (field === "status") {
+        const nextStatusSeq =
+          (taskStatusMutationSeqRef.current[targetTaskId] || 0) + 1;
+        taskStatusMutationSeqRef.current[targetTaskId] = nextStatusSeq;
+        taskStatusSeq = nextStatusSeq;
+      }
+
+      const capturedProjectId = projectId;
+      const capturedDeleteGen = taskDeleteSeqRef.current[targetTaskId] || 0;
+
+      try {
+        // Step 1: Execute exactly one PATCH
+        const { error: patchErr } = await TasksService.update(
+          targetTaskId,
+          patch
+        );
+        if (patchErr) {
+          return { outcome: "failure" };
+        }
+
+        // Check ownership post-PATCH
+        if (
+          capturedProjectId !== projectIdRef.current ||
+          fieldSeq !== taskUpdateSeqRef.current[targetTaskId]?.[field] ||
+          (field === "status" &&
+            taskStatusSeq !== taskStatusMutationSeqRef.current[targetTaskId]) ||
+          (activeDeleteOwnerRef.current.pending &&
+            activeDeleteOwnerRef.current.taskId === targetTaskId) ||
+          capturedDeleteGen !== (taskDeleteSeqRef.current[targetTaskId] || 0)
+        ) {
+          return { outcome: "stale" };
+        }
+
+        // Step 2: Authoritative exact read-back
+        const { data: updatedDetails, error: readBackErr } =
+          await TasksService.getDetails(capturedProjectId, targetTaskId);
+
+        if (readBackErr || !updatedDetails) {
+          return { outcome: "failure" };
+        }
+
+        // Check ownership post-read-back
+        if (
+          capturedProjectId !== projectIdRef.current ||
+          fieldSeq !== taskUpdateSeqRef.current[targetTaskId]?.[field] ||
+          (field === "status" &&
+            taskStatusSeq !== taskStatusMutationSeqRef.current[targetTaskId]) ||
+          (activeDeleteOwnerRef.current.pending &&
+            activeDeleteOwnerRef.current.taskId === targetTaskId) ||
+          capturedDeleteGen !== (taskDeleteSeqRef.current[targetTaskId] || 0)
+        ) {
+          return { outcome: "stale" };
+        }
+
+        // Final pre-reconciliation delete and status recheck
+        if (
+          capturedProjectId !== projectIdRef.current ||
+          fieldSeq !== taskUpdateSeqRef.current[targetTaskId]?.[field] ||
+          (field === "status" &&
+            taskStatusSeq !== taskStatusMutationSeqRef.current[targetTaskId]) ||
+          (activeDeleteOwnerRef.current.pending &&
+            activeDeleteOwnerRef.current.taskId === targetTaskId) ||
+          capturedDeleteGen !== (taskDeleteSeqRef.current[targetTaskId] || 0)
+        ) {
+          return { outcome: "stale" };
+        }
+
+        // Step 3: Authoritative Parent Collections Reconciliation
+        const currentMode = modeRef.current;
+        const isSearchActive = Boolean(debouncedSearch.trim());
+
+        if (field === "title") {
+          if (!isSearchActive) {
+            // No active search: direct slice update
+            setBoardTasks((prev) => {
+              const next = { ...prev };
+              (Object.keys(next) as TaskStatus[]).forEach((st) => {
+                next[st] = next[st].map((t) =>
+                  t.id === targetTaskId
+                    ? { ...t, title: updatedDetails.title }
+                    : t
+                );
+              });
+              return next;
+            });
+            setListTasks((prev) =>
+              prev.map((t) =>
+                t.id === targetTaskId
+                  ? { ...t, title: updatedDetails.title }
+                  : t
+              )
+            );
+            setMobileTasks((prev) =>
+              prev.map((t) =>
+                t.id === targetTaskId
+                  ? { ...t, title: updatedDetails.title }
+                  : t
+              )
+            );
+          } else {
+            // Search is active: reconcile under CURRENT search query
+            if (currentMode === "board") {
+              const taskSt = updatedDetails.status;
+              void fetchBoardColumnInitial(taskSt);
+            } else if (currentMode === "list") {
+              void fetchListPage(currentPageRef.current);
+            } else if (currentMode === "mobile") {
+              mobileSeqRef.current++;
+              activeMobileStatusIndexRef.current = 0;
+              mobileStatusPageIndexRef.current = 0;
+              mobileStatusLoadedCountRef.current = 0;
+              setMobileTasks([]);
+              setMobileAllExhausted(false);
+              setMobileError(false);
+              void fetchMobileSequential(0, 0, true);
+            }
+          }
+        } else if (field === "status") {
+          const srcStatus = previousStatus;
+          const tgtStatus = targetStatus || updatedDetails.status;
+
+          if (currentMode === "board") {
+            if (srcStatus && srcStatus !== tgtStatus) {
+              void fetchBoardColumnInitial(srcStatus);
+            }
+            void fetchBoardColumnInitial(tgtStatus);
+          } else if (currentMode === "list") {
+            void fetchListPage(currentPageRef.current);
+          } else if (currentMode === "mobile") {
+            mobileSeqRef.current++;
+            activeMobileStatusIndexRef.current = 0;
+            mobileStatusPageIndexRef.current = 0;
+            mobileStatusLoadedCountRef.current = 0;
+            setMobileTasks([]);
+            setMobileAllExhausted(false);
+            setMobileError(false);
+            void fetchMobileSequential(0, 0, true);
+          }
+        } else if (field === "assignee_id") {
+          // Slice patch on matching loaded tasks
+          const nextAssignee = updatedDetails.assignee;
+          setBoardTasks((prev) => {
+            const next = { ...prev };
+            (Object.keys(next) as TaskStatus[]).forEach((st) => {
+              next[st] = next[st].map((t) =>
+                t.id === targetTaskId ? { ...t, assignee: nextAssignee } : t
+              );
+            });
+            return next;
+          });
+          setListTasks((prev) =>
+            prev.map((t) =>
+              t.id === targetTaskId ? { ...t, assignee: nextAssignee } : t
+            )
+          );
+          setMobileTasks((prev) =>
+            prev.map((t) =>
+              t.id === targetTaskId ? { ...t, assignee: nextAssignee } : t
+            )
+          );
+        } else if (field === "due_date") {
+          // Slice patch on matching loaded tasks
+          const nextDueDate = updatedDetails.due_date;
+          setBoardTasks((prev) => {
+            const next = { ...prev };
+            (Object.keys(next) as TaskStatus[]).forEach((st) => {
+              next[st] = next[st].map((t) =>
+                t.id === targetTaskId ? { ...t, due_date: nextDueDate } : t
+              );
+            });
+            return next;
+          });
+          setListTasks((prev) =>
+            prev.map((t) =>
+              t.id === targetTaskId ? { ...t, due_date: nextDueDate } : t
+            )
+          );
+          setMobileTasks((prev) =>
+            prev.map((t) =>
+              t.id === targetTaskId ? { ...t, due_date: nextDueDate } : t
+            )
+          );
+        }
+
+        return { outcome: "success", task: updatedDetails };
+      } catch {
+        return { outcome: "failure" };
+      }
+    },
+    [
+      projectId,
+      debouncedSearch,
+      fetchBoardColumnInitial,
+      fetchListPage,
+      fetchMobileSequential,
+    ]
+  );
 
   // Observer callback for Mobile Sentinel
   const handleMobileLoadMore = useCallback(() => {
@@ -2110,6 +2451,7 @@ export default function ProjectTasksPage() {
             onDeleteRequested={
               mode === "board" ? handleBoardDeleteRequested : undefined
             }
+            onTaskUpdate={handleTaskUpdate}
           />
         ) : null}
 
