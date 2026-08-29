@@ -28,33 +28,38 @@ export default defineConfig({
     timeout: 60_000,
   },
   projects: [
-    // 1. Setup project for UI login and storageState generation
+    // 1. Dedicated project for Phase B Node fixture lifecycle validation (runs without browser auth setup)
+    {
+      name: "disposable-fixture-validation",
+      testMatch: /fixtures[\\/]disposable-data\.validation\.spec\.ts$/,
+    },
+    // 2. Setup project for UI login and storageState generation
     {
       name: "setup",
-      testMatch: /auth\.setup\.ts/,
+      testMatch: /auth\.setup\.ts$/,
     },
-    // 2. Unauthenticated Smoke tests (e.g. Auth Boundary SMOKE-001)
+    // 3. Unauthenticated Smoke tests (e.g. Auth Boundary SMOKE-001)
     {
       name: "unauthenticated-smoke",
-      testMatch: /auth\.smoke\.spec\.ts/,
+      testMatch: /smoke[\\/]auth\.smoke\.spec\.ts$/,
       use: {
         ...devices["Desktop Chrome"],
       },
     },
-    // 3. Authenticated Smoke tests (Desktop)
+    // 4. Authenticated Smoke tests (Desktop)
     {
       name: "authenticated-smoke-desktop",
-      testMatch: /(navigation|core-pages)\.smoke\.spec\.ts/,
+      testMatch: /smoke[\\/](navigation|core-pages)\.smoke\.spec\.ts$/,
       dependencies: ["setup"],
       use: {
         ...devices["Desktop Chrome"],
         storageState: STORAGE_STATE_PATH,
       },
     },
-    // 4. Authenticated Smoke tests (Mobile)
+    // 5. Authenticated Smoke tests (Mobile)
     {
       name: "authenticated-smoke-mobile",
-      testMatch: /(navigation|core-pages)\.smoke\.spec\.ts/,
+      testMatch: /smoke[\\/](navigation|core-pages)\.smoke\.spec\.ts$/,
       dependencies: ["setup"],
       use: {
         ...devices["Pixel 5"],
