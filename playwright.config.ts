@@ -99,5 +99,26 @@ export default defineConfig({
         storageState: STORAGE_STATE_PATH,
       },
     },
+    // 9. Phase E Statistics Regression suite (Desktop)
+    {
+      name: "statistics-regression-desktop",
+      testMatch: /regression[\\/]statistics-(data|errors)\.spec\.ts$/,
+      dependencies: ["setup"],
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: STORAGE_STATE_PATH,
+      },
+    },
+    // 10. Phase E Statistics Regression suite (Mobile)
+    {
+      name: "statistics-regression-mobile",
+      testMatch: /regression[\\/]statistics-responsive\.spec\.ts$/,
+      dependencies: ["setup"],
+      use: {
+        ...devices["Pixel 5"],
+        viewport: { width: 390, height: 844 },
+        storageState: STORAGE_STATE_PATH,
+      },
+    },
   ],
 });
