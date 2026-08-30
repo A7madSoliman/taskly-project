@@ -1,14 +1,15 @@
-import { test as base, expect } from "@playwright/test";
+import { test as base, expect, Response } from "@playwright/test";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * Safety contracts and types for disposable test fixtures.
  *
- * PHASE B CONTRACT:
+ * PHASE B / C0 CONTRACT:
  * - Dedicated Node-scoped Supabase client (persistSession: false, no browser storage).
  * - Authenticated strictly via normal QA user credentials (signInWithPassword).
  * - Exact-ID registration immediately upon successful row creation.
  * - Ownership checks: createEpic/createTask require exact currently owned parent IDs.
+ * - Safe network response handoff: registers ONLY valid, successful POST responses for the intended REST pathname.
  * - Cleanup targets ONLY exact owned UUIDs (.eq("id", exactUuid)).
  * - Order: Task -> Epic -> Project with exact-ID read-back absence verification.
  * - Cleanup failures are aggregated so teardown always attempts every registered entity.
@@ -44,6 +45,18 @@ export interface DisposableDataFixture {
   verifyProject(id: string): Promise<boolean>;
   verifyEpic(id: string): Promise<boolean>;
   verifyTask(id: string): Promise<boolean>;
+  registerUiCreatedProjectResponse(
+    response: Response
+  ): Promise<DisposableProject>;
+  registerUiCreatedEpicResponse(
+    response: Response,
+    expectedProjectId: string
+  ): Promise<DisposableEpic>;
+  registerUiCreatedTaskResponse(
+    response: Response,
+    expectedProjectId: string,
+    expectedEpicId: string
+  ): Promise<DisposableTask>;
   cleanup(): Promise<void>;
 }
 
@@ -57,6 +70,9 @@ class DisposableDataRegistry {
     if (!id || typeof id !== "string") {
       throw new Error("Invalid project ID registration");
     }
+    if (this.projectId && this.projectId !== id) {
+      throw new Error("Cannot overwrite existing fixture-owned project.");
+    }
     this.projectId = id;
   }
 
@@ -64,12 +80,18 @@ class DisposableDataRegistry {
     if (!id || typeof id !== "string") {
       throw new Error("Invalid epic ID registration");
     }
+    if (this.epicId && this.epicId !== id) {
+      throw new Error("Cannot overwrite existing fixture-owned epic.");
+    }
     this.epicId = id;
   }
 
   registerTask(id: string) {
     if (!id || typeof id !== "string") {
       throw new Error("Invalid task ID registration");
+    }
+    if (this.taskId && this.taskId !== id) {
+      throw new Error("Cannot overwrite existing fixture-owned task.");
     }
     this.taskId = id;
   }
@@ -135,6 +157,15 @@ export async function authenticateNodeClient(
 
   if (error) {
     throw new Error("Node QA client authentication failed.");
+  }
+}
+
+function getSafePathname(urlStr: string): string {
+  try {
+    const parsed = new URL(urlStr);
+    return parsed.pathname;
+  } catch {
+    return "";
   }
 }
 
@@ -396,6 +427,188 @@ export function createDisposableDataFixture(
       }
 
       return !!data && data.id === id;
+    },
+
+    registerUiCreatedProjectResponse: async (response: Response) => {
+      if (response.request().method() !== "POST") {
+        throw new Error("UI-created project response is invalid.");
+      }
+      if (!response.ok()) {
+        throw new Error("UI-created project response is invalid.");
+      }
+      const pathname = getSafePathname(response.url());
+      if (pathname !== "/rest/v1/projects") {
+        throw new Error("UI-created project response is invalid.");
+      }
+
+      let json: unknown;
+      try {
+        json = await response.json();
+      } catch {
+        throw new Error("UI-created project response is invalid.");
+      }
+
+      const item = Array.isArray(json) ? json[0] : json;
+      if (!item || typeof item !== "object" || !("id" in item)) {
+        throw new Error("UI-created project response is invalid.");
+      }
+
+      const recordId = (item as { id: unknown }).id;
+      if (!recordId || typeof recordId !== "string") {
+        throw new Error("UI-created project response is invalid.");
+      }
+
+      const name =
+        "name" in item && typeof (item as { name: unknown }).name === "string"
+          ? (item as { name: string }).name
+          : "";
+
+      registry.registerProject(recordId);
+      return {
+        id: recordId,
+        name,
+      };
+    },
+
+    registerUiCreatedEpicResponse: async (
+      response: Response,
+      expectedProjectId: string
+    ) => {
+      const { projectId: ownedProjectId } = registry.getRegisteredIds();
+      if (!ownedProjectId || expectedProjectId !== ownedProjectId) {
+        throw new Error(
+          "UI-created epic response does not belong to the owned project."
+        );
+      }
+
+      if (response.request().method() !== "POST") {
+        throw new Error("UI-created epic response is invalid.");
+      }
+      if (!response.ok()) {
+        throw new Error("UI-created epic response is invalid.");
+      }
+      const pathname = getSafePathname(response.url());
+      if (pathname !== "/rest/v1/epics") {
+        throw new Error("UI-created epic response is invalid.");
+      }
+
+      // Check request postData for parent relationship
+      const postData = response.request().postDataJSON();
+      const reqProjectId =
+        postData && typeof postData === "object" && "project_id" in postData
+          ? (postData as { project_id: unknown }).project_id
+          : null;
+
+      if (reqProjectId !== ownedProjectId) {
+        throw new Error(
+          "UI-created epic response does not belong to the owned project."
+        );
+      }
+
+      let json: unknown;
+      try {
+        json = await response.json();
+      } catch {
+        throw new Error("UI-created epic response is invalid.");
+      }
+
+      const item = Array.isArray(json) ? json[0] : json;
+      if (!item || typeof item !== "object" || !("id" in item)) {
+        throw new Error("UI-created epic response is invalid.");
+      }
+
+      const recordId = (item as { id: unknown }).id;
+      if (!recordId || typeof recordId !== "string") {
+        throw new Error("UI-created epic response is invalid.");
+      }
+
+      const title =
+        "title" in item &&
+        typeof (item as { title: unknown }).title === "string"
+          ? (item as { title: string }).title
+          : "";
+
+      registry.registerEpic(recordId);
+      return {
+        id: recordId,
+        projectId: ownedProjectId,
+        title,
+      };
+    },
+
+    registerUiCreatedTaskResponse: async (
+      response: Response,
+      expectedProjectId: string,
+      expectedEpicId: string
+    ) => {
+      const { projectId: ownedProjectId, epicId: ownedEpicId } =
+        registry.getRegisteredIds();
+      if (
+        !ownedProjectId ||
+        !ownedEpicId ||
+        expectedProjectId !== ownedProjectId ||
+        expectedEpicId !== ownedEpicId
+      ) {
+        throw new Error(
+          "UI-created task response does not belong to the owned parents."
+        );
+      }
+
+      if (response.request().method() !== "POST") {
+        throw new Error("UI-created task response is invalid.");
+      }
+      if (!response.ok()) {
+        throw new Error("UI-created task response is invalid.");
+      }
+      const pathname = getSafePathname(response.url());
+      if (pathname !== "/rest/v1/tasks") {
+        throw new Error("UI-created task response is invalid.");
+      }
+
+      let json: unknown;
+      try {
+        json = await response.json();
+      } catch {
+        throw new Error("UI-created task response is invalid.");
+      }
+
+      const item = Array.isArray(json) ? json[0] : json;
+      if (!item || typeof item !== "object" || !("id" in item)) {
+        throw new Error("UI-created task response is invalid.");
+      }
+
+      const recordId = (item as { id: unknown }).id;
+      const respProjectId =
+        "project_id" in item
+          ? (item as { project_id: unknown }).project_id
+          : null;
+      const respEpicId =
+        "epic_id" in item ? (item as { epic_id: unknown }).epic_id : null;
+
+      if (
+        !recordId ||
+        typeof recordId !== "string" ||
+        respProjectId !== ownedProjectId ||
+        respEpicId !== ownedEpicId
+      ) {
+        throw new Error(
+          "UI-created task response does not belong to the owned parents."
+        );
+      }
+
+      const title =
+        "title" in item &&
+        typeof (item as { title: unknown }).title === "string"
+          ? (item as { title: string }).title
+          : "";
+
+      registry.registerTask(recordId);
+      return {
+        id: recordId,
+        projectId: ownedProjectId,
+        epicId: ownedEpicId,
+        title,
+      };
     },
 
     cleanup,

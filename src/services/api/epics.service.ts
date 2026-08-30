@@ -34,13 +34,17 @@ export interface ProjectEpic {
 
 export const EpicsService = {
   create: async (projectId: string, data: NewEpicInput) => {
-    return supabase.from("epics").insert({
-      title: data.title,
-      description: data.description,
-      assignee_id: data.assignee_id,
-      project_id: projectId,
-      deadline: data.deadline,
-    });
+    return supabase
+      .from("epics")
+      .insert({
+        title: data.title,
+        description: data.description,
+        assignee_id: data.assignee_id,
+        project_id: projectId,
+        deadline: data.deadline,
+      })
+      .select("id")
+      .single();
   },
   getByProject: async (
     projectId: string,

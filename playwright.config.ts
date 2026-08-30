@@ -67,5 +67,15 @@ export default defineConfig({
         storageState: STORAGE_STATE_PATH,
       },
     },
+    // 6. Phase C Core CRUD Regression suite (Desktop)
+    {
+      name: "core-crud-regression",
+      testMatch: /regression[\\/]core-.*\.spec\.ts$/,
+      dependencies: ["setup"],
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: STORAGE_STATE_PATH,
+      },
+    },
   ],
 });

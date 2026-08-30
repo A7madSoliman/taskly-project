@@ -54,7 +54,7 @@ export const ProjectsService = {
     return supabase.rpc("get_projects");
   },
   create: async (data: { name: string; description?: string }) => {
-    return supabase.from("projects").insert([data]);
+    return supabase.from("projects").insert([data]).select("id").single();
   },
   getById: async (projectId: string) => {
     const { data, error } = await supabase.rpc("get_projects");
