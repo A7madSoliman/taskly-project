@@ -77,5 +77,27 @@ export default defineConfig({
         storageState: STORAGE_STATE_PATH,
       },
     },
+    // 7. Phase D Advanced Tasks Regression suite (Desktop)
+    {
+      name: "advanced-task-regression-desktop",
+      testMatch:
+        /regression[\\/]advanced-task-(search|pagination|dnd|errors)\.spec\.ts$/,
+      dependencies: ["setup"],
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: STORAGE_STATE_PATH,
+      },
+    },
+    // 8. Phase D Advanced Tasks Regression suite (Mobile)
+    {
+      name: "advanced-task-regression-mobile",
+      testMatch: /regression[\\/]advanced-task-mobile\.spec\.ts$/,
+      dependencies: ["setup"],
+      use: {
+        ...devices["Pixel 5"],
+        viewport: { width: 390, height: 844 },
+        storageState: STORAGE_STATE_PATH,
+      },
+    },
   ],
 });

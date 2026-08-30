@@ -4,14 +4,15 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 /**
  * Safety contracts and types for disposable test fixtures.
  *
- * PHASE B / C0 CONTRACT:
+ * PHASE B / C0 / D CONTRACT:
  * - Dedicated Node-scoped Supabase client (persistSession: false, no browser storage).
  * - Authenticated strictly via normal QA user credentials (signInWithPassword).
  * - Exact-ID registration immediately upon successful row creation.
- * - Ownership checks: createEpic/createTask require exact currently owned parent IDs.
+ * - Ownership checks: createEpic/createTask/createOwnedTasks require exact currently owned parent IDs.
+ * - Multi-Task ownership support: bounded to maximum 11 tasks per test.
  * - Safe network response handoff: registers ONLY valid, successful POST responses for the intended REST pathname.
  * - Cleanup targets ONLY exact owned UUIDs (.eq("id", exactUuid)).
- * - Order: Task -> Epic -> Project with exact-ID read-back absence verification.
+ * - Order: Tasks (exact UUIDs) -> Epic -> Project with exact-ID read-back absence verification.
  * - Cleanup failures are aggregated so teardown always attempts every registered entity.
  * - Zero .like(), .ilike(), prefix, title, or wildcard deletions.
  */
@@ -32,6 +33,23 @@ export interface DisposableTask {
   projectId: string;
   epicId: string;
   title: string;
+  status?: string;
+}
+
+export interface CreateOwnedTasksParams {
+  count: number;
+  projectId: string;
+  epicId: string;
+  status?:
+    | "TO_DO"
+    | "IN_PROGRESS"
+    | "BLOCKED"
+    | "IN_REVIEW"
+    | "READY_FOR_QA"
+    | "REOPENED"
+    | "READY_FOR_PRODUCTION"
+    | "DONE";
+  titlePrefix?: string;
 }
 
 export interface DisposableDataFixture {
@@ -42,6 +60,7 @@ export interface DisposableDataFixture {
     epicId: string,
     titlePrefix?: string
   ): Promise<DisposableTask>;
+  createOwnedTasks(params: CreateOwnedTasksParams): Promise<DisposableTask[]>;
   verifyProject(id: string): Promise<boolean>;
   verifyEpic(id: string): Promise<boolean>;
   verifyTask(id: string): Promise<boolean>;
@@ -64,7 +83,7 @@ export interface DisposableDataFixture {
 class DisposableDataRegistry {
   private projectId: string | null = null;
   private epicId: string | null = null;
-  private taskId: string | null = null;
+  private taskIds: Set<string> = new Set();
 
   registerProject(id: string) {
     if (!id || typeof id !== "string") {
@@ -90,22 +109,26 @@ class DisposableDataRegistry {
     if (!id || typeof id !== "string") {
       throw new Error("Invalid task ID registration");
     }
-    if (this.taskId && this.taskId !== id) {
-      throw new Error("Cannot overwrite existing fixture-owned task.");
+    if (this.taskIds.has(id)) {
+      throw new Error("Duplicate task UUID registration.");
     }
-    this.taskId = id;
+    this.taskIds.add(id);
   }
 
   getRegisteredIds() {
     return {
       projectId: this.projectId,
       epicId: this.epicId,
-      taskId: this.taskId,
+      taskIds: Array.from(this.taskIds),
     };
   }
 
-  clearTask() {
-    this.taskId = null;
+  removeTask(id: string) {
+    this.taskIds.delete(id);
+  }
+
+  clearTasks() {
+    this.taskIds.clear();
   }
 
   clearEpic() {
@@ -118,18 +141,18 @@ class DisposableDataRegistry {
 }
 
 export function createNodeSupabaseClient(): SupabaseClient {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey =
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey =
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (!supabaseUrl || !supabaseKey) {
+  if (!url || !anonKey) {
     throw new Error(
-      "NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/ANON_KEY are required for Node QA client."
+      "Missing public Supabase configuration for Node QA client."
     );
   }
 
-  return createClient(supabaseUrl, supabaseKey, {
+  return createClient(url, anonKey, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
@@ -146,7 +169,7 @@ export async function authenticateNodeClient(
 
   if (!email || !password) {
     throw new Error(
-      "TASKLY_QA_EMAIL and TASKLY_QA_PASSWORD are required for Node QA client authentication."
+      "Missing QA credentials in environment for disposable fixture authentication."
     );
   }
 
@@ -175,11 +198,11 @@ export function createDisposableDataFixture(
   const registry = new DisposableDataRegistry();
 
   const cleanup = async (): Promise<void> => {
-    const { taskId, epicId, projectId } = registry.getRegisteredIds();
+    const { taskIds, epicId, projectId } = registry.getRegisteredIds();
     const cleanupErrors: string[] = [];
 
-    // 1. Exact Task cleanup
-    if (taskId) {
+    // 1. Exact Task cleanup (iterate over all registered task UUIDs)
+    for (const taskId of taskIds) {
       try {
         const { error: delError } = await client
           .from("tasks")
@@ -187,7 +210,7 @@ export function createDisposableDataFixture(
           .eq("id", taskId);
 
         if (delError) {
-          cleanupErrors.push("Failed to delete exact task record.");
+          cleanupErrors.push(`Failed to delete exact task record (${taskId}).`);
         } else {
           // Verify exact absence
           const { data: readBack, error: readBackError } = await client
@@ -197,15 +220,21 @@ export function createDisposableDataFixture(
             .maybeSingle();
 
           if (readBackError) {
-            cleanupErrors.push("Read-back error verifying task absence.");
+            cleanupErrors.push(
+              `Read-back error verifying task absence (${taskId}).`
+            );
           } else if (readBack) {
-            cleanupErrors.push("Exact task record still present after delete.");
+            cleanupErrors.push(
+              `Exact task record (${taskId}) still present after delete.`
+            );
           } else {
-            registry.clearTask();
+            registry.removeTask(taskId);
           }
         }
       } catch {
-        cleanupErrors.push("Unexpected exception during task cleanup.");
+        cleanupErrors.push(
+          `Unexpected exception during task cleanup (${taskId}).`
+        );
       }
     }
 
@@ -311,7 +340,9 @@ export function createDisposableDataFixture(
 
       // Enforce parent ownership before any backend mutation
       if (!ownedProjectId || projectId !== ownedProjectId) {
-        throw new Error("Disposable epic parent is not owned by this fixture.");
+        throw new Error(
+          "Disposable epic parent project is not owned by this fixture."
+        );
       }
 
       const uniqueTitle = `${titlePrefix} [${Date.now()}]`;
@@ -321,8 +352,6 @@ export function createDisposableDataFixture(
           project_id: projectId,
           title: uniqueTitle,
           description: "Disposable epic created for automated QA validation",
-          assignee_id: null,
-          deadline: null,
         })
         .select("id, title, project_id")
         .single();
@@ -371,7 +400,7 @@ export function createDisposableDataFixture(
           assignee_id: null,
           due_date: null,
         })
-        .select("id, title, project_id, epic_id")
+        .select("id, title, project_id, epic_id, status")
         .single();
 
       if (error || !data || !data.id) {
@@ -384,7 +413,77 @@ export function createDisposableDataFixture(
         projectId: data.project_id,
         epicId: data.epic_id || epicId,
         title: data.title,
+        status: data.status,
       };
+    },
+
+    createOwnedTasks: async ({
+      count,
+      projectId,
+      epicId,
+      status = "TO_DO",
+      titlePrefix = "QA Disposable Task",
+    }: CreateOwnedTasksParams): Promise<DisposableTask[]> => {
+      if (
+        typeof count !== "number" ||
+        !Number.isInteger(count) ||
+        count <= 0 ||
+        count > 11
+      ) {
+        throw new Error(
+          "Invalid task count for createOwnedTasks. Must be an integer between 1 and 11."
+        );
+      }
+
+      const { projectId: ownedProjectId, epicId: ownedEpicId } =
+        registry.getRegisteredIds();
+
+      if (
+        !ownedProjectId ||
+        !ownedEpicId ||
+        projectId !== ownedProjectId ||
+        epicId !== ownedEpicId
+      ) {
+        throw new Error(
+          "Disposable task parents are not owned by this fixture."
+        );
+      }
+
+      const createdTasks: DisposableTask[] = [];
+
+      for (let i = 1; i <= count; i++) {
+        const uniqueTitle = `${titlePrefix} ${i.toString().padStart(2, "0")} [${Date.now()}-${i}]`;
+        const { data, error } = await client
+          .from("tasks")
+          .insert({
+            project_id: projectId,
+            epic_id: epicId,
+            title: uniqueTitle,
+            description: `Disposable task ${i} created for automated QA validation`,
+            status: status,
+            assignee_id: null,
+            due_date: null,
+          })
+          .select("id, title, project_id, epic_id, status")
+          .single();
+
+        if (error || !data || !data.id) {
+          throw new Error(
+            `Failed to create exact disposable task ${i} in batch.`
+          );
+        }
+
+        registry.registerTask(data.id);
+        createdTasks.push({
+          id: data.id,
+          projectId: data.project_id,
+          epicId: data.epic_id || epicId,
+          title: data.title,
+          status: data.status,
+        });
+      }
+
+      return createdTasks;
     },
 
     verifyProject: async (id: string) => {
