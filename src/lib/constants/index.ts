@@ -1,2 +1,0 @@
-// Application-wide constants
-export {};

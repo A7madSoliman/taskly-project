@@ -26,6 +26,7 @@ import {
   TaskStatus,
   TaskUpdatePatch,
 } from "@/services/api/tasks.service";
+import { TASK_STATUS_OPTIONS } from "@/lib/constants/task-status";
 import {
   ProjectsService,
   ProjectMember,
@@ -59,16 +60,7 @@ interface TaskDetailsModalProps {
   ) => Promise<TaskUpdateResult>;
 }
 
-const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = [
-  { value: "TO_DO", label: "TO DO" },
-  { value: "IN_PROGRESS", label: "IN PROGRESS" },
-  { value: "BLOCKED", label: "BLOCKED" },
-  { value: "IN_REVIEW", label: "IN REVIEW" },
-  { value: "READY_FOR_QA", label: "READY FOR QA" },
-  { value: "REOPENED", label: "REOPENED" },
-  { value: "READY_FOR_PRODUCTION", label: "READY FOR PRODUCTION" },
-  { value: "DONE", label: "DONE" },
-];
+const STATUS_OPTIONS = TASK_STATUS_OPTIONS;
 
 const taskDueDateFormat = new Intl.DateTimeFormat("en-GB", {
   day: "2-digit",

@@ -30,12 +30,15 @@ function InviteContent() {
 
   // Invalidate in-flight acceptance mutation and clear redirect timer on unmount
   useEffect(() => {
+    const seqRef = acceptRequestSeqRef;
+    const pRef = pendingRef;
+    const timerRef = redirectTimerRef;
     return () => {
-      acceptRequestSeqRef.current++;
-      pendingRef.current = false;
-      if (redirectTimerRef.current) {
-        clearTimeout(redirectTimerRef.current);
-        redirectTimerRef.current = null;
+      seqRef.current++;
+      pRef.current = false;
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
       }
     };
   }, []);

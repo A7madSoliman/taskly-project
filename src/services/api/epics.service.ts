@@ -69,7 +69,7 @@ export const EpicsService = {
       query = query.ilike("title", `%${search.trim()}%`);
     }
 
-    return query.range(from, to);
+    return query.order("id", { ascending: true }).range(from, to);
   },
   getAllByProject: async (
     projectId: string

@@ -4,63 +4,68 @@ import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { MoreHorizontal, Trash2, UserRound } from "lucide-react";
 import { BoardTask, TaskStatus } from "@/services/api/tasks.service";
+import { TASK_STATUS_OPTIONS } from "@/lib/constants/task-status";
 import { getInitials } from "@/lib/utils/avatar";
+
+const STATUS_LABELS: Record<TaskStatus, string> = Object.fromEntries(
+  TASK_STATUS_OPTIONS.map((opt) => [opt.value, opt.label])
+) as Record<TaskStatus, string>;
 
 export const STATUS_CONFIG: Record<
   TaskStatus,
   { label: string; bg: string; text: string; dotBg: string; border: string }
 > = {
   TO_DO: {
-    label: "TO DO",
+    label: STATUS_LABELS.TO_DO,
     bg: "bg-[#e8ebf3]",
     text: "text-[#4f5f7b]",
     dotBg: "bg-[#7e8b9f]",
     border: "border-[#d8dce8]",
   },
   IN_PROGRESS: {
-    label: "IN PROGRESS",
+    label: STATUS_LABELS.IN_PROGRESS,
     bg: "bg-[#dbe4ff]",
     text: "text-[#0052cc]",
     dotBg: "bg-[#0052cc]",
     border: "border-[#cad8ff]",
   },
   BLOCKED: {
-    label: "BLOCKED",
+    label: STATUS_LABELS.BLOCKED,
     bg: "bg-[#fee4e2]",
     text: "text-[#d92d20]",
     dotBg: "bg-[#d92d20]",
     border: "border-[#fecdca]",
   },
   IN_REVIEW: {
-    label: "IN REVIEW",
+    label: STATUS_LABELS.IN_REVIEW,
     bg: "bg-[#fef0c7]",
     text: "text-[#b54708]",
     dotBg: "bg-[#b54708]",
     border: "border-[#fedf89]",
   },
   READY_FOR_QA: {
-    label: "READY FOR QA",
+    label: STATUS_LABELS.READY_FOR_QA,
     bg: "bg-[#e0f2fe]",
     text: "text-[#0284c7]",
     dotBg: "bg-[#0284c7]",
     border: "border-[#bae6fd]",
   },
   REOPENED: {
-    label: "REOPENED",
+    label: STATUS_LABELS.REOPENED,
     bg: "bg-[#ffedd5]",
     text: "text-[#ea580c]",
     dotBg: "bg-[#ea580c]",
     border: "border-[#fed7aa]",
   },
   READY_FOR_PRODUCTION: {
-    label: "READY FOR PRODUCTION",
+    label: STATUS_LABELS.READY_FOR_PRODUCTION,
     bg: "bg-[#ccfbf1]",
     text: "text-[#0f766e]",
     dotBg: "bg-[#0f766e]",
     border: "border-[#99f6e4]",
   },
   DONE: {
-    label: "DONE",
+    label: STATUS_LABELS.DONE,
     bg: "bg-[#dcfce7]",
     text: "text-[#16a34a]",
     dotBg: "bg-[#16a34a]",

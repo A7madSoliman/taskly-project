@@ -1,15 +1,8 @@
 import { supabase } from "@/lib/supabase/client";
 import type { PostgrestError } from "@supabase/supabase-js";
+import { TaskStatus } from "@/lib/constants/task-status";
 
-export type TaskStatus =
-  | "TO_DO"
-  | "IN_PROGRESS"
-  | "BLOCKED"
-  | "IN_REVIEW"
-  | "READY_FOR_QA"
-  | "REOPENED"
-  | "READY_FOR_PRODUCTION"
-  | "DONE";
+export type { TaskStatus };
 
 export interface CreateTaskInput {
   title: string;
@@ -146,7 +139,9 @@ export const TasksService = {
       query = query.ilike("title", `%${trimmed}%`);
     }
 
-    const { data, error, count } = await query.range(from, to);
+    const { data, error, count } = await query
+      .order("id", { ascending: true })
+      .range(from, to);
 
     if (error) return { data: null, count: null, error };
     return { data: (data as BoardTask[]) ?? [], count, error: null };
@@ -175,7 +170,9 @@ export const TasksService = {
       query = query.ilike("title", `%${trimmed}%`);
     }
 
-    const { data, error, count } = await query.range(from, to);
+    const { data, error, count } = await query
+      .order("id", { ascending: true })
+      .range(from, to);
 
     if (error) return { data: null, count: null, error };
     return { data: (data as BoardTask[]) ?? [], count, error: null };

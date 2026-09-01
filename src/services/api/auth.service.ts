@@ -1,5 +1,4 @@
 import { supabase, setAuthRememberPreference } from "@/lib/supabase/client";
-import { SUPABASE_URL, getHeaders } from "./config";
 
 export interface SignUpData {
   email: string;
@@ -40,13 +39,6 @@ export const AuthService = {
   updatePassword: async ({ password }: { password: string }) => {
     return supabase.auth.updateUser({
       password,
-    });
-  },
-  refreshToken: async (refreshToken: string) => {
-    return fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
-      method: "POST",
-      headers: getHeaders(),
-      body: JSON.stringify({ refresh_token: refreshToken }),
     });
   },
   forgotPassword: async ({

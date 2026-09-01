@@ -33,6 +33,10 @@ import {
   TaskStatus,
   TaskUpdatePatch,
 } from "@/services/api/tasks.service";
+import {
+  TASK_STATUS_OPTIONS,
+  TASK_STATUS_SET,
+} from "@/lib/constants/task-status";
 import { TaskColumn } from "@/components/tasks/TaskColumn";
 import { TaskCard } from "@/components/tasks/TaskCard";
 import { TaskRow } from "@/components/tasks/TaskRow";
@@ -46,16 +50,11 @@ import { ProjectMobileBottomNav } from "@/components/layout/ProjectMobileBottomN
 
 const PAGE_SIZE = 10;
 
-const BOARD_COLUMNS: { status: TaskStatus; label: string }[] = [
-  { status: "TO_DO", label: "TO DO" },
-  { status: "IN_PROGRESS", label: "IN PROGRESS" },
-  { status: "BLOCKED", label: "BLOCKED" },
-  { status: "IN_REVIEW", label: "IN REVIEW" },
-  { status: "READY_FOR_QA", label: "READY FOR QA" },
-  { status: "REOPENED", label: "REOPENED" },
-  { status: "READY_FOR_PRODUCTION", label: "READY FOR PRODUCTION" },
-  { status: "DONE", label: "DONE" },
-];
+const BOARD_COLUMNS: { status: TaskStatus; label: string }[] =
+  TASK_STATUS_OPTIONS.map((opt) => ({
+    status: opt.value,
+    label: opt.label,
+  }));
 
 export default function ProjectTasksPage() {
   const params = useParams();
@@ -441,22 +440,11 @@ export default function ProjectTasksPage() {
       if (!taskId || !activeTask) return;
 
       // Status whitelist validation
-      const validStatuses: TaskStatus[] = [
-        "TO_DO",
-        "IN_PROGRESS",
-        "BLOCKED",
-        "IN_REVIEW",
-        "READY_FOR_QA",
-        "REOPENED",
-        "READY_FOR_PRODUCTION",
-        "DONE",
-      ];
-
       if (
         typeof rawSourceStatus !== "string" ||
-        !validStatuses.includes(rawSourceStatus as TaskStatus) ||
+        !TASK_STATUS_SET.has(rawSourceStatus as TaskStatus) ||
         typeof rawTargetStatus !== "string" ||
-        !validStatuses.includes(rawTargetStatus as TaskStatus)
+        !TASK_STATUS_SET.has(rawTargetStatus as TaskStatus)
       ) {
         return;
       }

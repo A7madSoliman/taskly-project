@@ -18,6 +18,7 @@ import {
 } from "@/services/api/statistics.service";
 import { AuthService } from "@/services/api/auth.service";
 import type { TaskStatus } from "@/services/api/tasks.service";
+import { TASK_STATUS_OPTIONS } from "@/lib/constants/task-status";
 import {
   Calendar as CalendarIcon,
   CheckCircle2,
@@ -28,6 +29,60 @@ import {
   RotateCcw,
 } from "lucide-react";
 
+const STATS_COLOR_MAP: Record<
+  TaskStatus,
+  { dotColor: string; textColor: string; badgeBg: string; chartColor: string }
+> = {
+  TO_DO: {
+    dotColor: "bg-[#737685]",
+    textColor: "text-[#4f5f7b]",
+    badgeBg: "bg-[#f1f3f9]",
+    chartColor: "#737685",
+  },
+  IN_PROGRESS: {
+    dotColor: "bg-[#0052cc]",
+    textColor: "text-[#0052cc]",
+    badgeBg: "bg-[#eef4ff]",
+    chartColor: "#0052cc",
+  },
+  BLOCKED: {
+    dotColor: "bg-[#d92d20]",
+    textColor: "text-[#d92d20]",
+    badgeBg: "bg-[#fef3f2]",
+    chartColor: "#d92d20",
+  },
+  IN_REVIEW: {
+    dotColor: "bg-[#f79009]",
+    textColor: "text-[#b54708]",
+    badgeBg: "bg-[#fffaeb]",
+    chartColor: "#f79009",
+  },
+  READY_FOR_QA: {
+    dotColor: "bg-[#7a5af8]",
+    textColor: "text-[#6938ef]",
+    badgeBg: "bg-[#f4f3ff]",
+    chartColor: "#7a5af8",
+  },
+  REOPENED: {
+    dotColor: "bg-[#ee46bc]",
+    textColor: "text-[#c11574]",
+    badgeBg: "bg-[#fdf2fa]",
+    chartColor: "#ee46bc",
+  },
+  READY_FOR_PRODUCTION: {
+    dotColor: "bg-[#0ba5ec]",
+    textColor: "text-[#026aa2]",
+    badgeBg: "bg-[#f0f9ff]",
+    chartColor: "#0ba5ec",
+  },
+  DONE: {
+    dotColor: "bg-[#12b76a]",
+    textColor: "text-[#027a48]",
+    badgeBg: "bg-[#ecfdf3]",
+    chartColor: "#12b76a",
+  },
+};
+
 // Canonical ordered statuses for normalization & rendering
 const CANONICAL_STATUSES: {
   status: TaskStatus;
@@ -36,72 +91,11 @@ const CANONICAL_STATUSES: {
   textColor: string;
   badgeBg: string;
   chartColor: string;
-}[] = [
-  {
-    status: "TO_DO",
-    label: "TO DO",
-    dotColor: "bg-[#737685]",
-    textColor: "text-[#4f5f7b]",
-    badgeBg: "bg-[#f1f3f9]",
-    chartColor: "#737685",
-  },
-  {
-    status: "IN_PROGRESS",
-    label: "IN PROGRESS",
-    dotColor: "bg-[#0052cc]",
-    textColor: "text-[#0052cc]",
-    badgeBg: "bg-[#eef4ff]",
-    chartColor: "#0052cc",
-  },
-  {
-    status: "BLOCKED",
-    label: "BLOCKED",
-    dotColor: "bg-[#d92d20]",
-    textColor: "text-[#d92d20]",
-    badgeBg: "bg-[#fef3f2]",
-    chartColor: "#d92d20",
-  },
-  {
-    status: "IN_REVIEW",
-    label: "IN REVIEW",
-    dotColor: "bg-[#f79009]",
-    textColor: "text-[#b54708]",
-    badgeBg: "bg-[#fffaeb]",
-    chartColor: "#f79009",
-  },
-  {
-    status: "READY_FOR_QA",
-    label: "READY FOR QA",
-    dotColor: "bg-[#7a5af8]",
-    textColor: "text-[#6938ef]",
-    badgeBg: "bg-[#f4f3ff]",
-    chartColor: "#7a5af8",
-  },
-  {
-    status: "REOPENED",
-    label: "REOPENED",
-    dotColor: "bg-[#ee46bc]",
-    textColor: "text-[#c11574]",
-    badgeBg: "bg-[#fdf2fa]",
-    chartColor: "#ee46bc",
-  },
-  {
-    status: "READY_FOR_PRODUCTION",
-    label: "READY FOR PRODUCTION",
-    dotColor: "bg-[#0ba5ec]",
-    textColor: "text-[#026aa2]",
-    badgeBg: "bg-[#f0f9ff]",
-    chartColor: "#0ba5ec",
-  },
-  {
-    status: "DONE",
-    label: "DONE",
-    dotColor: "bg-[#12b76a]",
-    textColor: "text-[#027a48]",
-    badgeBg: "bg-[#ecfdf3]",
-    chartColor: "#12b76a",
-  },
-];
+}[] = TASK_STATUS_OPTIONS.map((opt) => ({
+  status: opt.value,
+  label: opt.label,
+  ...STATS_COLOR_MAP[opt.value],
+}));
 
 // Helper: Format local date as YYYY-MM-DD
 function formatLocalDate(d: Date): string {

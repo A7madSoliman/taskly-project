@@ -53,33 +53,8 @@ export function ProjectCard({ project }: ProjectCardProps) {
 
       {/* Top Header & Content */}
       <div className="relative z-10 pointer-events-none">
-        {/* Mobile Header with 3-dots actions (Visual only, interactive sibling layered above overlay) */}
-        <div className="flex items-start justify-between gap-2 md:hidden mb-2">
-          <h2 className="text-[18px] font-semibold text-[#041b3c] leading-snug break-words">
-            {project.name}
-          </h2>
-          <button
-            type="button"
-            className="text-[#737685] p-1 shrink-0 -mr-1 hover:text-[#041b3c] transition-colors pointer-events-auto"
-            aria-label="Project actions"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-          >
-            <Image
-              src="/assets/svg/icons/icon-vertical-actions.svg"
-              alt=""
-              width={4}
-              height={16}
-              className="w-1 h-4"
-              aria-hidden="true"
-            />
-          </button>
-        </div>
-
-        {/* Desktop Header */}
-        <h2 className="hidden md:block text-[18px] font-semibold text-[#041b3c] leading-snug break-words mb-2">
+        {/* Header */}
+        <h2 className="text-[18px] font-semibold text-[#041b3c] leading-snug break-words mb-2">
           {project.name}
         </h2>
 
