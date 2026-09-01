@@ -14,7 +14,25 @@ Taskly is a responsive Project and Task Management application for organizing Pr
 
 ## Overview
 
-Taskly provides team members and project leads with an intuitive interface to streamline project execution. Designed with Next.js App Router, TypeScript, and Supabase, Taskly delivers fast client-side responsiveness backed by robust asynchronous state synchronization and optimistic UI updates across complex task workflows.
+---
+
+## Product Preview
+
+### Projects Workspace
+
+![Taskly Projects workspace](docs/screenshots/taskly-projects-desktop.png)
+
+### Kanban Task Board
+
+![Taskly Kanban Task Board](docs/screenshots/taskly-task-board-desktop.png)
+
+### My Statistics
+
+![Taskly My Statistics dashboard](docs/screenshots/taskly-statistics-desktop.png)
+
+### Responsive Mobile Experience
+
+![Taskly responsive mobile workspace](docs/screenshots/taskly-mobile-workspace.png)
 
 ---
 
