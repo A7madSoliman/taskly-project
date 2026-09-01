@@ -13,9 +13,14 @@ import { useParams } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { EpicsService, ProjectEpic } from "@/services/api/epics.service";
 import { ProjectsService } from "@/services/api/projects.service";
+import { TasksService, TaskUpdatePatch } from "@/services/api/tasks.service";
 import { EpicCard, EpicCardSkeletonGrid } from "@/components/epics/EpicCard";
 import { EpicDetailsModal } from "@/components/epics/EpicDetailsModal";
-import { TaskDetailsModal } from "@/components/tasks/TaskDetailsModal";
+import {
+  TaskDetailsModal,
+  TaskUpdateField,
+  TaskUpdateResult,
+} from "@/components/tasks/TaskDetailsModal";
 import { DeleteConfirmationModal } from "@/components/ui/DeleteConfirmationModal";
 import { ProjectMobileBottomNav } from "@/components/layout/ProjectMobileBottomNav";
 import {
@@ -127,6 +132,7 @@ export default function ProjectEpicsPage() {
 
   // Keep live-state mirrors in sync
   useEffect(() => {
+    projectIdRef.current = projectId;
     currentPageRef.current = currentPage;
     totalCountRef.current = totalCount;
     loadedCountRef.current = epics.length;
@@ -374,6 +380,71 @@ export default function ProjectEpicsPage() {
       }
     },
     [projectId]
+  );
+
+  // Epics-origin task mutation coordinator
+  const taskUpdateSeqRef = useRef<Record<string, Record<string, number>>>({});
+
+  const handleEpicOriginTaskUpdate = useCallback(
+    async (
+      targetTaskId: string,
+      field: TaskUpdateField,
+      patch: TaskUpdatePatch
+    ): Promise<TaskUpdateResult> => {
+      // 1. Capture exact task UUID & project identity
+      const capturedProjectId = projectIdRef.current;
+      const capturedTaskId = targetTaskId;
+
+      // 2. Track per-task per-field generation
+      if (!taskUpdateSeqRef.current[capturedTaskId]) {
+        taskUpdateSeqRef.current[capturedTaskId] = {};
+      }
+      const nextFieldSeq =
+        (taskUpdateSeqRef.current[capturedTaskId][field] || 0) + 1;
+      taskUpdateSeqRef.current[capturedTaskId][field] = nextFieldSeq;
+      const fieldSeq = nextFieldSeq;
+
+      try {
+        // 3. Issue exactly ONE PATCH
+        const { error: patchErr } = await TasksService.update(
+          capturedTaskId,
+          patch
+        );
+        if (patchErr) {
+          return { outcome: "failure" };
+        }
+
+        // 4. Reject stale / project-changed / task-changed / unmounted results
+        if (
+          capturedProjectId !== projectIdRef.current ||
+          fieldSeq !== taskUpdateSeqRef.current[capturedTaskId]?.[field]
+        ) {
+          return { outcome: "stale" };
+        }
+
+        // 5. Authoritative exact read-back
+        const { data: updatedDetails, error: readBackErr } =
+          await TasksService.getDetails(capturedProjectId, capturedTaskId);
+
+        if (readBackErr || !updatedDetails) {
+          return { outcome: "failure" };
+        }
+
+        // 6. Final stale check post read-back
+        if (
+          capturedProjectId !== projectIdRef.current ||
+          fieldSeq !== taskUpdateSeqRef.current[capturedTaskId]?.[field]
+        ) {
+          return { outcome: "stale" };
+        }
+
+        // 7. Authoritative success
+        return { outcome: "success", task: updatedDetails };
+      } catch {
+        return { outcome: "failure" };
+      }
+    },
+    []
   );
 
   // Delete handlers
@@ -991,9 +1062,11 @@ export default function ProjectEpicsPage() {
 
         {selectedTaskId ? (
           <TaskDetailsModal
+            key={selectedTaskId}
             projectId={projectId}
             taskId={selectedTaskId}
             onClose={() => setSelectedTaskId(null)}
+            onTaskUpdate={handleEpicOriginTaskUpdate}
           />
         ) : null}
 
