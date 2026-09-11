@@ -40,13 +40,13 @@ export function Navbar({
   }, [isDropdownOpen]);
 
   return (
-    <header className="h-16 w-full bg-white border-b border-[rgba(195,198,214,0.3)] px-4 lg:px-8 flex items-center justify-between shrink-0 z-10">
+    <header className="h-[80px] lg:h-16 w-full bg-background lg:bg-white border-b border-[rgba(0,0,0,0.1)] lg:border-[rgba(195,198,214,0.3)] px-6 lg:px-8 py-3 lg:py-0 flex items-center justify-between shrink-0 z-10">
       {/* Mobile left side: Hamburger toggle + TASKLY brand */}
-      <div className="flex items-center gap-3 lg:hidden">
+      <div className="flex items-center gap-4 lg:hidden">
         <button
           type="button"
           onClick={onMenuClick}
-          className="p-2 -ml-2 text-[#041b3c] hover:bg-slate-100 rounded-md focus:outline-none"
+          className="relative p-1 text-[#041b3c] hover:bg-slate-100 rounded-[2px] focus:outline-none after:absolute after:content-[''] after:-inset-3"
           aria-label="Open navigation menu"
         >
           <Image
@@ -60,15 +60,7 @@ export function Navbar({
         </button>
 
         <div className="flex items-center gap-2">
-          <Image
-            src="/assets/svg/brand/logo-taskly.svg"
-            alt="Taskly Logo"
-            width={18}
-            height={20}
-            className="shrink-0"
-            priority
-          />
-          <span className="font-bold text-[18px] text-neutral tracking-[-0.5px]">
+          <span className="font-bold text-[20px] leading-[28px] text-neutral tracking-[-0.5px]">
             TASKLY
           </span>
         </div>
@@ -90,7 +82,7 @@ export function Navbar({
 
         <button
           type="button"
-          className="cursor-pointer w-10 h-10 rounded-full bg-[#0052cc] text-white font-bold text-[14px] flex items-center justify-center select-none shrink-0 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0052cc] focus:ring-offset-2"
+          className="cursor-pointer w-10 h-10 rounded-lg lg:rounded-full bg-primary-container lg:bg-[#0052cc] text-white font-bold text-[16px] lg:text-[14px] flex items-center justify-center select-none shrink-0 shadow-[0_1px_1px_rgba(0,0,0,0.05)] lg:shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0052cc] focus:ring-offset-2"
           title={userName || "User"}
           aria-label={isDropdownOpen ? "Close user menu" : "Open user menu"}
           aria-expanded={isDropdownOpen}
