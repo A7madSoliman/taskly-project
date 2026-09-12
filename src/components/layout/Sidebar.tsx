@@ -53,26 +53,30 @@ export function Sidebar({
     (pathname === `${projectBase}/edit` ||
       pathname.startsWith(`${projectBase}/edit/`));
 
-  const activeLinkClass = `flex items-center gap-3 px-3 py-3 rounded-[8px] text-[14px] font-semibold transition-all ${
-    isCollapsed ? "justify-center px-0" : ""
-  } bg-white text-[#0052cc] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]`;
+  const activeLinkClass = `flex items-center gap-[12px] px-[12px] py-[10px] rounded-[4px] text-[14px] font-medium transition-all ${
+    isCollapsed ? "justify-center size-[48px] px-0" : ""
+  } bg-white text-[#003d9b] drop-shadow-[0px_1px_1px_rgba(0,0,0,0.05)]`;
 
-  const inactiveLinkClass = `flex items-center gap-3 px-3 py-3 rounded-[8px] text-[14px] font-normal text-[#4f5f7b] hover:bg-white/60 transition-all text-left w-full ${
-    isCollapsed ? "justify-center px-0" : ""
+  const inactiveLinkClass = `flex items-center gap-[12px] px-[12px] py-[10px] rounded-[4px] text-[14px] font-medium text-[#041b3c] hover:bg-white/60 transition-all text-left w-full ${
+    isCollapsed ? "justify-center size-[48px] px-0" : ""
   }`;
 
-  const disabledButtonClass = `flex items-center gap-3 px-3 py-3 rounded-[8px] text-[14px] font-normal text-[#4f5f7b] hover:bg-white/60 transition-all text-left w-full cursor-not-allowed opacity-60 ${
-    isCollapsed ? "justify-center px-0" : ""
+  const disabledButtonClass = `flex items-center gap-[12px] px-[12px] py-[10px] rounded-[4px] text-[14px] font-medium text-[#041b3c] hover:bg-white/60 transition-all text-left w-full cursor-not-allowed opacity-60 ${
+    isCollapsed ? "justify-center size-[48px] px-0" : ""
   }`;
 
   return (
     <aside
-      className="hidden lg:flex flex-col bg-[#f1f3ff] border-r border-[rgba(195,198,214,0.3)] shrink-0 transition-all duration-200 h-screen sticky top-0"
-      style={{ width: isCollapsed ? 72 : 256 }}
+      className="hidden lg:flex flex-col bg-[#f1f3ff] border-r border-[rgba(195,198,214,0.3)] shrink-0 transition-all duration-200 h-screen sticky top-0 p-[16px]"
+      style={{ width: isCollapsed ? 80 : 256 }}
       aria-label="Desktop Sidebar"
     >
       {/* Brand Header */}
-      <div className="h-16 flex items-center px-6 gap-3 border-b border-[rgba(195,198,214,0.3)] shrink-0">
+      <div
+        className={`flex items-center shrink-0 pb-[32px] ${
+          isCollapsed ? "justify-center" : "px-[8px] gap-[12px]"
+        }`}
+      >
         <Image
           src="/assets/svg/brand/logo-taskly.svg"
           alt="Taskly Logo"
@@ -89,7 +93,11 @@ export function Sidebar({
       </div>
 
       {/* Navigation Links */}
-      <nav className="flex-1 p-3 flex flex-col gap-1 overflow-y-auto">
+      <nav
+        className={`flex-1 flex flex-col overflow-y-auto ${
+          isCollapsed ? "gap-[16px]" : "gap-[4px]"
+        }`}
+      >
         {/* Projects */}
         <Link
           href="/project"
@@ -326,13 +334,13 @@ export function Sidebar({
       </nav>
 
       {/* Footer Actions */}
-      <div className="p-3 border-t border-[rgba(195,198,214,0.3)] flex flex-col gap-1 shrink-0">
+      <div className="border-t border-[rgba(195,198,214,0.2)] flex flex-col gap-[4px] pt-[25px] shrink-0">
         {/* Collapse / Expand Toggle */}
         <button
           type="button"
           onClick={onToggleCollapse}
-          className={`cursor-pointer flex items-center gap-3 px-3 py-3 rounded-[8px] text-[14px] font-semibold text-[#041b3c] hover:bg-white/60 transition-all text-left w-full ${
-            isCollapsed ? "justify-center px-0" : ""
+          className={`cursor-pointer flex items-center gap-[12px] px-[12px] py-[10px] rounded-[4px] text-[14px] font-medium text-[#041b3c] hover:bg-white/60 transition-all text-left w-full ${
+            isCollapsed ? "justify-center size-[48px] px-0" : ""
           }`}
           title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -343,7 +351,7 @@ export function Sidebar({
             width={12}
             height={20}
             className={`shrink-0 transition-transform duration-200 ${
-              isCollapsed ? "" : "rotate-180"
+              isCollapsed ? "rotate-180" : ""
             }`}
             aria-hidden="true"
           />
@@ -355,8 +363,8 @@ export function Sidebar({
           type="button"
           onClick={onLogout}
           disabled={isLoggingOut}
-          className={`cursor-pointer flex items-center gap-3 px-3 py-3 rounded-[8px] text-[14px] font-semibold text-[#d92d20] hover:bg-red-50/50 transition-all text-left w-full disabled:opacity-50 disabled:cursor-not-allowed ${
-            isCollapsed ? "justify-center px-0" : ""
+          className={`cursor-pointer flex items-center gap-[12px] px-[12px] py-[10px] rounded-[4px] text-[14px] font-medium text-[#ba1a1a] hover:bg-red-50/50 transition-all text-left w-full disabled:opacity-50 disabled:cursor-not-allowed ${
+            isCollapsed ? "justify-center size-[48px] px-0" : ""
           }`}
           title="Logout"
         >
