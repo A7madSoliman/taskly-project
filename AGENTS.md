@@ -98,6 +98,17 @@ pnpm format:check
 pnpm build
 ```
 
+---
+
+## 6. Project-Wide UI Parity Workflow
+
+For UI Parity features, Taskly follows a strict, permanent Figma-driven workflow.
+Agents MUST read and follow the full workflow rules defined in:
+
+`project-spec/workflows/ui-parity-workflow.md`
+
+Future prompts will simply state "Use the standard Taskly UI Parity workflow" and agents must inherit all project-wide rules automatically.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
