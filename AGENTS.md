@@ -109,6 +109,30 @@ Agents MUST read and follow the full workflow rules defined in:
 
 Future prompts will simply state "Use the standard Taskly UI Parity workflow" and agents must inherit all project-wide rules automatically.
 
+---
+
+## 7. Orchestration, Delegation, and Git Ownership
+
+Codex is the sole Taskly orchestrator. Codex exclusively owns canonical Spec Kit artifacts,
+Preflight conclusions, scope boundaries, plan synthesis and acceptance, checklist and task state,
+delegate diff review, validation and convergence decisions, and Git closure decisions.
+
+The Taskly fleet authority is the trusted project-local `.delegate/config.json`. Its lanes have these
+fixed responsibilities:
+
+- `plan` and `review-plan` MUST each contribute independent planning or review findings.
+- Codex MUST synthesize those inputs into the canonical plan and decide whether review findings are
+  accepted, rejected, or require correction and re-review.
+- Delegates MUST NOT edit canonical Spec Kit artifacts or independently change requirements,
+  governance, or scope.
+- Codex MUST review every raw implementation diff. Required implementation fixes MUST return through
+  the bounded writable `implement` lane and repeat until Codex accepts the diff.
+
+One Feature equals one dedicated branch and one PR. The human operator MUST create the Feature branch
+before the first writable Spec Kit stage. The human operator exclusively executes Commit, Push, PR,
+Merge, and branch cleanup commands in Warp Terminal. Delegates MUST NOT commit, push, merge, or perform
+Git closure.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

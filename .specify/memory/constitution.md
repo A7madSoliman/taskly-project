@@ -1,13 +1,15 @@
 <!--
 Sync Impact Report
-- Version change: 1.1.0 -> 1.3.0
-- Bump Rationale: Formally codifying permanent Figma-driven UI parity principles for the entire project, updating Feature-by-Feature methodology, Git ownership, and targeted Prettier validation.
+- Version change: 1.3.0 -> 2.0.0
+- Bump Rationale: Establishes Codex as the sole orchestrator and redefines the planning,
+  implementation-review, convergence, and Git-closure governance model.
 - Modified Sections:
-  - Core Principle III: Updated to Feature-by-Feature UI Parity Workflow, allowing multiple frames per bounded Feature.
-  - Core Principle IV: Replaced "frame" with "Feature".
-  - Core Principle V: Clarified human Git execution vs AGY orchestration.
-  - Core Principle VI: Added Permanent UI Parity Principles (Figma authority over code, Desktop/Mobile separation, functional preservation, authority separation, mandatory feature-by-feature lifecycle, prohibition of unrelated refactors).
-  - Quality Gates & Git Discipline: Clarified targeted Prettier validation and human execution for Git.
+  - Core Principle IV: Expanded to the complete Codex-owned Spec Kit lifecycle.
+  - Core Principle V: Replaced the former orchestration model with Codex orchestration and bounded delegates.
+  - Quality Gates & Git Discipline: Added one-Feature branch/PR and meaningful checkpoint policy.
+- Added Sections: None.
+- Removed Sections: None.
+- Follow-up TODOs: None.
 -->
 
 # Taskly Project Constitution
@@ -28,24 +30,41 @@ UI parity implementation MUST proceed one bounded Feature at a time. A single Fe
 
 ### IV. Spec-Driven Development Lifecycle
 Every new UI parity Feature MUST flow through the formal Spec Kit artifact and verification lifecycle before implementation:
-1. Constitution: Governs project rules, technical standards, and non-negotiable governance.
-2. Specification (`spec.md`): Defines what needs to be built and why.
-3. Clarify (`speckit-clarify`): Resolves ambiguity and underspecification in the current specification before planning begins.
-4. Plan (`plan.md`): Defines the architectural and technical how.
-5. Independent Plan Review: Uses the configured read-only `review-plan` delegation lane after the canonical plan is produced. The reviewer provides findings only; AGY remains the sole owner and editor of canonical Spec Kit artifacts.
-6. Checklist (`speckit-checklist`): Verifies requirement quality, completeness, and boundary criteria before implementation.
-7. Tasks (`tasks.md`): Defines executable, dependency-ordered work units.
-8. Analyze (`speckit-analyze`): Verifies cross-artifact consistency between Constitution, specification, plan, and tasks before implementation starts.
-9. Implementation (`speckit-implement`): Executes bounded implementation following approved artifacts.
-10. Convergence (`speckit-converge`): Audits the codebase against the spec, plan, and tasks.
-Implementation and Convergence MUST iterate until the feature reports complete convergence.
+1. Complete a read-only Feature Preflight.
+2. The human operator creates the dedicated Feature branch.
+3. Run `speckit-specify`, then `speckit-clarify` when required.
+4. Collect independent planning inputs from the read-only `plan` lane using
+   `gemini-3.1-pro-high` and the read-only `review-plan` lane using
+   `opencode/muse-spark-1.3-contributor-free`.
+5. Codex synthesizes the inputs and authors the canonical plan through `speckit-plan`.
+6. Both planning delegates independently review the canonical plan. Codex corrects it and requests
+   re-review until Codex accepts it.
+7. Run `speckit-checklist`, evaluate the checklist, run `speckit-tasks`, and run
+   `speckit-analyze`; resolve every material finding before implementation.
+8. Run bounded `speckit-implement` work through the writable `implement` lane using
+   `gemini-3.8-flash-high`.
+9. Codex reviews each raw implementation diff. Required fixes return through the bounded implement
+   lane until Codex accepts the diff.
+10. Run `speckit-converge`. If convergence adds tasks, return to the implementation and raw-diff
+    review loop until no required work remains.
+11. Complete independent Desktop and Mobile visual validation, final technical and Git-diff
+    validation, then human-only Git closure.
 
 ### V. Orchestration & Fleet Delegation Workflow
-AGY operates as the sole orchestrator with exclusive ownership of Spec Kit artifact authoring, final code reviews, validation gate execution, and Git closure decisions. AGY may prepare exact-path Git commands, but the human operator executes staging, commit, push, merge, branch deletion, and final sync checks in Warp Terminal. Delegation across the configured fleet lanes MUST adhere to defined bounds:
-- `plan`: Restricted to read-only technical planning assistance.
-- `review-plan`: Restricted to independent read-only review of generated technical plans.
-- `implement`: Restricted to bounded code implementation against approved spec, plan, and tasks.
-Delegates MUST NOT independently alter requirements or governance, and MUST NOT commit, push, merge, or perform Git closure independently. The orchestrator MUST review raw diffs and independently rerun all validation gates before accepting delegated work.
+Codex operates as the sole orchestrator and exclusively owns canonical Spec Kit artifacts, Preflight
+conclusions, scope boundaries, plan synthesis and acceptance, checklist and tasks canonical state,
+raw implementation diff review, validation and convergence decisions, and Git closure decisions.
+The trusted project-local `.delegate/config.json` is the Taskly fleet authority:
+- `plan`: Read-only independent planning input from `gemini-3.1-pro-high`.
+- `review-plan`: Read-only independent planning and canonical-plan review input from
+  `opencode/muse-spark-1.3-contributor-free`.
+- `implement`: Bounded writable implementation and fix work through `gemini-3.8-flash-high`.
+Delegates provide bounded findings or diffs only. They MUST NOT own or edit canonical Spec Kit
+artifacts, independently alter requirements or governance, commit, push, merge, or perform Git
+closure. Codex MUST synthesize planning inputs, correct and re-submit the plan until it approves the
+result, review every raw implementation diff, and return fixes through the implement lane. Codex MUST
+independently rerun required validation gates before acceptance. The human operator exclusively
+executes all Git commands in Warp Terminal.
 
 ### VI. Permanent UI Parity Principles
 1. **Figma Wins**: Approved Figma frames/nodes are the authoritative source of truth for visual implementation. When current code visually differs from Figma, Figma wins. Never invent or approximate visual values (width, spacing, typography, colors, borders, radii, shadows, layouts, states) when they can be obtained from Figma or approved design artifacts.
@@ -75,13 +94,21 @@ All implementation work MUST pass comprehensive quality gates prior to being com
   - `pnpm build`
   - `git diff --check`
 - Git Workflow & Closure:
+  - One Feature equals one dedicated branch and one PR.
+  - The human operator creates the Feature branch before the first writable Spec Kit stage.
   - Review `git status` and diffs before staging.
   - Stage exact file paths only; `git add .` is strictly prohibited.
-  - The human operator executes the commit only after the target feature or stage has been reviewed, validated, and approved.
+  - Meaningful human-executed Commit and Push checkpoints MAY occur after specification,
+    clarification when files changed, an approved canonical plan, checklist, approved tasks,
+    accepted implementation or fixes, convergence changes, and final closure documentation when
+    files changed.
+  - Empty commits MUST NOT be created for read-only planning, reviews, analysis, or validation.
+  - Delegates MUST NOT execute Git closure. The human operator alone executes Commit, Push, PR,
+    Merge, and branch cleanup after Codex approves the stage.
   - Verification After Commit: Confirm branch state, expected commit, and working tree cleanliness.
   - Verification After Push: Confirm working tree cleanliness and synchronization with the remote branch after push.
 
 ## Governance
 This Constitution establishes non-negotiable project laws and supersedes ad-hoc preferences or unwritten assumptions. Any amendment to this document requires explicit justification, human review, and semantic version incrementing (MAJOR for principle removals/redefinitions, MINOR for new or expanded rules, PATCH for clarifications). All PRs, task plans, and delegated outputs MUST be validated against this Constitution.
 
-**Version**: 1.3.0 | **Ratified**: 2026-09-12 | **Last Amended**: 2026-09-12
+**Version**: 2.0.0 | **Ratified**: 2026-09-12 | **Last Amended**: 2026-09-19
