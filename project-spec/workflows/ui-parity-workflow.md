@@ -6,28 +6,60 @@ This document outlines the standard, permanent workflow for all UI Parity tasks 
 
 UI parity proceeds one bounded Feature at a time. A single Feature may include multiple explicitly assigned authoritative Figma frames/states, such as Desktop + Mobile. All frames assigned to that Feature must be inspected and validated independently. The Feature as a whole runs through one Spec Kit lifecycle. Do not silently add unrelated frames/screens to the Feature.
 
-For every future UI Feature, the standard workflow is:
+Before the lifecycle begins, read `AGENTS.md`, `.specify/memory/constitution.md`, the relevant task
+specification and design references, applicable API authority, existing code, and reusable shared
+components, assets, and tokens. Produce an exact current-code-versus-Figma delta, separate visual
+from functional changes, and preserve existing correct behavior.
 
-1. Read `AGENTS.md`.
-2. Read `.specify/memory/constitution.md`.
-3. Read the relevant `project-spec/tasks/` file.
-4. Identify all assigned Figma Desktop/Mobile/state frames for the Feature.
-5. Review `project-spec/design/`.
-6. Inspect the current code.
-7. Inspect existing components/assets/tokens first.
-8. Review Postman/API authority only when API behavior is involved.
-9. Produce an exact current-code vs Figma delta.
-10. Separate visual changes from functional changes.
-11. Preserve existing correct behavior.
-12. Run the approved Spec Kit lifecycle for the entire Feature.
-13. Implement only the bounded Feature.
-14. Validate each relevant viewport/state against its exact Figma design.
-15. Run TypeScript, lint, build, and targeted formatting validation (`pnpm exec prettier --check <exact-files>`). Do not globally reformat unrelated files.
-16. Perform convergence.
-17. The human operator completes Git closure.
-18. Only then begin the next Feature.
+For every future UI Feature, the lifecycle is exactly:
 
-## 2. Figma Inspection Rules
+1. Read-only Feature Preflight.
+2. Human creates the dedicated Feature branch.
+3. `speckit-specify`.
+4. `speckit-clarify` when required.
+5. Independent `plan` delegate output.
+6. Independent `review-plan` delegate output.
+7. Codex synthesis.
+8. `speckit-plan`.
+9. Both planning delegates independently review the canonical plan.
+10. Codex corrections and re-review until Codex accepts the plan.
+11. `speckit-checklist`.
+12. Checklist evaluation.
+13. `speckit-tasks`.
+14. `speckit-analyze`.
+15. Resolve all material analysis findings.
+16. `speckit-implement` through the bounded writable `implement` delegate.
+17. Codex raw-diff review and bounded implementation-fix loop until accepted.
+18. `speckit-converge`.
+19. If convergence adds work, return to the implementation and raw-diff review loop.
+20. Final independent Desktop and Mobile visual validation.
+21. Final technical and Git-diff validation.
+22. Human Git closure.
+
+Codex is the sole orchestrator and sole owner/editor of canonical Spec Kit artifacts. Planning
+delegates provide independent findings only. Delegates MUST NOT alter governance or scope, commit,
+push, merge, or perform Git closure.
+
+## 2. Git Checkpoint Policy
+
+One Feature equals one dedicated branch and one PR. The human operator creates the branch before the
+first writable Spec Kit stage and exclusively executes all Git commands in Warp Terminal.
+
+Meaningful Commit and Push checkpoints may occur after:
+
+- specification
+- clarification when files changed
+- approved canonical plan
+- checklist
+- approved tasks
+- accepted implementation or fixes
+- convergence changes
+- final closure documentation when files changed
+
+Do not create empty commits for read-only planning, reviews, analysis, or validation. Stage exact
+paths only; `git add .` is prohibited. Delegates never perform Git closure.
+
+## 3. Figma Inspection Rules
 
 For every UI Feature:
 
@@ -51,7 +83,7 @@ If an exact value cannot be proven:
 - Do not guess.
 - Report it as unresolved or derive it only from an approved shared Design System token/component if clearly authoritative.
 
-## 3. Design System Rule
+## 4. Design System Rule
 
 The Taskly Design System is a shared reference authority.
 
@@ -71,7 +103,7 @@ However:
 - Do not globally restyle existing screens merely because a Design System token exists.
 - Apply design corrections Feature-by-Feature.
 
-## 4. Responsive Rule
+## 5. Responsive Rule
 
 Desktop and Mobile must be reviewed independently.
 
@@ -82,7 +114,7 @@ If both frames exist:
 - Do not infer one from the other.
 - Tablet/intermediate behavior should follow existing architecture unless the Task/Figma explicitly defines it.
 
-## 5. Functional Safety Rule
+## 6. Functional Safety Rule
 
 A UI parity Feature is visual by default.
 
@@ -99,7 +131,7 @@ If a visual change appears to require modifying:
 
 **STOP** and report why before expanding scope.
 
-## 6. Current Work Queue
+## 7. Current Work Queue
 
 The current operational sequence is:
 
@@ -110,7 +142,7 @@ The current operational sequence is:
 
 After Auth, continue according to the authoritative Task sequence and approved project roadmap.
 
-## 7. Deferred Work
+## 8. Deferred Work
 
 Current deferred UI work includes:
 - Mobile Drawer parity
