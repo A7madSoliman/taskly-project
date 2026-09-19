@@ -1,11 +1,11 @@
 <!--
 Sync Impact Report
-- Version change: 1.3.0 -> 2.0.0
-- Bump Rationale: Establishes Codex as the sole orchestrator and redefines the planning,
-  implementation-review, convergence, and Git-closure governance model.
+- Version change: 2.0.0 -> 3.0.0
+- Bump Rationale: Removes the external review-plan provider and redefines canonical-plan review as
+  AGY review followed by Codex's independent assessment.
 - Modified Sections:
-  - Core Principle IV: Expanded to the complete Codex-owned Spec Kit lifecycle.
-  - Core Principle V: Replaced the former orchestration model with Codex orchestration and bounded delegates.
+  - Core Principle IV: Retains the complete Spec Kit lifecycle with one external planning/review delegate and Codex assessment.
+  - Core Principle V: Retains Codex orchestration and bounded delegation with only plan and implement lanes.
   - Quality Gates & Git Discipline: Added one-Feature branch/PR and meaningful checkpoint policy.
 - Added Sections: None.
 - Removed Sections: None.
@@ -33,12 +33,15 @@ Every new UI parity Feature MUST flow through the formal Spec Kit artifact and v
 1. Complete a read-only Feature Preflight.
 2. The human operator creates the dedicated Feature branch.
 3. Run `speckit-specify`, then `speckit-clarify` when required.
-4. Collect independent planning inputs from the read-only `plan` lane using
-   `gemini-3.1-pro-high` and the read-only `review-plan` lane using
-   `opencode/muse-spark-1.3-contributor-free`.
-5. Codex synthesizes the inputs and authors the canonical plan through `speckit-plan`.
-6. Both planning delegates independently review the canonical plan. Codex corrects it and requests
-   re-review until Codex accepts it.
+4. Collect independent planning input from the read-only `plan` lane using
+   `gemini-3.1-pro-high`.
+5. Codex synthesizes that input with direct review of the canonical authorities and authors the
+   canonical plan through `speckit-plan`.
+6. The `plan` lane independently reviews the canonical plan. Codex independently assesses the
+   findings against the specification, Figma, repository source, governance, functional behavior,
+   and validation requirements, then accepts, rejects, or defers each finding. If material
+   corrections are required, Codex corrects the plan, requests AGY re-review, and reassesses it.
+   Codex alone approves the plan before the lifecycle advances.
 7. Run `speckit-checklist`, evaluate the checklist, run `speckit-tasks`, and run
    `speckit-analyze`; resolve every material finding before implementation.
 8. Run bounded `speckit-implement` work through the writable `implement` lane using
@@ -55,16 +58,17 @@ Codex operates as the sole orchestrator and exclusively owns canonical Spec Kit 
 conclusions, scope boundaries, plan synthesis and acceptance, checklist and tasks canonical state,
 raw implementation diff review, validation and convergence decisions, and Git closure decisions.
 The trusted project-local `.delegate/config.json` is the Taskly fleet authority:
-- `plan`: Read-only independent planning input from `gemini-3.1-pro-high`.
-- `review-plan`: Read-only independent planning and canonical-plan review input from
-  `opencode/muse-spark-1.3-contributor-free`.
+- `plan`: Read-only independent planning and canonical-plan review input from
+  `gemini-3.1-pro-high`.
 - `implement`: Bounded writable implementation and fix work through `gemini-3.8-flash-high`.
 Delegates provide bounded findings or diffs only. They MUST NOT own or edit canonical Spec Kit
 artifacts, independently alter requirements or governance, commit, push, merge, or perform Git
-closure. Codex MUST synthesize planning inputs, correct and re-submit the plan until it approves the
-result, review every raw implementation diff, and return fixes through the implement lane. Codex MUST
-independently rerun required validation gates before acceptance. The human operator exclusively
-executes all Git commands in Warp Terminal.
+closure. Codex MUST synthesize planning input, independently verify delegate findings against the
+canonical authorities, decide their disposition, correct and re-submit the plan for AGY re-review
+when material corrections are required, and approve the plan before advancing. Codex MUST review
+every raw implementation diff and return fixes through the implement lane. Codex MUST independently
+rerun required validation gates before acceptance. The human operator exclusively executes all Git
+commands in Warp Terminal.
 
 ### VI. Permanent UI Parity Principles
 1. **Figma Wins**: Approved Figma frames/nodes are the authoritative source of truth for visual implementation. When current code visually differs from Figma, Figma wins. Never invent or approximate visual values (width, spacing, typography, colors, borders, radii, shadows, layouts, states) when they can be obtained from Figma or approved design artifacts.
@@ -111,4 +115,4 @@ All implementation work MUST pass comprehensive quality gates prior to being com
 ## Governance
 This Constitution establishes non-negotiable project laws and supersedes ad-hoc preferences or unwritten assumptions. Any amendment to this document requires explicit justification, human review, and semantic version incrementing (MAJOR for principle removals/redefinitions, MINOR for new or expanded rules, PATCH for clarifications). All PRs, task plans, and delegated outputs MUST be validated against this Constitution.
 
-**Version**: 2.0.0 | **Ratified**: 2026-09-12 | **Last Amended**: 2026-09-19
+**Version**: 3.0.0 | **Ratified**: 2026-09-12 | **Last Amended**: 2026-09-19

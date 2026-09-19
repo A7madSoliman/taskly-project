@@ -17,28 +17,30 @@ For every future UI Feature, the lifecycle is exactly:
 2. Human creates the dedicated Feature branch.
 3. `speckit-specify`.
 4. `speckit-clarify` when required.
-5. Independent `plan` delegate output.
-6. Independent `review-plan` delegate output.
-7. Codex synthesis.
-8. `speckit-plan`.
-9. Both planning delegates independently review the canonical plan.
-10. Codex corrections and re-review until Codex accepts the plan.
-11. `speckit-checklist`.
-12. Checklist evaluation.
-13. `speckit-tasks`.
-14. `speckit-analyze`.
-15. Resolve all material analysis findings.
-16. `speckit-implement` through the bounded writable `implement` delegate.
-17. Codex raw-diff review and bounded implementation-fix loop until accepted.
-18. `speckit-converge`.
-19. If convergence adds work, return to the implementation and raw-diff review loop.
-20. Final independent Desktop and Mobile visual validation.
-21. Final technical and Git-diff validation.
-22. Human Git closure.
+5. Independent planning input from the read-only `plan` lane.
+6. Codex synthesis and `speckit-plan`.
+7. AGY independently reviews the canonical plan. Codex assesses findings against the specification,
+   exact Figma authorities, repository source, governance, functional behavior, and validation
+   requirements, then accepts, rejects, or defers each finding.
+8. If material corrections are required, Codex corrects the plan, requests AGY re-review, and
+   reassesses until Codex approves the plan.
+9. `speckit-checklist`.
+10. Checklist evaluation.
+11. `speckit-tasks`.
+12. `speckit-analyze`.
+13. Resolve all material analysis findings.
+14. `speckit-implement` through the bounded writable `implement` delegate.
+15. Codex raw-diff review and bounded implementation-fix loop until accepted.
+16. `speckit-converge`.
+17. If convergence adds work, return to the implementation and raw-diff review loop.
+18. Final independent Desktop and Mobile visual validation.
+19. Final technical and Git-diff validation.
+20. Human Git closure.
 
-Codex is the sole orchestrator and sole owner/editor of canonical Spec Kit artifacts. Planning
-delegates provide independent findings only. Delegates MUST NOT alter governance or scope, commit,
-push, merge, or perform Git closure.
+Codex is the sole orchestrator and sole owner/editor of canonical Spec Kit artifacts. AGY provides
+independent planning and review findings only; Codex independently verifies and decides their
+disposition. Delegates MUST NOT alter governance or scope, commit, push, merge, or perform Git
+closure.
 
 ## 2. Git Checkpoint Policy
 
