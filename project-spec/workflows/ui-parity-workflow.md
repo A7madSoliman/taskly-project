@@ -134,7 +134,16 @@ If a visual change appears to require modifying:
 
 **STOP** and report why before expanding scope.
 
-## 7. Current Work Queue
+## 7. Visual Example Data Rule
+
+- Any sample text/data shown inside Figma inputs, fields, selectors, tables, cards, or similar UI elements is visual example data only unless the authoritative Feature requirements explicitly define it as real/default data.
+- Do not treat Figma sample content as initial state, default user data, hardcoded production data, validation requirements, API payload requirements, or acceptance criteria.
+- Form inputs start empty unless Feature requirements explicitly define a default value.
+- Figma controls visual presentation.
+- Feature requirements control behavior and real data requirements.
+- If sample content conflicts with requirements, requirements control behavior/data and Figma controls presentation.
+
+## 8. Current Work Queue
 
 The current operational sequence is:
 
@@ -145,7 +154,7 @@ The current operational sequence is:
 
 After Auth, continue according to the authoritative Task sequence and approved project roadmap.
 
-## 8. Deferred Work
+## 9. Deferred Work
 
 Current deferred UI work includes:
 
