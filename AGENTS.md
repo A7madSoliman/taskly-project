@@ -120,9 +120,11 @@ delegate diff review, validation and convergence decisions, and Git closure deci
 The Taskly fleet authority is the trusted project-local `.delegate/config.json`. Its lanes have these
 fixed responsibilities:
 
-- `plan` and `review-plan` MUST each contribute independent planning or review findings.
-- Codex MUST synthesize those inputs into the canonical plan and decide whether review findings are
-  accepted, rejected, or require correction and re-review.
+- The read-only `plan` lane MUST contribute independent planning and canonical-plan review findings.
+- Codex MUST independently assess delegate findings against the canonical authorities, accept,
+  reject, or defer each finding, and own corrections and final approval of canonical artifacts.
+- If material plan corrections are required, Codex corrects the canonical plan, requests AGY
+  re-review, and reassesses it before advancing.
 - Delegates MUST NOT edit canonical Spec Kit artifacts or independently change requirements,
   governance, or scope.
 - Codex MUST review every raw implementation diff. Required implementation fixes MUST return through
