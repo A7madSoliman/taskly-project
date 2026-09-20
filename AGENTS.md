@@ -111,29 +111,28 @@ Future prompts will simply state "Use the standard Taskly UI Parity workflow" an
 
 ---
 
-## 7. Orchestration, Delegation, and Git Ownership
+## 7. Orchestration and Git Ownership
 
-Codex is the sole Taskly orchestrator. Codex exclusively owns canonical Spec Kit artifacts,
-Preflight conclusions, scope boundaries, plan synthesis and acceptance, checklist and task state,
-delegate diff review, validation and convergence decisions, and Git closure decisions.
+The human operator is the sole orchestrator (HUMAN = ORCHESTRATOR). The human chooses the best agent for each Spec Kit stage.
 
-The Taskly fleet authority is the trusted project-local `.delegate/config.json`. Its lanes have these
-fixed responsibilities:
+Agents work directly in the project workspace. There is no agent-to-agent delegation, no Delegate fleet, no project-local `.delegate` authority, and no repository-defined agent routing.
 
-- The read-only `plan` lane MUST contribute independent planning and canonical-plan review findings.
-- Codex MUST independently assess delegate findings against the canonical authorities, accept,
-  reject, or defer each finding, and own corrections and final approval of canonical artifacts.
-- If material plan corrections are required, Codex corrects the canonical plan, requests AGY
-  re-review, and reassesses it before advancing.
-- Delegates MUST NOT edit canonical Spec Kit artifacts or independently change requirements,
-  governance, or scope.
-- Codex MUST review every raw implementation diff. Required implementation fixes MUST return through
-  the bounded writable `implement` lane and repeat until Codex accepts the diff.
+The standard Spec Kit workflow is:
 
-One Feature equals one dedicated branch and one PR. The human operator MUST create the Feature branch
-before the first writable Spec Kit stage. The human operator exclusively executes Commit, Push, PR,
-Merge, and branch cleanup commands in Warp Terminal. Delegates MUST NOT commit, push, merge, or perform
-Git closure.
+1. `speckit-specify`
+2. `speckit-clarify` (when required)
+3. `speckit-plan`
+4. `speckit-checklist`
+5. `speckit-tasks`
+6. `speckit-analyze`
+7. `speckit-implement`
+8. independent review / fix loop
+9. `speckit-converge`
+10. human Git closure
+
+Agents MUST NOT independently alter requirements, governance, or scope.
+
+One Feature equals one dedicated branch and one PR. The human operator MUST create the Feature branch before the first writable Spec Kit stage. The human operator exclusively executes Commit, Push, PR, Merge, and branch cleanup commands in Warp Terminal. Agents MUST NOT commit, push, merge, or perform Git closure.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

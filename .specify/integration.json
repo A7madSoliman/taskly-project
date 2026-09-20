@@ -1,15 +1,10 @@
 {
   "version": "1.0.6",
   "integration_state_schema": 1,
-  "installed_integrations": [
-    "agy"
-  ],
+  "installed_integrations": ["generic"],
   "integration_settings": {
-    "agy": {
-      "script": "ps",
-      "invoke_separator": "-"
-    }
+    "generic": { "script": "ps", "invoke_separator": "-" }
   },
-  "integration": "agy",
-  "default_integration": "agy"
+  "integration": "generic",
+  "default_integration": "generic"
 }
